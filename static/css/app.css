@@ -1,0 +1,177 @@
+.segment-text {
+    /*text-align: center;*/
+    font-size: 16px;
+    line-height: 28px;
+    letter-spacing: 0.2px;
+    color: #000000;
+}
+
+.segment-text.col-lg-6 {
+    border: 1px solid #eee;
+    padding: 1em;
+}
+.segment-text__word-wrapper {
+    padding: 0 1px;
+}
+.row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.annotation-label {
+    padding: 3px 10px;
+    margin-bottom: 0;
+    border: 1px solid #f1f1f1;
+    border-collapse: collapse;
+}
+
+p.highlighted {
+    background-color: rgba(0, 255, 0, 0.3);
+}
+
+.row-eq-height {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+.speakers-row {
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+.wavesurfer-region {
+    opacity: 0.5;
+    min-width: 5px;
+    border: solid;
+    border-width: 1px;
+}
+
+.selected-region {
+    border-width: 2px;
+    opacity: 0.6;
+}
+
+label {
+    display: block;
+}
+
+.wavesurfer-handle {
+    position: absolute;
+    cursor: col-resize;
+    height: 100%;
+    width: 5px;
+    max-width: 50%;
+}
+
+.wavesurfer-handle-end {
+    right: 0;
+}
+
+
+.lds-circle {
+    display: inline-block;
+    transform: translateZ(1px);
+}
+
+.lds-circle > div {
+    display: inline-block;
+    width: 51px;
+    height: 51px;
+    margin: 6px;
+    border-radius: 50%;
+    background: #cef;
+    animation: lds-circle 2.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+@keyframes lds-circle {
+    0%, 100% {
+        animation-timing-function: cubic-bezier(0.5, 0, 1, 0.5);
+    }
+    0% {
+        transform: rotateY(0deg);
+    }
+    50% {
+        transform: rotateY(1800deg);
+        animation-timing-function: cubic-bezier(0, 0.5, 0.5, 1);
+    }
+    100% {
+        transform: rotateY(3600deg);
+    }
+}
+
+.selected-word {
+    border-bottom: 5px solid #54F2D9
+}
+.discrepancy-selected {
+    background-color: #fbeb9b82;
+}
+.selected-discrepancy {
+    background-color: #FBEB9B;
+}
+hr.half-rule {
+    width: 50%;
+}
+
+
+
+
+.navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.active>a:hover, .navbar-inverse .navbar-nav>.active>a:focus {
+    background-color: #a94dec;
+}
+.navbar-inverse {
+    background-color: #812AC1;
+}
+
+.navbar-inverse .navbar-nav>.open>a, .navbar-inverse .navbar-nav>.open>a:hover, .navbar-inverse .navbar-nav>.open>a:focus {
+    background-color: #a94dec;
+}
+.nav .open>a, .nav .open>a:hover, .nav .open>a:focus {
+    background-color: #eeeeee;
+    border-color: #a94dec;
+}
+.btn-primary {
+    background-color: #a94dec;
+}
+.btn-primary:active {
+    background-color: #a94dec;
+}
+.btn-primary:focus {
+    background-color: #a94dec;
+}
+.btn-primary:focus, .btn-primary.focus {
+    color: #ffffff;
+    background-color: #a94dec;
+}
+.btn-primary:hover, .btn-primary:active:hover {
+    background-color: #a94dec;
+}
+.navbar-inverse .navbar-nav>li>a {
+    color: #fff;
+}
+.navbar-inverse .navbar-brand {
+    color: #fff;
+}
+
+.btn-primary:active {
+    background-image: radial-gradient(circle, #812AC1 10%, #a94dec 11%);
+}
+a {
+    color: #a94dec;
+}
+a:hover, a:focus {
+    color: #812AC1;
+}
+.segment-text__word-wrapper.low-confidence {
+    font-style: italic;
+}
+
+#logo {
+    transform:rotate(90deg);
+    height: 50px;
+}
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  display: none !important;
+}
