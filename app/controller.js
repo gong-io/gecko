@@ -2,7 +2,7 @@ import initWaveSurfer from './wavesurfer.js'
 
 import * as constants from './constants'
 
-//import './third-party/soundtouch.js'
+import './third-party/soundtouch.js'
 
 import {config} from './config.js'
 
@@ -248,55 +248,59 @@ class MainController {
             $scope.$evalAsync();
 
 
-            // ---- THIS CODE CREATES HUGE MEMORY LEAK EVERY NEW FILE LOAD AND I HAVE NO IDEA WHAT ITS PURPOSE ----
-            // var st = new soundtouch.SoundTouch(self.wavesurfer.backend.ac.sampleRate);
-            // var buffer = self.wavesurfer.backend.buffer;
-            // var channels = buffer.numberOfChannels;
-            // var l = buffer.getChannelData(0);
-            // var r = channels > 1 ? buffer.getChannelData(1) : l;
-            // self.length = buffer.length;
-            // self.seekingPos = null;
-            // var seekingDiff = 0;
-            //
-            // var source = {
-            //     extract: function (target, numFrames, position) {
-            //         if (self.seekingPos != null) {
-            //             seekingDiff = self.seekingPos - position;
-            //             self.seekingPos = null;
-            //         }
-            //
-            //         position += seekingDiff;
-            //
-            //         for (var i = 0; i < numFrames; i++) {
-            //             target[i * 2] = l[i + position];
-            //             target[i * 2 + 1] = r[i + position];
-            //         }
-            //
-            //         return Math.min(numFrames, self.length - position);
-            //     }
-            // }
-            //
-            //
-            // self.soundtouchNode = null;
-            //
-            // self.wavesurfer.on('play', function () {
-            //     self.seekingPos = ~~(self.wavesurfer.backend.getPlayedPercents() * self.length);
-            //     st.tempo = self.wavesurfer.getPlaybackRate();
-            //
-            //     if (st.tempo === 1) {
-            //         self.wavesurfer.backend.disconnectFilters();
-            //     } else {
-            //         if (!self.soundtouchNode) {
-            //             var filter = new soundtouch.SimpleFilter(source, st);
-            //             self.soundtouchNode = soundtouch.getWebAudioNode(self.wavesurfer.backend.ac, filter);
-            //         }
-            //         self.wavesurfer.backend.setFilter(self.soundtouchNode);
-            //     }
-            // });
-            //
-            // self.wavesurfer.on('pause', function () {
-            //     self.soundtouchNode && self.soundtouchNode.disconnect();
-            // });
+            var st = new soundtouch.SoundTouch(self.wavesurfer.backend.ac.sampleRate);
+            var buffer = self.wavesurfer.backend.buffer;
+            var channels = buffer.numberOfChannels;
+            var l = buffer.getChannelData(0);
+            var r = channels > 1 ? buffer.getChannelData(1) : l;
+            self.length = buffer.length;
+            self.seekingPos = null;
+            var seekingDiff = 0;
+
+            var source = {
+                extract: function (target, numFrames, position) {
+                    if (self.seekingPos != null) {
+                        seekingDiff = self.seekingPos - position;
+                        self.seekingPos = null;
+                    }
+
+                    position += seekingDiff;
+
+                    for (var i = 0; i < numFrames; i++) {
+                        target[i * 2] = l[i + position];
+                        target[i * 2 + 1] = r[i + position];
+                    }
+
+                    return Math.min(numFrames, self.length - position);
+                }
+            }
+
+
+            self.soundtouchNode = null;
+
+            self.wavesurfer.on('play', function () {
+                self.seekingPos = ~~(self.wavesurfer.backend.getPlayedPercents() * self.length);
+                st.tempo = self.wavesurfer.getPlaybackRate();
+
+                if (st.tempo === 1) {
+                    self.wavesurfer.backend.disconnectFilters();
+                } else {
+                    if (!self.soundtouchNode) {
+                        var filter = new soundtouch.SimpleFilter(source, st);
+                        self.soundtouchNode = soundtouch.getWebAudioNode(self.wavesurfer.backend.ac, filter);
+                    }
+                    self.wavesurfer.backend.setFilter(self.soundtouchNode);
+                }
+
+                self.isPlaying = true;
+                $scope.$evalAsync();
+            });
+
+            self.wavesurfer.on('pause', function () {
+                self.soundtouchNode && self.soundtouchNode.disconnect();
+                self.isPlaying = false;
+                $scope.$evalAsync();
+            });
         });
 
 
@@ -393,16 +397,6 @@ class MainController {
             //self.updateView();
         });
 
-
-        this.wavesurfer.on('play', function () {
-            self.isPlaying = true;
-            $scope.$evalAsync();
-        });
-
-        this.wavesurfer.on('pause', function () {
-            self.isPlaying = false;
-            $scope.$evalAsync();
-        });
     }
 
     // for debugging
