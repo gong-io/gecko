@@ -1,4 +1,4 @@
-# speech_transcriber
+# Gecko
 GUI tool for transcribing Speech
 
 # How to use
