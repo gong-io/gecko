@@ -1096,6 +1096,8 @@ class MainController {
     addSpeaker() {
         var speakerNameElement = document.getElementById('newSpeakerName');
 
+        if (speakerNameElement.value === '') return;
+
         // Add speaker to legend and assign random color
         this.filesData[this.selectedFileIndex].legend[speakerNameElement.value] =
             constants.SPEAKER_COLORS[Math.floor(Math.random() * constants.SPEAKER_COLORS.length)];
@@ -1173,7 +1175,7 @@ class MainController {
 
                         var self = this;
                         reader.onload = function (e) {
-                            $scope.$evalAsync(function () {
+                            $scope.$evalAsyncevalAsync(function () {
                                 $scope.call_urls = JSON.parse(e.target.result)
                                     .map(function (x) {
                                         var k = Object.keys(x)[0];
