@@ -4,7 +4,7 @@ In order to follow a good GitHub collaboration workflow, there are some tips mig
 
 ## Build a development environment
 
-Please read this issue [#149](https://github.com/chakki-works/doccano/issues/149) first.
+Please read the [installation section in the README](README.md#installation).
 
 ## Update to latest version
 
@@ -40,7 +40,7 @@ git fetch upstream
 # Make sure that you're on your master branch:
 git checkout master
 
-# Rewrite your master branch to make  your local doccano be the same with upstream/master 
+# Rewrite your master branch to make your local version be the same with upstream/master
 git reset --hard upstream/master
 
 # Make your forked repo same as the upstream
@@ -53,7 +53,7 @@ git push -f origin master
 
 ## Development
 
-Right now, your local master branch, origin master branch (forked repo in GitHub), and upstream master branch (original doccano repo) should be the same.
+Right now, your local master branch, origin master branch (forked repo in GitHub), and upstream master branch (original project repo) should be the same.
 
 Usually, we use a new branch for feature development or bug fix, like 'feature/auto_label', 'bug/annotation. For example, we want to implement the JSON export feature, so we name a new branch as `feature/json_export`.
 
