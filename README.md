@@ -18,7 +18,7 @@ We hope that the community will also find this tool as useful as we have.
 
 ## Technological Stack
 Gecko is written in Javascript and is based on Angular.js V1.X.
- The audio player uses the popular wavesurfer.js library.
+ The audio player uses the popular [wavesurfer.js](https://github.com/katspaugh/wavesurfer.js) library.
 
 
 
