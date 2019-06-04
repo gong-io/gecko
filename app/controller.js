@@ -12,18 +12,16 @@ window.onbeforeunload = function (event) {
     return confirm("Confirm refresh");
 };
 
-function sortDict(dict, sortby) {
+function sortDict(dict, sortBy, sortFunction) {
     var sorted = {};
 
-    // sort by keys if undefined
-    var sortFunction = undefined;
-
-    if (sortby !== undefined) {
+    if (sortBy !== undefined) {
         sortFunction = function (a, b) {
-            return (dict[a][sortby] < dict[b][sortby]) ? -1 : ((dict[a][sortby] > dict[b][sortby]) ? 1 : 0)
+            return (dict[a][sortby] < dict[b][sortBy]) ? -1 : ((dict[a][sortby] > dict[b][sortBy]) ? 1 : 0)
         };
     }
 
+    // sort by keys if sortFunction is undefined
     Object.keys(dict).sort(sortFunction).forEach(function (key) {
         sorted[key] = dict[key];
     });
@@ -169,16 +167,8 @@ class MainController {
 
             var numOfFiles = self.filesData.length;
 
-            var mustSpeakers = {
-                '[crosstalk]': "#e1c7ff",
-                '[dialtone]': "#e1c7ff",
-                '[music]': "#e1c7ff",
-                '[foreign]': "#e1c7ff",
-                '[noise]': "#e1c7ff"
-            };
-            mustSpeakers[constants.UNKNOWN_SPEAKER] = '#808080';
 
-            self.speakersColors = Object.assign({}, mustSpeakers);
+            self.speakersColors = Object.assign({}, constants.defaultSpeakers);
 
             // extract speakers
             for (let i = 0; i < numOfFiles; i++) {
@@ -217,8 +207,8 @@ class MainController {
             for (let i = 0; i < numOfFiles; i++) {
                 let fileData = self.filesData[i];
                 var speakers = self.addRegions(fileData.data, i);
-                speakers = Object.assign({}, mustSpeakers, speakers);
-                fileData.legend = sortDict(speakers);
+                speakers = Object.assign({}, constants.defaultSpeakers, speakers);
+                fileData.legend = self.sortLegend(speakers);
                 self.currentRegions.push(undefined);
             }
 
@@ -1094,15 +1084,34 @@ class MainController {
     }
 
     addSpeaker() {
-        var speakerNameElement = document.getElementById('newSpeakerName');
+        // var speakerNameElement = document.getElementById('newSpeakerName');
 
-        if (speakerNameElement.value === '') return;
+        let legend = this.filesData[this.selectedFileIndex].legend;
+
+        if (this.newSpeakerName === '' || this.newSpeakerName in legend) return;
 
         // Add speaker to legend and assign random color
-        this.filesData[this.selectedFileIndex].legend[speakerNameElement.value] =
-            constants.SPEAKER_COLORS[Math.floor(Math.random() * constants.SPEAKER_COLORS.length)];
+        const amountOfSpeakers = Object.keys(legend).length - Object.keys(constants.defaultSpeakers).length;
 
-        speakerNameElement.value = "";
+        legend[this.newSpeakerName] = constants.SPEAKER_COLORS[amountOfSpeakers];
+
+        this.filesData[this.selectedFileIndex].legend = this.sortLegend(legend);
+
+        this.newSpeakerName = "";
+    }
+
+    sortLegend(legend) {
+        return sortDict(legend, undefined, function (a, b) {
+                if (a in constants.defaultSpeakers && !(b in constants.defaultSpeakers)) {
+                    return 1;
+                }
+                if (b in constants.defaultSpeakers && !(a in constants.defaultSpeakers)) {
+                    return -1;
+                }
+
+                return a < b ? -1 : 1;
+            }
+        );
     }
 
 // WARNING: Does not work well. after resize there's a dragging problem for regions

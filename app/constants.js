@@ -30,6 +30,19 @@ export const SPEAKER_COLORS = [
 
 export const UNKNOWN_SPEAKER = "<NA>";
 
+var speakers = {
+    '[crosstalk]': "#e1c7ff",
+    '[dialtone]': "#e1c7ff",
+    '[music]': "#e1c7ff",
+    '[foreign]': "#e1c7ff",
+    '[noise]': "#e1c7ff"
+};
+
+speakers[UNKNOWN_SPEAKER] = '#808080';
+
+export const defaultSpeakers = speakers;
+
+
 export const MINIMUM_LENGTH = 0.1;
 
 export const NO_SPEAKER_COLOR = 'hsla(0, 0%, 30%, 0.1)';

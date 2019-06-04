@@ -23,12 +23,12 @@ speechRecognition.directive("fileread", [function () {
                     var files = changeEvent.target.files;
                     scope.fileread = files[0];
 
-                    if (scope.handlemultiple){
+                    if (scope.handlemultiple) {
                         var extrafiles = []
-                        for (var i=1 ; i<files.length; i++){
+                        for (var i = 1; i < files.length; i++) {
                             extrafiles.push(files[i]);
                         }
-                        scope.handlemultiple({extrafiles:extrafiles});
+                        scope.handlemultiple({extrafiles: extrafiles});
                     }
 
                     if (scope.afterread) {
@@ -43,13 +43,49 @@ speechRecognition.directive("fileread", [function () {
         }
     }
 }]);
-speechRecognition.filter("mulSearch", function(){
-    return function(items, searchText){
-        if(!searchText) return items;
+
+speechRecognition.directive("editable", function () {
+    return {
+        restrict: "A",
+        require: "ngModel",
+        scope:{
+            changed: '&'
+        },
+        link: function (scope, element, attrs, ngModel) {
+
+            element[0].setAttribute('contenteditable', true);
+
+            function read() {
+                // view -> model
+                var text = element.text();
+                ngModel.$setViewValue(text);
+            }
+
+            // model -> view
+            ngModel.$render = function () {
+                element.text(ngModel.$viewValue || "");
+            };
+
+            element.bind("blur", function () {
+                scope.$apply(read);
+            });
+            element.bind("keydown keypress", function (event) {
+                if (event.which === 13) {
+                    this.blur();
+                    event.preventDefault();
+                }
+            });
+        }
+    };
+});
+
+speechRecognition.filter("mulSearch", function () {
+    return function (items, searchText) {
+        if (!searchText) return items;
 
         let onlyUnmarked = false;
 
-        if(searchText[0] === '!'){
+        if (searchText[0] === '!') {
             onlyUnmarked = true;
             searchText = searchText.substring(1);
         }
@@ -57,7 +93,7 @@ speechRecognition.filter("mulSearch", function(){
         let searchWords = searchText.toLowerCase().split(',');
 
         return items.filter(x => {
-            if (onlyUnmarked && x.choice){
+            if (onlyUnmarked && x.choice) {
                 return false;
             }
             return searchWords.some(searchWord => {

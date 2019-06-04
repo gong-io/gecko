@@ -267,8 +267,8 @@
                         <div>
                             <label class="annotation-label">
                                 Add a new speaker:
-                                <input id="newSpeakerName" type="text" ng-keyup="ctrl.newSpeakerKeyUp($event)">
-                                <button ng-click="ctrl.addSpeaker()" class="btn btn-link">
+                                <input type="text" ng-model="ctrl.newSpeakerName" ng-keyup="ctrl.newSpeakerKeyUp($event)">
+                                <button ng-click="ctrl.addSpeaker()" class="btn btn-link" ng-disabled="!ctrl.newSpeakerName">
                                     <i class="glyphicon glyphicon-plus"></i>
                                 </button>
                             </label>
@@ -421,13 +421,6 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="static/js/bootstrap.min.js"></script>
 
-<script>
-    /*
-        $(function() {
-        $('[data-toggle="tooltip"]').tooltip();
-    });
-    */
-</script>
 
 <!--<script src="/js/bundle.js"></script>-->
 <script src="bundle.js"></script>
