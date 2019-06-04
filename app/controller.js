@@ -17,7 +17,7 @@ function sortDict(dict, sortBy, sortFunction) {
 
     if (sortBy !== undefined) {
         sortFunction = function (a, b) {
-            return (dict[a][sortby] < dict[b][sortBy]) ? -1 : ((dict[a][sortby] > dict[b][sortBy]) ? 1 : 0)
+            return (dict[a][sortBy] < dict[b][sortBy]) ? -1 : ((dict[a][sortBy] > dict[b][sortBy]) ? 1 : 0)
         };
     }
 

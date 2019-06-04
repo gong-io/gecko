@@ -3,7 +3,7 @@ var config = {
         container: '#waveform',
         waveColor: 'black',
         // waveColor == progressColor => no progress painting
-        progressColor: 'black',
+        // progressColor: 'black',
         pixelRatio: 1,
         autoCenter : false,
         height: '350'
