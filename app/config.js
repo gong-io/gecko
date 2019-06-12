@@ -9,7 +9,7 @@ var config = {
         height: '350'
     },
     slider: "#slider",
-    isServerMode: true
+    isServerMode: false
 }
 
 export { config }
