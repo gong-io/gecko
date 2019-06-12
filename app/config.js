@@ -8,7 +8,8 @@ var config = {
         autoCenter : false,
         height: '350'
     },
-    slider: "#slider"
+    slider: "#slider",
+    isServerMode: true
 }
 
 export { config }

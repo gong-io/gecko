@@ -1,4 +1,5 @@
 import {MainController} from './controller.js'
+import {dataManager} from './dataManager.js'
 import {Checklist} from './third-party/checked-list.js'
 import angular from 'angularjs';
 import dropdown from 'angular-ui-bootstrap/src/dropdown'
@@ -9,6 +10,9 @@ import './third-party/localStorageDB.js'
 var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse]);
 
 speechRecognition.controller('MainController', MainController);
+
+
+speechRecognition.service('dataManager', dataManager);
 speechRecognition.directive('checklistModel', Checklist);
 speechRecognition.directive("fileread", [function () {
     return {
@@ -104,3 +108,4 @@ speechRecognition.filter("mulSearch", function () {
         });
     }
 })
+

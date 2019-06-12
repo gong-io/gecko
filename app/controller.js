@@ -54,11 +54,17 @@ function secondsToMinutes(time) {
 }
 
 class MainController {
-    constructor($scope, $uibModal) {
+    constructor($scope, $uibModal, dataManager) {
+        this.dataManager = dataManager;
         this.$uibModal = $uibModal;
         this.$scope = $scope;
-        // this.init($scope);
-        this.loadNew();
+
+        if (config.isServerMode){
+            this.loadServerMode();
+        }
+        else{
+            this.loadClientMode();
+        }
     }
 
     init($scope) {
@@ -962,18 +968,6 @@ class MainController {
     }
 
 
-    saveFile(data, filename) {
-        var blob = new Blob([data], {type: 'text/json'});
-        var e = document.createEvent('MouseEvents');
-        var a = document.createElement('a');
-
-        a.download = filename;
-        a.href = window.URL.createObjectURL(blob);
-        a.dataset.downloadurl = ['text/json', a.download, a.href].join(':');
-        e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-        a.dispatchEvent(e);
-    }
-
     save(extension, converter) {
         for (var i = 0; i < this.filesData.length; i++) {
             var current = this.filesData[i];
@@ -983,13 +977,13 @@ class MainController {
 
                 if (!this.checkValidRegions(i)) return;
 
-                this.saveFile(converter(i), filename);
+                this.dataManager.downloadFile(converter(i), filename);
             }
         }
     }
 
     saveDiscrepancyResults() {
-        this.saveFile(JSON.stringify(this.discrepancies),
+        this.dataManager.downloadFile(JSON.stringify(this.discrepancies),
             this.filesData[0].filename + "_VS_" + this.filesData[1].filename + ".json");
     }
 
@@ -1135,7 +1129,23 @@ class MainController {
         }, fileIndex, speaker);
     }
 
-    loadNew() {
+    loadServerMode() {
+        var self = this;
+
+        if (self.wavesurfer) self.wavesurfer.destroy();
+        self.init(self.$scope);
+
+        this.dataManager.loadFileFromServer().then(function (res) {
+            // var uint8buf = new Uint8Array(res.audioFile);
+            // self.wavesurfer.loadBlob(new Blob([uint8buf]));
+            self.wavesurfer.loadBlob(res.audioFile);
+            self.audioFileName = res.audioFileName;
+            res.segmentFiles.forEach(x=> x.data = self.handleTextFormats(x.filename, x.data));
+            self.filesData = res.segmentFiles;
+        })
+    }
+
+    loadClientMode() {
         var self = this;
         var modalInstance = this.$uibModal.open({
             templateUrl: 'selectAudioModal.html',
@@ -1480,7 +1490,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal'];
+    .$inject = ['$scope', '$uibModal', 'dataManager'];
 export {
     MainController
 }
