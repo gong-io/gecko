@@ -26,7 +26,7 @@ Gecko is written in Javascript and is based on Angular.js V1.X.
 See [this page](INSTALLATION.md).
 
 ## Publications
-See this [video]() for an overview and this [paper](./docs/Gecko_intersepeech2019_proposal.pdf)
+See this [video](https://youtu.be/CBYA0YC1NBI) for an overview and this [paper](./docs/Gecko_intersepeech2019_proposal.pdf)
 
 ## Contribution
 See [this page](CONTRIBUTING.md).
