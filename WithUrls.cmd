@@ -1,1 +1,1 @@
-start chrome --user-data-dir="C:/Chrome UNSECURE session" --disable-web-security "C:\develop\code\speech_transcriber\transcriber\index.html"
+start chrome --user-data-dir="C:/Chrome UNSECURE session" --disable-web-security "C:\develop\code\gecko\index.html" "https://gong-io.github.io/gecko/"

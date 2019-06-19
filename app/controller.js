@@ -1194,7 +1194,7 @@ class MainController {
 
                         var self = this;
                         reader.onload = function (e) {
-                            $scope.$evalAsyncevalAsync(function () {
+                            $scope.$evalAsync(function () {
                                 $scope.call_urls = JSON.parse(e.target.result)
                                     .map(function (x) {
                                         var k = Object.keys(x)[0];
