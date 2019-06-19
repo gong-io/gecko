@@ -59,10 +59,9 @@ class MainController {
         this.$uibModal = $uibModal;
         this.$scope = $scope;
 
-        if (config.isServerMode){
+        if (config.isServerMode) {
             this.loadServerMode();
-        }
-        else{
+        } else {
             this.loadClientMode();
         }
     }
@@ -171,57 +170,25 @@ class MainController {
                 }
             });
 
-            var numOfFiles = self.filesData.length;
+            self.createSpeakerLegends();
+
+            self.addRegions();
 
 
-            self.speakersColors = Object.assign({}, constants.defaultSpeakers);
-
-            // extract speakers
-            for (let i = 0; i < numOfFiles; i++) {
-                let colorIndex = 0;
-                let fileData = self.filesData[i];
-                for (const monologue of fileData.data) {
-                    if (!monologue.speaker.id) continue;
-                    var speakerId = monologue.speaker.id;
-
-                    if (monologue.speaker.color) {
-                        self.speakersColors[speakerId] = monologue.speaker.color;
-                    }
-
-                    if (!(speakerId in self.speakersColors)) {
-                        self.speakersColors[speakerId] = constants.SPEAKER_COLORS[colorIndex];
-                        colorIndex = (colorIndex + 1) % constants.SPEAKER_COLORS.length;
-                    }
-                }
-            }
-
-
-            // map between speakers according to EDER mapping
-            if (self.EDER) {
-                var mapping = self.EDER.map;
-                for (let s in self.speakersColors) {
-                    var mapped = mapping[s];
-                    if (mapped) {
-                        self.speakersColors[mapped] = self.speakersColors[s];
-                    }
-                }
-            }
-
-            self.currentRegions = [];
-
-            // Add all regions
-            for (let i = 0; i < numOfFiles; i++) {
-                let fileData = self.filesData[i];
-                var speakers = self.addRegions(fileData.data, i);
-                speakers = Object.assign({}, constants.defaultSpeakers, speakers);
-                fileData.legend = self.sortLegend(speakers);
-                self.currentRegions.push(undefined);
-            }
+            // // map between speakers according to EDER mapping
+            // if (self.EDER) {
+            //     var mapping = self.EDER.map;
+            //     for (let s in self.speakersColors) {
+            //         var mapped = mapping[s];
+            //         if (mapped) {
+            //             self.speakersColors[mapped] = self.speakersColors[s];
+            //         }
+            //     }
+            // }
 
             // select the first region
             self.selectedFileIndex = 0;
             self.selectRegion();
-
 
             // var interval = setInterval(function () {
             //     self.iterateRegions(function (region) {
@@ -237,12 +204,6 @@ class MainController {
 
 
             self.handleCtm();
-
-            self.loader = false;
-            self.ready = true;
-
-            $scope.$evalAsync();
-
 
             var st = new soundtouch.SoundTouch(self.wavesurfer.backend.ac.sampleRate);
             var buffer = self.wavesurfer.backend.buffer;
@@ -297,8 +258,14 @@ class MainController {
                 self.isPlaying = false;
                 $scope.$evalAsync();
             });
-        });
 
+
+            self.loader = false;
+            self.ready = true;
+
+            $scope.$evalAsync();
+
+        });
 
         this.wavesurfer.on('seek', function (e) {
             self.updateView();
@@ -341,19 +308,20 @@ class MainController {
             elem.children[1].removeAttribute('style');
 
             // region.color = self.filesData[region.data.fileIndex].legend[region.data.speaker];
-            if (region.data.speaker !== 'EDER') {
-                region.color = self.speakersColors[region.data.speaker];
-            }
-            region.updateRender();
+            // if (region.data.speaker !== 'EDER') {
+            // region.color = self.speakersColors[region.data.speaker];
+            // }
+
+            self.regionUpdated(region);
         });
 
         this.wavesurfer.on("region-updated", function (region) {
-            self.regionUpdated(region);
+            self.regionPositionUpdated(region);
 
         });
 
         this.wavesurfer.on('region-update-end', function (region) {
-            self.regionUpdated(region);
+            self.regionPositionUpdated(region);
 
             var multiEffect = [region.id];
             self.addHistory(region);
@@ -550,7 +518,7 @@ class MainController {
         this.regionsHistory[region.id].push(this.copyRegion(region));
     }
 
-    regionUpdated(region) {
+    regionPositionUpdated(region) {
         var self = this;
 
         self.selectRegion(region);
@@ -570,7 +538,7 @@ class MainController {
             } else if (region.start < prevRegion.end) {
                 prevRegion.end = region.start;
                 self.updateOtherRegions.add(prevRegion);
-                prevRegion.updateRender();
+                self.regionUpdated(prevRegion);
             }
         }
 
@@ -581,16 +549,24 @@ class MainController {
             } else if (region.end > nextRegion.start) {
                 nextRegion.start = region.end;
                 self.updateOtherRegions.add(nextRegion);
-                nextRegion.updateRender();
+                self.regionUpdated(nextRegion);
             }
         }
 
-        if (region.data.speaker !== 'EDER') {
-            region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker];
-        }
+        self.regionUpdated(region);
+    }
+
+    // change region visually
+    regionUpdated(region) {
+        // if (region.data.speaker !== 'EDER') {
+        region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker];
+        // }
 
         region.updateRender();
-        self.$scope.$evalAsync();
+
+        region.element.title = region.data.speaker;
+
+        this.$scope.$evalAsync();
     }
 
     copyRegion(region) {
@@ -626,7 +602,7 @@ class MainController {
             if (lastState === null) {
                 // pop again because "region-created" will insert another to history
                 var newRegion = this.wavesurfer.addRegion(history.pop());
-                this.regionUpdated(newRegion);
+                this.regionPositionUpdated(newRegion);
             } else if (history.length === 0) {
                 this.__deleteRegion(this.getRegion(regionId));
             } else {
@@ -839,56 +815,106 @@ class MainController {
         return closest;
     }
 
+    createSpeakerLegends() {
+        var self = this;
 
-    addRegions(monologues, fileIndex) {
-        var speakers = {}
-        if (!monologues.length) return;
+        // First aggregate all speakers, overwrite if "color" field is presented anywhere.
+        // We set the same speaker for different files with the same color this way,
+        // // determined by the last "color" field or one of the colors in the list
+        let speakersColors = Object.assign({}, constants.defaultSpeakers);
 
-        var last_end = monologues[0].start;
+        self.filesData.forEach(fileData => {
+            let colorIndex = 0;
 
-        for (var i = 0; i < monologues.length; i++) {
-            var monologue = monologues[i];
-            var speakerId = monologue.speaker.id;
+            fileData.legend = Object.assign({}, constants.defaultSpeakers);
 
-            // set file's legend
-            speakers[speakerId] = this.speakersColors[speakerId];
+            fileData.data.forEach(monologue => {
+                if (!monologue.speaker.id) return;
 
+                let speakerId = monologue.speaker.id;
 
-            var start = monologue.start;
-            var end = monologue.end;
+                // ignore multiple speakers in this stage
+                // ASSUMPTION: they appear as single speakers later
+                if (String(speakerId).includes(constants.SPEAKERS_SEPARATOR)) return;
 
+                // forcefully set the color of the speaker
+                if (monologue.speaker.color) {
+                    speakersColors[speakerId] = monologue.speaker.color;
+                }
 
-            // check overlapping with accuracy up to 5 decimal points
-            // else if (last_end > start + 0.00001) {
-            if (last_end > start + 0.00001) {
-                console.error("overlapping monologues. file index: {0} time: {1}".format(fileIndex, last_end.toFixed(2)));
-            }
+                // Encounter the speaker id for the first time (among all files)
+                if (!(speakerId in speakersColors)) {
+                    speakersColors[speakerId] = constants.SPEAKER_COLORS[colorIndex];
+                    colorIndex = (colorIndex + 1) % constants.SPEAKER_COLORS.length;
+                }
 
-            last_end = end;
+                fileData.legend[speakerId] = undefined;
+            })
 
+            fileData.legend = self.sortLegend(fileData.legend);
+        });
 
-            //region.element.innerText = speaker;
-            var region = this.wavesurfer.addRegion({
-                start: start,
-                end: end,
-                data: {
-                    initFinished: true,
-                    text: monologue.text,
-                    fileIndex: fileIndex,
-                    speaker: speakerId,
-                    words: monologue.words
-                },
-                drag: false,
-                minLength: constants.MINIMUM_LENGTH
+        // Set the actual colors for each speaker
+        self.filesData.forEach(fileData => {
+            Object.keys(fileData.legend).forEach(speaker => {
+                fileData.legend[speaker] = speakersColors[speaker];
             });
+        });
+    }
 
-            if (speakerId === 'EDER') {
-                region.color = monologue.speaker.color;
+    addRegions() {
+        var self = this;
+
+        self.currentRegions = [];
+
+        self.filesData.forEach((fileData, fileIndex) => {
+            let monologues = fileData.data;
+
+            if (!monologues.length) return;
+
+            var last_end = monologues[0].start;
+
+            for (var i = 0; i < monologues.length; i++) {
+                var monologue = monologues[i];
+                var speakerId = monologue.speaker.id;
+
+                var start = monologue.start;
+                var end = monologue.end;
+
+
+                // check overlapping with accuracy up to 5 decimal points
+                // else if (last_end > start + 0.00001) {
+                if (last_end > start + 0.00001) {
+                    console.error("overlapping monologues. file index: {0} time: {1}".format(fileIndex, last_end.toFixed(2)));
+                }
+
+                last_end = end;
+
+
+                //region.element.innerText = speaker;
+                var region = this.wavesurfer.addRegion({
+                    start: start,
+                    end: end,
+                    data: {
+                        initFinished: true,
+                        text: monologue.text,
+                        fileIndex: fileIndex,
+                        speaker: speakerId,
+                        words: monologue.words
+                    },
+                    drag: false,
+                    minLength: constants.MINIMUM_LENGTH
+                });
+
+                // if (speakerId === 'EDER') {
+                //     region.color = monologue.speaker.color;
+                // }
+
             }
 
-        }
+            self.currentRegions.push(undefined);
+        })
 
-        return speakers;
     }
 
     deleteRegionAction(region) {
@@ -1125,7 +1151,7 @@ class MainController {
 
         this.iterateRegions(function (region) {
             region.color = color;
-            region.updateRender();
+            self.regionUpdated(region);
         }, fileIndex, speaker);
     }
 
@@ -1140,7 +1166,7 @@ class MainController {
             // self.wavesurfer.loadBlob(new Blob([uint8buf]));
             self.wavesurfer.loadBlob(res.audioFile);
             self.audioFileName = res.audioFileName;
-            res.segmentFiles.forEach(x=> x.data = self.handleTextFormats(x.filename, x.data));
+            res.segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
             self.filesData = res.segmentFiles;
         })
     }
@@ -1325,7 +1351,7 @@ class MainController {
     readGongJson(data) {
         data = JSON.parse(data)
 
-        this.EDER = data['EDER'];
+        // this.EDER = data['EDER'];
         this.segmentation = data['Segmentation'];
 
         var monologues = data['monologues'];

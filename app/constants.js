@@ -30,6 +30,8 @@ export const SPEAKER_COLORS = [
 
 export const UNKNOWN_SPEAKER = "<NA>";
 
+export const SPEAKERS_SEPARATOR = "+";
+
 var speakers = {
     '[crosstalk]': "#e1c7ff",
     '[dialtone]': "#e1c7ff",
