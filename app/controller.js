@@ -977,7 +977,7 @@ class MainController {
 
                 if (!this.checkValidRegions(i)) return;
 
-                this.dataManager.downloadFile(converter(i), filename);
+                this.dataManager.downloadFileToClient(converter(i), filename);
             }
         }
     }
@@ -1000,7 +1000,7 @@ class MainController {
         try {
             var last_end = 0;
             this.iterateRegions(function (region) {
-                if (region.start < last_end) {
+                if (last_end > region.start + 0.00001) {
                     throw "Overlapping in file: {0}. \n Time: {1}".format(self.filesData[fileIndex].filename, last_end.toFixed(2));
                 }
                 last_end = region.end;
