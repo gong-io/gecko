@@ -2,10 +2,10 @@
 
 ![Comparison](./docs/Comparison.png)
 
- Gecko allows efficient and effective segmentation of the voice signal by speaker as well as annotation of the linguistic content of the conversation. A key feature of Gecko is the presentation of the output of automatic segmentation and transcription systems in an intuitive user interface for editing. Gecko allows annotation of Voice Activity Detection (VAD), Diarization, Speaker Identiﬁcation and ASR outputs on a large scale.
+ Gecko allows efficient and effective segmentation of the voice signal by speaker as well as annotation of the linguistic content of the conversation. A key feature of Gecko is the presentation of the output of automatic segmentation and transcription systems in an intuitive user interface for editing. Gecko allows annotation of Voice Activity Detection (VAD), Diarization, Speaker Identiﬁcation and ASR outputs on a large scale, and leads to faster and more accurate annotated datasets. 
  
- Creating annotated datasets is known to be the pain point of any ML project. Using Gecko as part of our ongoing work process has led to faster and more accurate outcomes.
-We hope that the community will also find this tool as useful as we have.
+ For an overview of the main features, see this [video](https://youtu.be/CBYA0YC1NBI) and the corresponding [paper](./docs/Gecko_intersepeech2019_proposal.pdf). You can also play with the online [working platform](https://gong-io.github.io/gecko/).
+
 ## Features
 * Supports the annotating process of different stages of a conversation: voice detection, diarization, identification and transcription.
 * Provides an efficient and convenient tool for annotating audio files.
@@ -26,7 +26,7 @@ Gecko is written in Javascript and is based on Angular.js V1.X.
 See [this page](INSTALLATION.md).
 
 ## Publications
-See this [video]() for an overview and this [paper](./docs/Gecko_intersepeech2019_proposal.pdf)
+Gecko will be presented in Interspeech 2019, the world's leading Speech Technology conference. See this [video](https://youtu.be/CBYA0YC1NBI) for an overview and the accepted [paper](./docs/Gecko_intersepeech2019_proposal.pdf).
 
 ## Contribution
 See [this page](CONTRIBUTING.md).
