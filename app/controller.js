@@ -115,6 +115,18 @@ class MainController {
                 self.undo();
             } else if (e.key === 'Enter') {
                 self.playRegion();
+            } else {
+                let number = parseInt(e.key);
+                if (!isNaN(number) && number >= 1 && number <= 9) {
+                    let index = number - 1;
+                    if (self.selectedRegion) {
+                        let fileIndex = self.selectedRegion.data.fileIndex;
+                        let speakers = Object.keys(self.filesData[fileIndex].legend);
+                        if (index < speakers.length) {
+                            self.speakerChanged(speakers[index]);
+                        }
+                    }
+                }
             }
 
             $scope.$evalAsync();
@@ -861,7 +873,6 @@ class MainController {
                 let speakerId = monologue.speaker.id;
 
 
-
                 // ignore multiple speakers in this stage
                 // ASSUMPTION: they appear as single speakers later
                 // TODO: handle the case when the assumption does not hold
@@ -1238,7 +1249,7 @@ class MainController {
     loadClientMode() {
         var self = this;
         var modalInstance = this.$uibModal.open({
-            templateUrl: 'selectAudioModal.html',
+            templateUrl: 'static/templates/selectAudioModal.html',
             controller: function ($scope, $uibModalInstance, $timeout, zoom) {
                 $scope.newSegmentFiles = [undefined];
 
@@ -1577,6 +1588,33 @@ class MainController {
         };
 
         reader.readAsText(file);
+    }
+
+    openShortcutsInfo() {
+        var self = this;
+        var modalInstance = this.$uibModal.open({
+            templateUrl: 'static/templates/shortcutsInfo.html',
+            controller: function ($scope, $uibModalInstance) {
+                $scope.ok = function () {
+                    $uibModalInstance.close();
+                };
+
+                //TODO: prettify the html by integrating symbols
+                $scope.shortcuts = [
+                    {'key': 'Space bar', 'desc': 'Play/Pause'},
+                    {'key': 'Enter', 'desc': 'Play segment'},
+                    {'key': 'Right Arrow', 'desc':'Skip forwards'},
+                    {'key': 'Left Arrow', 'desc':'Skip backwards'},
+                    {'key': 'Ctrl + Right Arrow', 'desc':'Next difference (comparing mode)'},
+                    {'key': 'Delete/Backspace', 'desc':'Delete segment'},
+                    {'key': 'Ctrl + z', 'desc': 'Undo'},
+                    {'key': '1-9', 'desc':'Select annotation'},
+                    {'key': 'Escape', 'desc': 'Focus-out text area'}
+                ]
+            }
+        });
+
+
     }
 }
 
