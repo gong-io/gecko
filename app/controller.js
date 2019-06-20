@@ -117,7 +117,6 @@ class MainController {
                 self.playRegion();
             }
 
-
             $scope.$evalAsync();
 
         };
@@ -284,7 +283,8 @@ class MainController {
                 self.calcCurrentFileIndex(event);
 
                 region.data.fileIndex = self.selectedFileIndex;
-                region.data.speaker = constants.UNKNOWN_SPEAKER;
+                // region.data.speaker = constants.UNKNOWN_SPEAKER;
+                region.data.speaker = [];
 
                 region.data.initFinished = false;
             } else {
@@ -371,7 +371,7 @@ class MainController {
         this.iterateRegions(function (region) {
             var r = self.copyRegion(region);
             r.fileIndex = r.data.fileIndex;
-            r.speaker = r.data.speaker;
+            r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
             r.initFinished = r.data.initFinished;
             delete r.data;
             delete r.drag;
@@ -379,23 +379,28 @@ class MainController {
             var id = r.id;
             delete r.id;
             formatted[id] = r;
-        }, fileIndex, undefined, true);
+        }, fileIndex, true);
 
         console.table(formatted);
     }
 
-    _printHistoryInfo() {
+    _printHistoryInfo(onlyAvailableHistory) {
         var self = this;
 
         Object.keys(this.regionsHistory).forEach(function (key) {
             var history = self.regionsHistory[key];
             var formatted = [];
+
+            if (onlyAvailableHistory && history.length < 2) {
+                return;
+            }
+
             for (let i = 0; i < history.length; i++) {
                 var region = history[i];
                 if (region) {
                     var r = self.copyRegion(region);
                     r.fileIndex = r.data.fileIndex;
-                    r.speaker = r.data.speaker;
+                    r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
                     r.initFinished = r.data.initFinished;
                     delete r.data;
                     delete r.drag;
@@ -559,24 +564,46 @@ class MainController {
     // change region visually
     regionUpdated(region) {
         // if (region.data.speaker !== 'EDER') {
-        region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker];
+
+        region.element.style.background = "";
+
+        if (region.data.speaker.length === 0) {
+            region.color = constants.UNKNOWN_SPEAKER_COLOR;
+        } else if (region.data.speaker.length === 1) {
+            region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker[0]];
+
+        } else {
+            let line_width = 20;
+
+            let colors = region.data.speaker.map((s, i) =>
+                "{0} {1}px".format(this.filesData[region.data.fileIndex].legend[s], (i + 1) * line_width)).join(',');
+
+            region.element.style.background =
+                "repeating-linear-gradient(135deg, {0})".format(colors);
+
+        }
         // }
 
+        //TODO: This also happens at other times so we cannot determine things after it
+        // unless we fork the repo and set an "afterrender" event so we could change the region however we'd like
         region.updateRender();
 
-        region.element.title = region.data.speaker;
+        // region.element.title = region.data.speaker;
 
         this.$scope.$evalAsync();
     }
 
     copyRegion(region) {
+
+        //TODO: change the copy of data to deep copy by "JSON.parse(JSON.stringify(object))"
+        // and then handle "words" correctly
         return {
             id: region.id,
             data: {
                 initFinished: region.data.initFinished,
                 text: region.data.text,
                 fileIndex: region.data.fileIndex,
-                speaker: region.data.speaker
+                speaker: region.data.speaker.slice() // copy by value
             },
             start: region.start,
             end: region.end,
@@ -776,7 +803,7 @@ class MainController {
         return this.wavesurfer.regions.list[id];
     }
 
-    iterateRegions(func, fileIndex, speaker, sort) {
+    iterateRegions(func, fileIndex, sort) {
         var regions = this.wavesurfer.regions.list;
 
         if (sort) {
@@ -788,9 +815,9 @@ class MainController {
             if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
                 return;
             }
-            if (speaker !== undefined && region.data.speaker !== speaker) {
-                return;
-            }
+            // if (speaker !== undefined && region.data.speaker !== speaker) {
+            //     return;
+            // }
 
             func(region);
         });
@@ -833,8 +860,11 @@ class MainController {
 
                 let speakerId = monologue.speaker.id;
 
+
+
                 // ignore multiple speakers in this stage
                 // ASSUMPTION: they appear as single speakers later
+                // TODO: handle the case when the assumption does not hold
                 if (String(speakerId).includes(constants.SPEAKERS_SEPARATOR)) return;
 
                 // forcefully set the color of the speaker
@@ -890,7 +920,6 @@ class MainController {
 
                 last_end = end;
 
-
                 //region.element.innerText = speaker;
                 var region = this.wavesurfer.addRegion({
                     start: start,
@@ -899,7 +928,7 @@ class MainController {
                         initFinished: true,
                         text: monologue.text,
                         fileIndex: fileIndex,
-                        speaker: speakerId,
+                        speaker: speakerId.split(constants.SPEAKERS_SEPARATOR),
                         words: monologue.words
                     },
                     drag: false,
@@ -1026,11 +1055,16 @@ class MainController {
         try {
             var last_end = 0;
             this.iterateRegions(function (region) {
+                if (region.end <= region.start) {
+                    throw "Negative duration in file {}\n Start: {1}\n End: {2}"
+                        .format(self.filesData[fileIndex].filename, region.start, region.end);
+                }
+
                 if (last_end > region.start + 0.00001) {
                     throw "Overlapping in file: {0}. \n Time: {1}".format(self.filesData[fileIndex].filename, last_end.toFixed(2));
                 }
                 last_end = region.end;
-            }, fileIndex, undefined, true)
+            }, fileIndex, true)
         } catch (err) {
             alert(err);
             return false;
@@ -1038,23 +1072,31 @@ class MainController {
         return true;
     }
 
+    formatSpeaker(speaker) {
+        var ret = "";
+
+        if (speaker.length === 0) {
+            ret = constants.UNKNOWN_SPEAKER;
+        } else {
+            ret = speaker.join(constants.SPEAKERS_SEPARATOR);
+        }
+
+        return ret;
+    }
+
     convertRegionsToJson(fileIndex) {
         var self = this;
         var data = {schemaVersion: "2.0", monologues: []};
         this.iterateRegions(function (region) {
-            if (region.end <= region.start) {
-                alert("Negative duration in file {}\n Start: {1}\n End: {2}"
-                    .format(self.filesData[fileIndex].filename, region.start, region.end));
-            }
 
             data.monologues.push({
-                speaker: {id: region.data.speaker, color: region.color},
+                speaker: {id: self.formatSpeaker(region.data.speaker), color: region.color},
                 start: region.start,
                 end: region.end,
                 text: region.data.text
             });
 
-        }, fileIndex, undefined, true);
+        }, fileIndex, true);
 
         return JSON.stringify(data);
     }
@@ -1064,14 +1106,12 @@ class MainController {
         var data = [];
 
         this.iterateRegions(function (region) {
-            if (region.end <= region.start) {
-                alert("Negative duration in file {}\n Start: {1}\n End: {2}"
-                    .format(self.filesData[fileIndex].filename, region.start, region.end));
-            }
+            data.push('SPEAKER <NA> <NA> {0} {1} <NA> <NA> {2} <NA> <NA>'.format(
+                region.start.toFixed(2),
+                (region.end - region.start).toFixed(2),
+                self.formatSpeaker(region.data.speaker)));
 
-            data.push('SPEAKER <NA> <NA> {0} {1} <NA> <NA> {2} <NA> <NA>'.format(region.start.toFixed(2), (region.end - region.start).toFixed(2), region.data.speaker));
-
-        }, fileIndex, undefined, true);
+        }, fileIndex, true);
 
         return data.join('\n');
     }
@@ -1088,14 +1128,36 @@ class MainController {
         this.isTextChanged = true;
     }
 
-    segmentSpeakerChanged() {
+    speakerChanged(speaker) {
         var self = this;
+
+        var speakers = self.selectedRegion.data.speaker;
+        var idx = speakers.indexOf(speaker);
+
+        // Is currently selected
+        if (idx > -1) {
+            speakers.splice(idx, 1);
+        }
+
+        // Is newly selected
+        else {
+            speakers.push(speaker);
+        }
 
         self.addHistory(self.selectedRegion);
         self.undoStack.push([self.selectedRegion.id]);
 
         this.regionUpdated(self.selectedRegion);
     }
+
+    // segmentSpeakerChanged() {
+    //     var self = this;
+    //
+    //     self.addHistory(self.selectedRegion);
+    //     self.undoStack.push([self.selectedRegion.id]);
+    //
+    //     this.regionUpdated(self.selectedRegion);
+    // }
 
     newSpeakerKeyUp(e) {
         if (e.keyCode === 13) {
@@ -1150,9 +1212,11 @@ class MainController {
         self.filesData[fileIndex].legend[speaker] = color;
 
         this.iterateRegions(function (region) {
-            region.color = color;
-            self.regionUpdated(region);
-        }, fileIndex, speaker);
+            if (region.data.speaker.indexOf(speaker) > -1) {
+                //region.color = color;
+                self.regionUpdated(region);
+            }
+        }, fileIndex);
     }
 
     loadServerMode() {
@@ -1352,7 +1416,7 @@ class MainController {
         data = JSON.parse(data)
 
         // this.EDER = data['EDER'];
-        this.segmentation = data['Segmentation'];
+        //this.segmentation = data['Segmentation'];
 
         var monologues = data['monologues'];
         for (var i = 0; i < monologues.length; i++) {
@@ -1360,7 +1424,8 @@ class MainController {
 
 
             if (!monologue.speaker) {
-                monologue.speaker = {id: constants.UNKNOWN_SPEAKER};
+                // monologue.speaker = {id: constants.UNKNOWN_SPEAKER};
+                monologue.speaker = "";
             }
 
             if (monologue.start === undefined) monologue.start = monologue.terms[0].start;

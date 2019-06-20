@@ -40,7 +40,7 @@ var speakers = {
     '[noise]': "#e1c7ff"
 };
 
-speakers[UNKNOWN_SPEAKER] = '#808080';
+export const UNKNOWN_SPEAKER_COLOR = '#808080';
 
 export const defaultSpeakers = speakers;
 
