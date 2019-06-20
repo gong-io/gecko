@@ -29,6 +29,16 @@ function sortDict(dict, sortBy, sortFunction) {
     return sorted;
 }
 
+function jsonStringify(json){
+    return JSON.stringify(json, function(key, value) {
+        // limit precision of floats
+        if (typeof value === 'number') {
+            return parseFloat(value.toFixed(2));
+        }
+        return value;
+    })
+}
+
 // First, checks if it isn't implemented yet.
 if (!String.prototype.format) {
     String.prototype.format = function () {
@@ -99,6 +109,7 @@ class MainController {
 
             // wavesurfer does not get focus for some reason, so body it is
             // if (e.target.nodeName !== 'BODY') return;
+            if (e.target.type === 'text') return;
 
             if (e.key === " ") {
                 e.preventDefault();
@@ -871,24 +882,25 @@ class MainController {
 
                 let speakerId = monologue.speaker.id;
 
+                let speakers = String(speakerId).split(constants.SPEAKERS_SEPARATOR);
 
-                // ignore multiple speakers in this stage
-                // ASSUMPTION: they appear as single speakers later
-                // TODO: handle the case when the assumption does not hold
-                if (String(speakerId).includes(constants.SPEAKERS_SEPARATOR)) return;
-
-                // forcefully set the color of the speaker
-                if (monologue.speaker.color) {
-                    speakersColors[speakerId] = monologue.speaker.color;
+                // TODO: remove and put colors as metadata outside monologues
+                if (speakers.length === 1) {
+                    // forcefully set the color of the speaker
+                    if (monologue.speaker.color) {
+                        speakersColors[speakerId] = monologue.speaker.color;
+                    }
                 }
 
-                // Encounter the speaker id for the first time (among all files)
-                if (!(speakerId in speakersColors)) {
-                    speakersColors[speakerId] = constants.SPEAKER_COLORS[colorIndex];
-                    colorIndex = (colorIndex + 1) % constants.SPEAKER_COLORS.length;
-                }
+                speakers.forEach(s => {
 
-                fileData.legend[speakerId] = undefined;
+                    // Encounter the speaker id for the first time (among all files)
+                    if (!(s in speakersColors)) {
+                        speakersColors[s] = constants.SPEAKER_COLORS[colorIndex];
+                        colorIndex = (colorIndex + 1) % constants.SPEAKER_COLORS.length;
+                    }
+                    fileData.legend[s] = undefined;
+                });
             })
 
             fileData.legend = self.sortLegend(fileData.legend);
@@ -1048,7 +1060,7 @@ class MainController {
     }
 
     saveDiscrepancyResults() {
-        this.dataManager.downloadFile(JSON.stringify(this.discrepancies),
+        this.dataManager.downloadFileToClient(jsonStringify(this.discrepancies),
             this.filesData[0].filename + "_VS_" + this.filesData[1].filename + ".json");
     }
 
@@ -1108,7 +1120,7 @@ class MainController {
 
         }, fileIndex, true);
 
-        return JSON.stringify(data);
+        return jsonStringify(data);
     }
 
     convertRegionsToRTTM(fileIndex) {
@@ -1602,11 +1614,11 @@ class MainController {
                 $scope.shortcuts = [
                     {'key': 'Space bar', 'desc': 'Play/Pause'},
                     {'key': 'Enter', 'desc': 'Play segment'},
-                    {'key': 'Right/Left Arrow', 'desc':'Skip forward/backward'},
-                    {'key': 'Ctrl + Right Arrow', 'desc':'Next difference (comparing mode)'},
-                    {'key': 'Delete/Backspace', 'desc':'Delete segment'},
+                    {'key': 'Right/Left Arrow', 'desc': 'Skip forward/backward'},
+                    {'key': 'Ctrl + Right Arrow', 'desc': 'Next difference (comparing mode)'},
+                    {'key': 'Delete/Backspace', 'desc': 'Delete segment'},
                     {'key': 'Ctrl + z', 'desc': 'Undo'},
-                    {'key': '1-9', 'desc':'Select annotation'},
+                    {'key': '1-9', 'desc': 'Select annotation'},
                     {'key': 'Escape', 'desc': 'Focus-out text area'}
                 ]
             }
