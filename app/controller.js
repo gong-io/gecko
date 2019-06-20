@@ -98,7 +98,7 @@ class MainController {
             }
 
             // wavesurfer does not get focus for some reason, so body it is
-            if (e.target.nodeName !== 'BODY') return;
+            // if (e.target.nodeName !== 'BODY') return;
 
             if (e.key === " ") {
                 e.preventDefault();
@@ -704,7 +704,6 @@ class MainController {
         return region;
     }
 
-    //TODO: change select region into "update by cursor" - maybe through the seek function?
     selectRegion(region) {
         this.deselectRegion();
 
@@ -1603,8 +1602,7 @@ class MainController {
                 $scope.shortcuts = [
                     {'key': 'Space bar', 'desc': 'Play/Pause'},
                     {'key': 'Enter', 'desc': 'Play segment'},
-                    {'key': 'Right Arrow', 'desc':'Skip forwards'},
-                    {'key': 'Left Arrow', 'desc':'Skip backwards'},
+                    {'key': 'Right/Left Arrow', 'desc':'Skip forward/backward'},
                     {'key': 'Ctrl + Right Arrow', 'desc':'Next difference (comparing mode)'},
                     {'key': 'Delete/Backspace', 'desc':'Delete segment'},
                     {'key': 'Ctrl + z', 'desc': 'Undo'},
@@ -1613,8 +1611,6 @@ class MainController {
                 ]
             }
         });
-
-
     }
 }
 
