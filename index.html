@@ -359,19 +359,19 @@
 
         </div>
 
-        <div class="col col-md-3 segment-text" ng-repeat="file in ctrl.filesData track by $index"
-             ng-show="ctrl.discrepancies">
+        <div class="col col-md-3 segment-text" ng-repeat="file in ctrl.filesData track by $index">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
                 </div>
                 <div class="panel-body">
+                <p><b id="speaker_{{$index}}"></b></p>
                 <span ng-repeat="word in ctrl.currentRegions[$index].data.words track by $index">
-                <span style="color: rgba(0,0,0, {{ word.confidence }})"
-                      class="segment-text__word-wrapper"
-                      ng-class="{'low-confidence': word.confidence<.95}"
-                      title="Confidence: {{ word.confidence }}"
-                      id="word_{{$parent.$index}}_{{$index}}">{{ word.text }}</span>
+                    <span style="color: rgba(0,0,0, {{ word.confidence }})"
+                        class="segment-text__word-wrapper"
+                        ng-class="{'low-confidence': word.confidence<.95}"
+                        title="Confidence: {{ word.confidence }}"
+                        id="word_{{$parent.$index}}_{{$index}}">{{ word.text }}</span>
                 </span>
                 </div>
             </div>
