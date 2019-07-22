@@ -1645,6 +1645,23 @@ class MainController {
             }
         });
     }
+
+    wordChanged(regionIndex, wordIndex) {
+        let newWord = this.currentRegions[regionIndex].data.words[wordIndex]
+        if (newWord.text.length) {
+            let newWordSplited = newWord.text.split(' ')
+            if (newWordSplited.length > 1) {
+                this.currentRegions[regionIndex].data.words[wordIndex].text = newWordSplited[0]
+                for (let i = newWordSplited.length - 1; i >= 1; i--) {
+                    let wordCopy = Object.assign({}, this.currentRegions[regionIndex].data.words[wordIndex])
+                    wordCopy.text = newWordSplited[i]
+                    this.currentRegions[regionIndex].data.words.splice(wordIndex + 1, 0, wordCopy)
+                }
+            }
+        } else {
+            this.currentRegions[regionIndex].data.words.splice(wordIndex, 1)
+        }
+    }
 }
 
 MainController

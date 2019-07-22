@@ -371,7 +371,10 @@
                         class="segment-text__word-wrapper"
                         ng-class="{'low-confidence': word.confidence<.95}"
                         title="Confidence: {{ word.confidence }}"
-                        id="word_{{$parent.$index}}_{{$index}}">{{ word.text }}</span>
+                        editable
+                        ng-model="word.text"
+                        changed="ctrl.wordChanged($parent.$index, $index)"
+                        id="word_{{$parent.$index}}_{{$index}}"></span>
                 </span>
                 </div>
             </div>

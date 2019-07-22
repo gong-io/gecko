@@ -56,13 +56,15 @@ speechRecognition.directive("editable", function () {
             changed: '&'
         },
         link: function (scope, element, attrs, ngModel) {
-
             element[0].setAttribute('contenteditable', true);
 
             function read() {
                 // view -> model
                 var text = element.text();
                 ngModel.$setViewValue(text);
+                if (scope.changed) {
+                    scope.changed()
+                }
             }
 
             // model -> view
@@ -78,6 +80,7 @@ speechRecognition.directive("editable", function () {
                     this.blur();
                     event.preventDefault();
                 }
+                event.stopPropagation()
             });
         }
     };
