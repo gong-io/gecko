@@ -605,6 +605,16 @@ class MainController {
                 "repeating-linear-gradient(135deg, {0})".format(colors);
 
         }
+
+        region.data.words.forEach((w) => {
+            if (region.data.speaker.length === 0) {
+                w.speaker.id = null
+            } else {
+                if (w.speaker.id !== region.data.speaker[0]) {
+                    w.speaker.id = region.data.speaker[0]
+                }
+            }
+        })
         // }
 
         //TODO: This also happens at other times so we cannot determine things after it
@@ -1093,6 +1103,10 @@ class MainController {
         this.save('json', this.convertRegionsToJson.bind(this));
     }
 
+    saveCtm() {
+        this.save('ctm', this.convertRegionsToCtm.bind(this));
+    }
+
     checkValidRegions(fileIndex) {
         var self = this;
         try {
@@ -1142,6 +1156,48 @@ class MainController {
         }, fileIndex, true);
 
         return jsonStringify(data);
+    }
+
+    convertRegionsToCtm(fileIndex) {
+        const speakersMap = {}
+        this.iterateRegions(function (region) {
+            region.data.words.forEach((word) => {
+                if (!speakersMap[word.speaker.id]) {
+                    speakersMap[word.speaker.id] = []
+                }
+                speakersMap[word.speaker.id].push({
+                    confidence: word.confidence.toFixed(2),
+                    end: word.end.toFixed(2),
+                    segment_id: word.segment_id,
+                    start: word.start.toFixed(2),
+                    text: word.text,
+                    diff: (word.end - word.start).toFixed(2)
+                })
+            })
+        }, fileIndex, true);
+
+        const output = []
+
+        let keys = []
+        for (var key in speakersMap) {
+            keys.push(key)
+        }
+        keys = keys.sort()
+
+        keys.forEach((key) => {
+            speakersMap[key].forEach((w) => {
+                output.push('{0}_{1}_audio 1 {2} {3} {4} {5}'.format(
+                    key,
+                    w.segment_id.toString().padStart(5, '0'),
+                    w.start.padStart(8, '0'),
+                    w.diff,
+                    w.text,
+                    w.confidence
+                ))
+            })
+        })
+
+        return output.join('\n')
     }
 
     convertRegionsToRTTM(fileIndex) {
