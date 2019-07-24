@@ -64,6 +64,9 @@
                         <li><a href="#" ng-click="ctrl.saveJson()">
                             JSON
                         </a></li>
+                        <li><a href="#" ng-click="ctrl.saveCtm()">
+                            CTM
+                        </a></li>
                         <li><a href="#" ng-click="ctrl.saveDiscrepancyResults()" ng-if="ctrl.discrepancies">
                             Annotations
                         </a></li>
@@ -365,7 +368,7 @@
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
                 </div>
                 <div class="panel-body">
-                <p><b id="speaker_{{$index}}"></b></p>
+                <p><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter }}</b></p>
                 <span ng-repeat="word in ctrl.currentRegions[$index].data.words track by $index">
                     <span style="color: rgba(0,0,0, {{ word.confidence }})"
                         class="segment-text__word-wrapper"

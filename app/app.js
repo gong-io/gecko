@@ -112,3 +112,15 @@ speechRecognition.filter("mulSearch", function () {
     }
 })
 
+speechRecognition.filter("speakersFilter", function () {
+    return function (items) {
+        if (items && items.length) {
+            return items.join(', ')
+        } else if (items && !items.length) {
+            return 'No speaker'
+        } else {
+            return ''
+        }
+    }
+})
+
