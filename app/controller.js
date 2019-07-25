@@ -1729,6 +1729,15 @@ class MainController {
         e.preventDefault()
         e.stopPropagation()
     }
+
+    editableKeysMapping(regionIndex, wordIndex, keys) {
+        console.log('test', keys)
+        if (keys === 'space') {
+            this.playPause()
+        } else if (keys === 'ArrowRight') {
+            console.log('next word')
+        }
+    }
 }
 
 MainController

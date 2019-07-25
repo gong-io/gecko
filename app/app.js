@@ -53,7 +53,8 @@ speechRecognition.directive("editable", function () {
         restrict: "A",
         require: "ngModel",
         scope:{
-            changed: '&'
+            changed: '&',
+            keysMapping: '&'
         },
         link: function (scope, element, attrs, ngModel) {
             element[0].setAttribute('contenteditable', true);
@@ -75,13 +76,32 @@ speechRecognition.directive("editable", function () {
             element.bind("blur", function () {
                 scope.$apply(read);
             });
-            element.bind("keydown keypress", function (event) {
-                if (event.which === 13) {
+            element.bind("keydown keypress", function (e) {
+                if (element.which === 13) {
                     this.blur();
-                    event.preventDefault();
+                    e.preventDefault();
                 }
-                event.stopPropagation()
+
+                e.stopPropagation()
             });
+
+            element.bind("keypress", function (e) {
+                const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+                const isMacAlt =  window.navigator.platform === 'MacIntel' && e.altKey
+                const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
+                const isDownCtrl = isMacMeta || isOtherControl
+                if (isDownCtrl || (isMacAlt && e.key !== 'Alt')) {
+                    if (e.which === 160) {
+                        scope.keysMapping({ keys: 'space' })
+                        e.preventDefault()
+                    }
+                }
+
+                if (isDownCtrl) {
+                    scope.keysMapping({ keys: e.key })
+                }
+                e.stopPropagation()
+            })
         }
     };
 });
