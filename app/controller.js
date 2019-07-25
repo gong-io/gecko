@@ -1718,6 +1718,17 @@ class MainController {
             this.currentRegions[regionIndex].data.words.splice(wordIndex, 1)
         }
     }
+
+    wordClick(word, e) {
+        const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+        const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
+        const isDownCtrl = isMacMeta || isOtherControl
+        if (isDownCtrl) {
+            this.wavesurfer.play(word.start)
+        }
+        e.preventDefault()
+        e.stopPropagation()
+    }
 }
 
 MainController
