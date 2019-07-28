@@ -64,10 +64,11 @@ function secondsToMinutes(time) {
 }
 
 class MainController {
-    constructor($scope, $uibModal, dataManager) {
+    constructor($scope, $uibModal, dataManager, $timeout) {
         this.dataManager = dataManager;
         this.$uibModal = $uibModal;
         this.$scope = $scope;
+        this.$timeout = $timeout
 
         if (config.isServerMode) {
             this.loadServerMode();
@@ -890,6 +891,17 @@ class MainController {
                 }
             }
 
+        }, fileIndex);
+
+        return closest;
+    }
+
+    findClosestRegionToTimeBackward(fileIndex, time) {
+        var closest = null;
+        this.iterateRegions(function (region) {
+                if (region.end < time && (closest === null || region.end > closest.end)) {
+                    closest = region;
+                }
         }, fileIndex);
 
         return closest;
@@ -1731,17 +1743,51 @@ class MainController {
     }
 
     editableKeysMapping(regionIndex, wordIndex, keys) {
-        console.log('test', keys)
         if (keys === 'space') {
             this.playPause()
         } else if (keys === 'ArrowRight') {
-            console.log('next word')
+            let nextIndex = wordIndex + 1
+            if (nextIndex < this.currentRegions[regionIndex].data.words.length) {
+                const nextWord = document.getElementById(`word_${regionIndex}_${nextIndex}`)
+                nextWord.focus()
+            } else {
+                var nextRegion = this.findClosestRegionToTime(this.currentRegions[regionIndex].data.fileIndex, this.currentRegions[regionIndex].end)
+                if (nextRegion) {
+                    this.wavesurfer.setCurrentTime(nextRegion.start)
+                    this.$timeout(() => {
+                        const nextWord = document.getElementById(`word_${regionIndex}_0`)
+                        if (nextWord) {
+                            nextWord.focus()
+                        }
+                    })
+                }
+            }
+        } else if (keys === 'ArrowLeft') {
+            let prevIndex = wordIndex - 1
+            if (prevIndex >= 0) {
+                const prevWord = document.getElementById(`word_${regionIndex}_${prevIndex}`)
+                prevWord.focus()
+            } else {
+                var prevRegion = this.findClosestRegionToTimeBackward(this.currentRegions[regionIndex].data.fileIndex, this.currentRegions[regionIndex].end)
+                if (prevRegion) {
+                    this.wavesurfer.setCurrentTime(prevRegion.start)
+                    this.$timeout(() => {
+                        const lastIndex = this.currentRegions[regionIndex].data.words.length - 1
+                        const prevWord = document.getElementById(`word_${regionIndex}_${lastIndex}`)
+                        if (prevWord) {
+                            prevWord.focus()
+                        }
+                    })
+                }
+            }
+        } else if (keys === 'alt_space') {
+            this.playRegion()
         }
     }
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'dataManager'];
+    .$inject = ['$scope', '$uibModal', 'dataManager', '$timeout'];
 export {
     MainController
 }

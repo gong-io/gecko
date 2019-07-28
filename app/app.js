@@ -85,22 +85,36 @@ speechRecognition.directive("editable", function () {
                 e.stopPropagation()
             });
 
-            element.bind("keypress", function (e) {
+            element.bind("keydown", function (e) {
                 const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
                 const isMacAlt =  window.navigator.platform === 'MacIntel' && e.altKey
+                const isAlt =  window.navigator.platform !== 'MacIntel' && e.altKey
                 const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
                 const isDownCtrl = isMacMeta || isOtherControl
-                if (isDownCtrl || (isMacAlt && e.key !== 'Alt')) {
-                    if (e.which === 160) {
+                if (isDownCtrl && (isMacAlt || isAlt)) {
+                    if (e.which === 32) {
+                        scope.keysMapping({ keys: 'alt_space' })
+                        e.preventDefault()
+                        e.stopPropagation()
+                        return
+                    }
+                }
+                if (isDownCtrl || isMacAlt) {
+                    if (e.which === 32) {
                         scope.keysMapping({ keys: 'space' })
                         e.preventDefault()
+                        e.stopPropagation()
+                        return
                     }
                 }
 
                 if (isDownCtrl) {
                     scope.keysMapping({ keys: e.key })
+                    e.preventDefault()
+                    e.stopPropagation()
+                    return
                 }
-                e.stopPropagation()
+                
             })
         }
     };
