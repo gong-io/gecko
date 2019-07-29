@@ -1718,6 +1718,7 @@ class MainController {
 
     wordChanged(regionIndex, wordIndex) {
         let newWord = this.currentRegions[regionIndex].data.words[wordIndex]
+        newWord.wasEdited = true
         if (newWord.text.length) {
             let newWordSplited = newWord.text.split(' ')
             if (newWordSplited.length > 1) {
@@ -1772,7 +1773,7 @@ class MainController {
             } else {
                 var prevRegion = this.findClosestRegionToTimeBackward(this.currentRegions[regionIndex].data.fileIndex, this.currentRegions[regionIndex].end)
                 if (prevRegion) {
-                    this.wavesurfer.setCurrentTime(prevRegion.start)
+                    this.wavesurfer.setCurrentTime(prevRegion.end)
                     this.$timeout(() => {
                         const lastIndex = this.currentRegions[regionIndex].data.words.length - 1
                         const prevWord = document.getElementById(`word_${regionIndex}_${lastIndex}`)
