@@ -607,15 +607,17 @@ class MainController {
 
         }
 
-        region.data.words.forEach((w) => {
-            if (region.data.speaker.length === 0) {
-                w.speaker.id = null
-            } else {
-                if (w.speaker.id !== region.data.speaker[0]) {
-                    w.speaker.id = region.data.speaker[0]
+        if (region.data.words) {
+            region.data.words.forEach((w) => {
+                if (region.data.speaker.length === 0) {
+                    w.speaker.id = null
+                } else {
+                    if (w.speaker.id !== region.data.speaker[0]) {
+                        w.speaker.id = region.data.speaker[0]
+                    }
                 }
-            }
-        })
+            })
+        }
         // }
 
         //TODO: This also happens at other times so we cannot determine things after it
