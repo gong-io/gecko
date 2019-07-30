@@ -62,10 +62,10 @@ speechRecognition.directive("editable", function () {
             function read() {
                 // view -> model
                 var text = element.text();
-                ngModel.$setViewValue(text);
-                if (scope.changed) {
+                if (ngModel.$viewValue !== text && scope.changed) {
                     scope.changed()
                 }
+                ngModel.$setViewValue(text);
             }
 
             // model -> view
@@ -77,21 +77,20 @@ speechRecognition.directive("editable", function () {
                 scope.$apply(read);
             });
             element.bind("keydown keypress", function (e) {
-                if (element.which === 13) {
+                if (e.which === 13 || e.which === 27) {
                     this.blur();
                     e.preventDefault();
-                }
+                } 
 
                 e.stopPropagation()
             });
 
             element.bind("keydown", function (e) {
                 const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
-                const isMacAlt =  window.navigator.platform === 'MacIntel' && e.altKey
-                const isAlt =  window.navigator.platform !== 'MacIntel' && e.altKey
+                const isAlt = e.altKey
                 const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
                 const isDownCtrl = isMacMeta || isOtherControl
-                if (isDownCtrl && (isMacAlt || isAlt)) {
+                if (isDownCtrl && isAlt) {
                     if (e.which === 32) {
                         scope.keysMapping({ keys: 'alt_space' })
                         e.preventDefault()
@@ -99,7 +98,7 @@ speechRecognition.directive("editable", function () {
                         return
                     }
                 }
-                if (isDownCtrl || isMacAlt) {
+                if (isDownCtrl || isAlt) {
                     if (e.which === 32) {
                         scope.keysMapping({ keys: 'space' })
                         e.preventDefault()
