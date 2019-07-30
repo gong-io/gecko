@@ -973,7 +973,7 @@ class MainController {
 
             for (var i = 0; i < monologues.length; i++) {
                 var monologue = monologues[i];
-                var speakerId = monologue.speaker.id;
+                var speakerId = monologue.speaker.id.toString();
 
                 var start = monologue.start;
                 var end = monologue.end;
