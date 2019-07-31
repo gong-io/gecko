@@ -90,14 +90,6 @@ speechRecognition.directive("editable", function () {
                 const isAlt = e.altKey
                 const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
                 const isDownCtrl = isMacMeta || isOtherControl
-                if (isDownCtrl && isAlt) {
-                    if (e.which === 32) {
-                        scope.keysMapping({ keys: 'alt_space' })
-                        e.preventDefault()
-                        e.stopPropagation()
-                        return
-                    }
-                }
                 if (isDownCtrl || isAlt) {
                     if (e.which === 32) {
                         scope.keysMapping({ keys: 'space' })
@@ -108,7 +100,7 @@ speechRecognition.directive("editable", function () {
                 }
 
                 if (isDownCtrl) {
-                    scope.keysMapping({ keys: e.key })
+                    scope.keysMapping({ keys: e.key, which: e.which })
                     e.preventDefault()
                     e.stopPropagation()
                     return
