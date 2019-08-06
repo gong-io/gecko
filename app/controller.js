@@ -8,6 +8,9 @@ import {config} from './config.js'
 
 var Diff = require('diff')
 
+const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
+const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
+
 window.onbeforeunload = function (event) {
     return confirm("Confirm refresh");
 };
@@ -1360,7 +1363,7 @@ class MainController {
     loadClientMode() {
         var self = this;
         var modalInstance = this.$uibModal.open({
-            templateUrl: 'static/templates/selectAudioModal.html',
+            templateUrl: audioModalTemplate,
             controller: function ($scope, $uibModalInstance, $timeout, zoom) {
                 $scope.newSegmentFiles = [undefined];
 
@@ -1704,7 +1707,7 @@ class MainController {
     openShortcutsInfo() {
         var self = this;
         var modalInstance = this.$uibModal.open({
-            templateUrl: 'static/templates/shortcutsInfo.html',
+            templateUrl: shortcutsInfoTemplate,
             controller: function ($scope, $uibModalInstance) {
                 $scope.ok = function () {
                     $uibModalInstance.close();

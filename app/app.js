@@ -1,3 +1,8 @@
+import '../static/css/bootstrap.min.theme_paper.css'
+import '../static/css/app.css'
+
+import '../static/js/bootstrap.min.js'
+
 import {MainController} from './controller.js'
 import {dataManager} from './dataManager.js'
 import {Checklist} from './third-party/checked-list.js'

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Speech Recognition Platform </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="images/favicon.png">
+<link href="bundle.css" rel="stylesheet"></head>
+
+<body ng-app="speechRecognition" ng-controller="MainController as ctrl" ng-cloak>
+
+<nav class="navbar navbar-inverse" style="margin-bottom: 0">
+    <div class="container">
+        <div class="navbar-header">
+            <img id="logo" src="cf602c540f0db52121e748c0b95886c2.svg" alt="Gecko">
+        </div>
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <a class="navbar-brand" href="#">Gecko</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li class="">
+                    <a>
+                        <b>Audio filename: </b>
+                        {{ ctrl.audioFileName }}
+                    </a>
+                </li>
+                <li class="">
+                    <a>
+                        <b>Time: </b>
+                        {{ ctrl.currentTime }} / {{ ctrl.totalTime }}
+                    </a>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="active">
+                    <a href="#" onclick="location.reload();">
+                        <i class="glyphicon glyphicon-open"></i>
+                        Load
+                    </a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">
+                        <i class="glyphicon glyphicon-save"></i>
+                        Save
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#" ng-click="ctrl.saveRttm()">
+                            RTTM
+                        </a></li>
+                        <li><a href="#" ng-click="ctrl.saveJson()">
+                            JSON
+                        </a></li>
+                        <li><a href="#" ng-click="ctrl.saveCtm()">
+                            CTM
+                        </a></li>
+                        <li><a href="#" ng-click="ctrl.saveDiscrepancyResults()" ng-if="ctrl.discrepancies">
+                            Annotations
+                        </a></li>
+                        <li role="separator" class="divider"></li>
+                    </ul>
+                </li>
+
+                <li>
+                <a href="#" ng-click="ctrl.openShortcutsInfo()">
+                    <i class="glyphicon glyphicon-info-sign"></i>
+                    Shortcuts
+                </a></li>
+            </ul>
+        </div><!--/.nav-collapse -->
+    </div>
+</nav>
+
+<div style="margin:0; text-align: center;" ng-show="ctrl.loader">
+    <div class="lds-circle">
+        <div></div>
+    </div>
+</div>
+
+<!--<div style="resize:vertical;overflow-y:auto" ng-mousemove="ctrl.resizeWavesurfer($event)">-->
+<div id="waveform"></div>
+<!--<div style="height:10px"></div>-->
+<!--</div>-->
+
+<div class="wrapper" ng-show="ctrl.ready">
+    <div id="zoom" class="row" style="margin-bottom: 2em">
+        <div class="col-md-1">
+            <i class="glyphicon glyphicon-zoom-out"></i>
+        </div>
+
+        <div class="col-md-10">
+            <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
+                   max="100"
+                   style="width: 100%"/>
+            <div class="text-center">
+                <b>Zoom level:</b> {{ ctrl.zoomLevel }}
+            </div>
+        </div>
+
+        <div class="col-md-1">
+            <i class="glyphicon glyphicon-zoom-in"></i>
+        </div>
+    </div>
+
+    <div id="file-data" style="text-align:center">
+    </div>
+
+    <div class="row" style="text-align: center; margin-bottom: 2em">
+        <div class="col-md-12">
+            <button class="btn btn-primary" ng-if="!ctrl.isPlaying" ng-click="ctrl.playPause()">
+                <i class="glyphicon glyphicon-play"></i>
+                Play
+            </button>
+            <button class="btn btn-primary" ng-if="ctrl.isPlaying" ng-click="ctrl.playPause()">
+                <i class="glyphicon glyphicon-pause"></i>
+                Pause
+            </button>
+
+            <button class="btn btn-primary" ng-click="ctrl.playRegion()">
+                <i class="glyphicon glyphicon-play"></i>
+                Play Segment
+            </button>
+
+            <div class="btn-group" uib-dropdown is-open="status.isopen">
+                <button id="playback-speed" type="button" class="btn btn-default" uib-dropdown-toggle>
+                    x{{ ctrl.currentPlaybackSpeed }}
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="playback-speed"
+                    title="Set the play speed">
+                    <li role="menuitem" ng-repeat="speed in ctrl.playbackSpeeds">
+                        <a href="#" ng-click="ctrl.setPlaybackSpeed(speed)">x{{ speed }}
+                            <i ng-if="speed == ctrl.currentPlaybackSpeed" class="glyphicon glyphicon-ok"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+
+            <button class="btn btn-default" ng-click="ctrl.toggleAutoCenter()"
+                    title="Determines whether to auto-scroll the timeline so that the current time is always centered">
+                <i class="glyphicon glyphicon-screenshot"></i>
+                Toggle Auto Center
+            </button>
+
+            <button class="btn btn-default" ng-click="ctrl.deleteRegionAction(ctrl.selectedRegion)"
+                    title="Delete Segment"
+                    ng-disabled="!ctrl.selectedRegion">
+                <i class="glyphicon glyphicon-trash"></i>
+            </button>
+
+            <button class="btn btn-default" ng-click="ctrl.undo()" ng-disabled="!ctrl.undoStack.length"
+                    title="Undo the last operation"
+                    data-toggle="tooltip" data-placement="top">
+                <i class="glyphicon glyphicon-share-alt" style="transform: scaleX(-1);"></i>
+                Undo
+            </button>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top: 1em; margin-bottom: 1em;">
+        <div class="col col-md-3" ng-hide="ctrl.discrepancies">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        <dt>Selected File</dt>
+                        <dd>{{ ctrl.filesData[ctrl.selectedFileIndex].filename }}</dd>
+
+                        <div ng-show="ctrl.selectedRegion">
+                            <dt>Segment Time</dt>
+                            <dd>{{ctrl.selectedRegion.start | number : 2}} - {{ctrl.selectedRegion.end | number : 2}}
+                            </dd>
+                            <dt>Segment Length</dt>
+                            <dd>{{ ctrl.selectedRegion.end - ctrl.selectedRegion.start | number : 2}}</dd>
+                        </div>
+
+                        <div ng-hide="ctrl.selectedRegion">
+                            <dt>Silence Time</dt>
+                            <dd>{{ ctrl.silence.start | number : 2}} - {{ ctrl.silence.end | number : 2}}</dd>
+                            <dt>Silence Length</dt>
+                            <dd>{{ ctrl.silence.end - ctrl.silence.start | number : 2}}</dd>
+                        </div>
+                    </dl>
+
+                    <hr class="half-rule">
+
+                    <div>
+            <textarea ng-disabled="!ctrl.selectedRegion" class="form-control" rows="3"
+                      ng-model="ctrl.selectedRegion.data.text"
+                      placeholder="Edit the text of the segment..."
+                      ng-blur="ctrl.textareaBlur()" ng-change="ctrl.textChanged()">
+            </textarea>
+
+                        <hr class="half-rule">
+                    </div>
+
+                    <div ng-show="ctrl.EDER">
+                        <div>
+                            Confusion: {{ ctrl.EDER.confusion | number : 2}} ({{ ctrl.EDER.confusion /
+                            ctrl.EDER.total_speech_time |
+                            number:2}}%)
+                        </div>
+                        <div>
+                            False Alarm: {{ ctrl.EDER.false_alarm | number : 2}} ({{ ctrl.EDER.false_alarm /
+                            ctrl.EDER.total_speech_time|
+                            number:2}}%)
+                        </div>
+                        <div>
+                            Missed: {{ ctrl.EDER.missed | number : 2}} ({{ ctrl.EDER.missed /
+                            ctrl.EDER.total_speech_time|
+                            number:2}}%)
+                        </div>
+                        <div>
+                            Correct: {{ ctrl.EDER.correct | number : 2}} ({{ ctrl.EDER.correct /
+                            ctrl.EDER.total_speech_time|
+                            number:2}}%)
+                        </div>
+                        <div>
+                            DER: {{ ctrl.EDER.DER | number : 2}} ({{ ctrl.EDER.DER / ctrl.EDER.total_speech_time|
+                            number:2}}%)
+                        </div>
+                        <div>
+                            Total Speech Time: {{ ctrl.EDER.total_speech_time| number:2}}s
+                        </div>
+                        <div>
+                            Mapping: {{ ctrl.EDER.map }}
+                        </div>
+
+                        <div>
+                            Segmentation: {{ ctrl.segmentation }}
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <div class="col col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        Segment Labeling
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion">
+                        <div class="form-group">
+                            <label class="annotation-label" style="background-color:{{ color + 80 }};"
+                                   ng-repeat="(speaker,color) in ctrl.filesData[ctrl.selectedFileIndex].legend">
+
+                                <input type="checkbox"
+                                       value="{{speaker}}"
+                                       ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
+                                       ng-click="ctrl.speakerChanged(speaker)">
+                                {{ speaker }}
+
+                                <!--                                <input type="radio" ng-change="ctrl.segmentSpeakerChanged()"-->
+                                <!--                                       ng-model="ctrl.selectedRegion.data.speaker"-->
+                                <!--                                       ng-value="speaker">-->
+                                <!--                                <span editable ng-model="speaker"> {{ speaker }} </span>-->
+                                <input type="color" ng-model="color" class="pull-right"
+                                       ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker, color)"/>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="annotation-label">
+                                Add a new speaker:
+                                <input type="text" ng-model="ctrl.newSpeakerName"
+                                       ng-keyup="ctrl.newSpeakerKeyUp($event)">
+                                <button ng-click="ctrl.addSpeaker()" class="btn btn-link"
+                                        ng-disabled="!ctrl.newSpeakerName">
+                                    <i class="glyphicon glyphicon-plus"></i>
+                                </button>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col col-lg-3 col-md-6 segment-text" ng-if="ctrl.discrepancies">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        Transcript differences
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div>
+                        <div class="input-group">
+                            <input type="text" ng-model="searchDiscrepancy" class="form-control"
+                                   placeholder="Filter list...">
+                            <!--
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button"><i class="glyphicon glyphicon-search"></i></button>
+                            </span>
+                            -->
+                            <span class="input-group-btn">
+                                <button ng-if="ctrl.discrepancies" class="btn btn-primary"
+                                        ng-click="ctrl.jumpNextDiscrepancy()" title="Jump to the next difference">
+                                    <i class="glyphicon glyphicon-forward"></i>
+                                    Next
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style=" height:300px; overflow:auto; margin-top:20px;">
+                        <table class="table" border="0" style="width: -webkit-fill-available;">
+                            <tr>
+                                <th>Time</th>
+                                <th>{{ ctrl.filesData[0].filename }}</th>
+                                <th>{{ ctrl.filesData[1].filename }}</th>
+                            </tr>
+                            <tr id="discrepancy_{{$index}}"
+                                ng-repeat="discrepancy in (ctrl.filteredDiscrepancies = (ctrl.discrepancies |mulSearch: searchDiscrepancy)) track by $index ">
+                                <td><a ng-click="ctrl.playDiscrepancy(discrepancy)" style="cursor: pointer">
+                                    {{ discrepancy.startDisp }} - {{ discrepancy.endDisp }}</a>
+                                </td>
+
+                                <td style="cursor:pointer"
+                                    ng-class="{'discrepancy-selected': discrepancy.choice==='old'}"
+                                    ng-click="discrepancy.choice = discrepancy.choice === 'old' ? undefined : 'old'">
+                                    <span ng-show="discrepancy.choice === 'old'"
+                                          style="color:green;">&#10004;</span>
+                                    {{ discrepancy.oldText }}
+                                </td>
+
+                                <td style="cursor:pointer"
+                                    ng-class="{'discrepancy-selected': discrepancy.choice==='new'}"
+                                    ng-click="discrepancy.choice = discrepancy.choice === 'new' ? undefined : 'new'">
+                                    <span ng-show="discrepancy.choice === 'new'"
+                                          style="color:green;">&#10004;</span>
+                                    {{ discrepancy.newText }}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <div class="col col-md-3 segment-text" ng-repeat="file in ctrl.filesData track by $index">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">File: {{ file.filename }}</h3>
+                </div>
+                <div class="panel-body">
+                <p><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter }}</b></p>
+                <span ng-repeat="word in ctrl.currentRegions[$index].data.words track by $index">
+                    <span style="color: rgba(0,0,0, {{ word.confidence }})"
+                        ng-style="word.wasEdited && {'color':'rgba(129, 42, 193, ' + word.confidence + ')'}"
+                        class="segment-text__word-wrapper"
+                        ng-class="{'low-confidence': word.confidence<.95}"
+                        title="Confidence: {{ word.confidence }}"
+                        editable
+                        ng-model="word.text"
+                        changed="ctrl.wordChanged($parent.$index, $index)"
+                        keys-mapping="ctrl.editableKeysMapping($parent.$index, $index, keys, which)"
+                        ng-click="ctrl.wordClick(word, $event)"
+                        id="word_{{$parent.$index}}_{{$index}}"></span>
+                </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--<script type="text/ng-template" id="selectAudioModal.html">-->
+<!--   -->
+<!--</script>-->
+
+<a id="downloadAnchorElem" style="display:none"></a>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+<script type="text/javascript" src="bundle.js"></script></body>
+
+</html>
