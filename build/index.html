@@ -8,7 +8,7 @@
     <link rel="icon" href="images/favicon.png">
 <link href="bundle.css" rel="stylesheet"></head>
 
-<body ng-app="speechRecognition" ng-controller="MainController as ctrl" ng-cloak>
+<body ng-app="speechRecognition" ng-controller="MainController as ctrl" ng-init="ctrl.loadApp({mode: 'client'})" ng-cloak>
 
 <nav class="navbar navbar-inverse" style="margin-bottom: 0">
     <div class="container">
