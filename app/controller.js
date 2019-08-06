@@ -72,9 +72,11 @@ class MainController {
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
+    }
 
-        if (config.isServerMode) {
-            this.loadServerMode();
+    loadApp(config) {
+        if (config.mode === 'server') {
+            this.loadServerMode(config);
         } else {
             this.loadClientMode();
         }
