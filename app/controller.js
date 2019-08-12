@@ -8,6 +8,9 @@ import {config} from './config.js'
 
 var Diff = require('diff')
 
+const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
+const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
+
 window.onbeforeunload = function (event) {
     return confirm("Confirm refresh");
 };
@@ -69,9 +72,11 @@ class MainController {
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
+    }
 
-        if (config.isServerMode) {
-            this.loadServerMode();
+    loadApp(config) {
+        if (config.mode === 'server') {
+            this.loadServerMode(config);
         } else {
             this.loadClientMode();
         }
@@ -108,6 +113,10 @@ class MainController {
                 return;
             }
 
+            const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+            const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
+            const isDownCtrl = isMacMeta || isOtherControl
+
             // wavesurfer does not get focus for some reason, so body it is
             // if (e.target.nodeName !== 'BODY') return;
             if (e.target.type === 'text') return;
@@ -127,6 +136,11 @@ class MainController {
                 self.undo();
             } else if (e.key === 'Enter') {
                 self.playRegion();
+            } else if (isDownCtrl) {
+                if (e.which === 219) {
+                    e.preventDefault()
+                    self.moveBack()
+                }
             } else {
                 let number = parseInt(e.key);
                 if (!isNaN(number) && number >= 1 && number <= 9) {
@@ -1353,7 +1367,7 @@ class MainController {
     loadClientMode() {
         var self = this;
         var modalInstance = this.$uibModal.open({
-            templateUrl: 'static/templates/selectAudioModal.html',
+            templateUrl: audioModalTemplate,
             controller: function ($scope, $uibModalInstance, $timeout, zoom) {
                 $scope.newSegmentFiles = [undefined];
 
@@ -1697,7 +1711,7 @@ class MainController {
     openShortcutsInfo() {
         var self = this;
         var modalInstance = this.$uibModal.open({
-            templateUrl: 'static/templates/shortcutsInfo.html',
+            templateUrl: shortcutsInfoTemplate,
             controller: function ($scope, $uibModalInstance) {
                 $scope.ok = function () {
                     $uibModalInstance.close();
@@ -1712,7 +1726,8 @@ class MainController {
                     {'key': 'Delete/Backspace', 'desc': 'Delete segment'},
                     {'key': 'Ctrl + z', 'desc': 'Undo'},
                     {'key': '1-9', 'desc': 'Select annotation'},
-                    {'key': 'Escape', 'desc': 'Focus-out text area'}
+                    {'key': 'Escape', 'desc': 'Focus-out text area'},
+                    {'key': 'Ctrl+[', 'desc': 'Move back 5 seconds'}
                 ]
             }
         });
@@ -1747,7 +1762,7 @@ class MainController {
         e.stopPropagation()
     }
 
-    editableKeysMapping(regionIndex, wordIndex, keys) {
+    editableKeysMapping(regionIndex, wordIndex, keys, which) {
         if (keys === 'space') {
             this.playPause()
         } else if (keys === 'ArrowRight') {
@@ -1787,6 +1802,19 @@ class MainController {
             }
         } else if (keys === 'alt_space') {
             this.playRegion()
+        } else if (which) {
+            if (which === 219) {
+                this.moveBack()
+            }
+        }
+    }
+
+    moveBack () {
+        const toTime = this.wavesurfer.getCurrentTime()
+        if (toTime > 5) {
+            this.wavesurfer.setCurrentTime(toTime - 5)
+        } else {
+            this.wavesurfer.setCurrentTime(0)
         }
     }
 }
