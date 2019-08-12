@@ -113,6 +113,13 @@ label {
     }
 }
 
+.panel {
+    border: solid 1px transparent;
+}
+.selected-file {
+    border: solid 1px #54F2D9;
+}
+
 .selected-word {
     border-bottom: 5px solid #54F2D9
 }
