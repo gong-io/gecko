@@ -223,6 +223,8 @@ class MainController {
             //     }
             // }
 
+            self.transcriptPanelSize = parseInt(9/self.filesData.length);
+
             // select the first region
             self.selectedFileIndex = 0;
             self.selectRegion();

@@ -72,10 +72,10 @@
                 </li>
 
                 <li>
-                <a href="#" ng-click="ctrl.openShortcutsInfo()">
-                    <i class="glyphicon glyphicon-info-sign"></i>
-                    Shortcuts
-                </a></li>
+                    <a href="#" ng-click="ctrl.openShortcutsInfo()">
+                        <i class="glyphicon glyphicon-info-sign"></i>
+                        Shortcuts
+                    </a></li>
             </ul>
         </div><!--/.nav-collapse -->
     </div>
@@ -102,9 +102,9 @@
             <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
                    max="100"
                    style="width: 100%"/>
-            <div class="text-center">
-                <b>Zoom level:</b> {{ ctrl.zoomLevel }}
-            </div>
+<!--            <div class="text-center">-->
+<!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
+<!--            </div>-->
         </div>
 
         <div class="col-md-1">
@@ -169,89 +169,89 @@
     </div>
 
     <div class="row" style="margin-top: 1em; margin-bottom: 1em;">
-        <div class="col col-md-3" ng-hide="ctrl.discrepancies">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
+        <!--        <div class="col col-md-3" ng-hide="ctrl.discrepancies">-->
+        <!--            <div class="panel panel-default">-->
+        <!--                <div class="panel-heading">-->
+        <!--                    <h3 class="panel-title">-->
 
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <dl class="dl-horizontal">
-                        <dt>Selected File</dt>
-                        <dd>{{ ctrl.filesData[ctrl.selectedFileIndex].filename }}</dd>
+        <!--                    </h3>-->
+        <!--                </div>-->
+        <!--                <div class="panel-body">-->
+        <!--                    <dl class="dl-horizontal">-->
+        <!--                        <dt>Selected File</dt>-->
+        <!--                        <dd>{{ ctrl.filesData[ctrl.selectedFileIndex].filename }}</dd>-->
 
-                        <div ng-show="ctrl.selectedRegion">
-                            <dt>Segment Time</dt>
-                            <dd>{{ctrl.selectedRegion.start | number : 2}} - {{ctrl.selectedRegion.end | number : 2}}
-                            </dd>
-                            <dt>Segment Length</dt>
-                            <dd>{{ ctrl.selectedRegion.end - ctrl.selectedRegion.start | number : 2}}</dd>
-                        </div>
+        <!--                        <div ng-show="ctrl.selectedRegion">-->
+        <!--                            <dt>Segment Time</dt>-->
+        <!--                            <dd>{{ctrl.selectedRegion.start | number : 2}} - {{ctrl.selectedRegion.end | number : 2}}-->
+        <!--                            </dd>-->
+        <!--                            <dt>Segment Length</dt>-->
+        <!--                            <dd>{{ ctrl.selectedRegion.end - ctrl.selectedRegion.start | number : 2}}</dd>-->
+        <!--                        </div>-->
 
-                        <div ng-hide="ctrl.selectedRegion">
-                            <dt>Silence Time</dt>
-                            <dd>{{ ctrl.silence.start | number : 2}} - {{ ctrl.silence.end | number : 2}}</dd>
-                            <dt>Silence Length</dt>
-                            <dd>{{ ctrl.silence.end - ctrl.silence.start | number : 2}}</dd>
-                        </div>
-                    </dl>
+        <!--                        <div ng-hide="ctrl.selectedRegion">-->
+        <!--                            <dt>Silence Time</dt>-->
+        <!--                            <dd>{{ ctrl.silence.start | number : 2}} - {{ ctrl.silence.end | number : 2}}</dd>-->
+        <!--                            <dt>Silence Length</dt>-->
+        <!--                            <dd>{{ ctrl.silence.end - ctrl.silence.start | number : 2}}</dd>-->
+        <!--                        </div>-->
+        <!--                    </dl>-->
 
-                    <hr class="half-rule">
+        <!--                    <hr class="half-rule">-->
 
-                    <div>
-            <textarea ng-disabled="!ctrl.selectedRegion" class="form-control" rows="3"
-                      ng-model="ctrl.selectedRegion.data.text"
-                      placeholder="Edit the text of the segment..."
-                      ng-blur="ctrl.textareaBlur()" ng-change="ctrl.textChanged()">
-            </textarea>
+        <!--                    <div>-->
+        <!--            <textarea ng-disabled="!ctrl.selectedRegion" class="form-control" rows="3"-->
+        <!--                      ng-model="ctrl.selectedRegion.data.text"-->
+        <!--                      placeholder="Edit the text of the segment..."-->
+        <!--                      ng-blur="ctrl.textareaBlur()" ng-change="ctrl.textChanged()">-->
+        <!--            </textarea>-->
 
-                        <hr class="half-rule">
-                    </div>
+        <!--                        <hr class="half-rule">-->
+        <!--                    </div>-->
 
-                    <div ng-show="ctrl.EDER">
-                        <div>
-                            Confusion: {{ ctrl.EDER.confusion | number : 2}} ({{ ctrl.EDER.confusion /
-                            ctrl.EDER.total_speech_time |
-                            number:2}}%)
-                        </div>
-                        <div>
-                            False Alarm: {{ ctrl.EDER.false_alarm | number : 2}} ({{ ctrl.EDER.false_alarm /
-                            ctrl.EDER.total_speech_time|
-                            number:2}}%)
-                        </div>
-                        <div>
-                            Missed: {{ ctrl.EDER.missed | number : 2}} ({{ ctrl.EDER.missed /
-                            ctrl.EDER.total_speech_time|
-                            number:2}}%)
-                        </div>
-                        <div>
-                            Correct: {{ ctrl.EDER.correct | number : 2}} ({{ ctrl.EDER.correct /
-                            ctrl.EDER.total_speech_time|
-                            number:2}}%)
-                        </div>
-                        <div>
-                            DER: {{ ctrl.EDER.DER | number : 2}} ({{ ctrl.EDER.DER / ctrl.EDER.total_speech_time|
-                            number:2}}%)
-                        </div>
-                        <div>
-                            Total Speech Time: {{ ctrl.EDER.total_speech_time| number:2}}s
-                        </div>
-                        <div>
-                            Mapping: {{ ctrl.EDER.map }}
-                        </div>
+        <!--                    <div ng-show="ctrl.EDER">-->
+        <!--                        <div>-->
+        <!--                            Confusion: {{ ctrl.EDER.confusion | number : 2}} ({{ ctrl.EDER.confusion /-->
+        <!--                            ctrl.EDER.total_speech_time |-->
+        <!--                            number:2}}%)-->
+        <!--                        </div>-->
+        <!--                        <div>-->
+        <!--                            False Alarm: {{ ctrl.EDER.false_alarm | number : 2}} ({{ ctrl.EDER.false_alarm /-->
+        <!--                            ctrl.EDER.total_speech_time|-->
+        <!--                            number:2}}%)-->
+        <!--                        </div>-->
+        <!--                        <div>-->
+        <!--                            Missed: {{ ctrl.EDER.missed | number : 2}} ({{ ctrl.EDER.missed /-->
+        <!--                            ctrl.EDER.total_speech_time|-->
+        <!--                            number:2}}%)-->
+        <!--                        </div>-->
+        <!--                        <div>-->
+        <!--                            Correct: {{ ctrl.EDER.correct | number : 2}} ({{ ctrl.EDER.correct /-->
+        <!--                            ctrl.EDER.total_speech_time|-->
+        <!--                            number:2}}%)-->
+        <!--                        </div>-->
+        <!--                        <div>-->
+        <!--                            DER: {{ ctrl.EDER.DER | number : 2}} ({{ ctrl.EDER.DER / ctrl.EDER.total_speech_time|-->
+        <!--                            number:2}}%)-->
+        <!--                        </div>-->
+        <!--                        <div>-->
+        <!--                            Total Speech Time: {{ ctrl.EDER.total_speech_time| number:2}}s-->
+        <!--                        </div>-->
+        <!--                        <div>-->
+        <!--                            Mapping: {{ ctrl.EDER.map }}-->
+        <!--                        </div>-->
 
-                        <div>
-                            Segmentation: {{ ctrl.segmentation }}
-                        </div>
-                    </div>
-                </div>
+        <!--                        <div>-->
+        <!--                            Segmentation: {{ ctrl.segmentation }}-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+        <!--                </div>-->
 
 
-            </div>
-        </div>
+        <!--            </div>-->
+        <!--        </div>-->
 
-        <div class="col col-md-3">
+        <div class="col col-md-3" ng-if="!ctrl.discrepancies">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
@@ -259,6 +259,15 @@
                     </h3>
                 </div>
                 <div class="panel-body">
+                    <div ng-show="ctrl.selectedRegion">
+                        <dt>Segment Time: {{ctrl.selectedRegion.start | number : 2}} - {{ctrl.selectedRegion.end | number : 2}}
+                            ({{ ctrl.selectedRegion.end - ctrl.selectedRegion.start | number : 2}}s)</dt>
+                    </div>
+
+                    <div ng-hide="ctrl.selectedRegion">
+                        <dt>Silence Time: {{ ctrl.silence.start | number : 2}} - {{ ctrl.silence.end | number : 2}}
+                            ({{ ctrl.silence.end - ctrl.silence.start | number : 2}}s)</dt>
+                    </div>
                     <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion">
                         <div class="form-group">
                             <label class="annotation-label" style="background-color:{{ color + 80 }};"
@@ -322,7 +331,7 @@
                         </div>
                     </div>
 
-                    <div style=" height:300px; overflow:auto; margin-top:20px;">
+                    <div style=" height:265px; overflow:auto; margin-top:20px;">
                         <table class="table" border="0" style="width: -webkit-fill-available;">
                             <tr>
                                 <th>Time</th>
@@ -359,14 +368,17 @@
 
         </div>
 
-        <div class="col col-md-3 segment-text" ng-repeat="file in ctrl.filesData track by $index">
-            <div class="panel panel-default">
+        <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text" ng-repeat="file in ctrl.filesData track by $index">
+            <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
                 </div>
-                <div class="panel-body">
-                <p><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter }}</b></p>
-                <span ng-repeat="word in ctrl.currentRegions[$index].data.words track by $index">
+                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
+                    <p><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
+                        }}</b></p>
+                    <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
+                    <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
+                    <span ng-repeat="word in ctrl.currentRegions[$index].data.words track by $index">
                     <span style="color: rgba(0,0,0, {{ word.confidence }})"
                         ng-style="word.wasEdited && {'color':'rgba(129, 42, 193, ' + word.confidence + ')'}"
                         class="segment-text__word-wrapper"
