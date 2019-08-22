@@ -6,6 +6,7 @@ import dropdown from 'angular-ui-bootstrap/src/dropdown'
 import modal from 'angular-ui-bootstrap/src/modal'
 import collapse from 'angular-ui-bootstrap/src/collapse'
 import './third-party/localStorageDB.js'
+import {playPartDirective} from './playPartDirective'
 
 var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse]);
 
@@ -13,6 +14,7 @@ speechRecognition.controller('MainController', MainController);
 
 
 speechRecognition.service('dataManager', dataManager);
+speechRecognition.directive('playPart', playPartDirective);
 speechRecognition.directive('checklistModel', Checklist);
 speechRecognition.directive("fileread", [function () {
     return {
