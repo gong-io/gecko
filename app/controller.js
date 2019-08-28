@@ -982,7 +982,11 @@ class MainController {
 
             for (var i = 0; i < monologues.length; i++) {
                 var monologue = monologues[i];
-                var speakerId = monologue.speaker.id.toString();
+
+                var speakerId = "";
+                if (monologue.speaker){
+                    speakerId = monologue.speaker.id.toString();
+                }
 
                 var start = monologue.start;
                 var end = monologue.end;
@@ -1004,7 +1008,7 @@ class MainController {
                         initFinished: true,
                         text: monologue.text,
                         fileIndex: fileIndex,
-                        speaker: speakerId.split(constants.SPEAKERS_SEPARATOR),
+                        speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x=>x), //removing empty speaker
                         words: monologue.words
                     },
                     drag: false,
