@@ -384,7 +384,8 @@
                     <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
                     <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
                     <span ng-repeat="word in ctrl.currentRegions[$index].data.words track by $index">
-                    <span ng-style="word.wasEdited && {'color':'rgba(129, 42, 193, ' + word.confidence + ')'}"
+                        <span style="color: rgba(0,0,0, {{ word.confidence }})"
+                          ng-style="word.wasEdited && {'color':'rgba(129, 42, 193, ' + word.confidence + ')'}"
                           class="segment-text__word-wrapper"
                           ng-class="{'low-confidence': word.confidence < 0.95 && word.confidence >= 0}"
                           title="Confidence: {{ word.confidence }}"
