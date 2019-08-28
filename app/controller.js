@@ -32,8 +32,8 @@ function sortDict(dict, sortBy, sortFunction) {
     return sorted;
 }
 
-function jsonStringify(json){
-    return JSON.stringify(json, function(key, value) {
+function jsonStringify(json) {
+    return JSON.stringify(json, function (key, value) {
         // limit precision of floats
         if (typeof value === 'number') {
             return parseFloat(value.toFixed(2));
@@ -223,7 +223,7 @@ class MainController {
             //     }
             // }
 
-            self.transcriptPanelSize = parseInt(9/self.filesData.length);
+            self.transcriptPanelSize = parseInt(9 / self.filesData.length);
 
             // select the first region
             self.selectedFileIndex = 0;
@@ -241,6 +241,7 @@ class MainController {
             //     });
             // }, 100)
 
+            self.initAudioContext();
 
             self.handleCtm();
 
@@ -303,7 +304,6 @@ class MainController {
             self.ready = true;
 
             $scope.$evalAsync();
-
         });
 
         this.wavesurfer.on('seek', function (e) {
@@ -580,7 +580,9 @@ class MainController {
             if (region.start < prevRegion.start + constants.MINIMUM_LENGTH) {
                 region.start = prevRegion.start + constants.MINIMUM_LENGTH;
                 region.end = Math.max(region.start + constants.MINIMUM_LENGTH, region.end);
-            } else if (region.start < prevRegion.end) {
+            }
+
+            if (region.start < prevRegion.end) {
                 prevRegion.end = region.start;
                 self.updateOtherRegions.add(prevRegion);
                 self.regionUpdated(prevRegion);
@@ -591,7 +593,9 @@ class MainController {
             if (region.end > nextRegion.end - constants.MINIMUM_LENGTH) {
                 region.end = nextRegion.end - constants.MINIMUM_LENGTH;
                 region.start = Math.min(region.start, region.end - constants.MINIMUM_LENGTH);
-            } else if (region.end > nextRegion.start) {
+            }
+
+            if (region.end > nextRegion.start) {
                 nextRegion.start = region.end;
                 self.updateOtherRegions.add(nextRegion);
                 self.regionUpdated(nextRegion);
@@ -815,12 +819,14 @@ class MainController {
         let region = self.currentRegions[fileIndex];
         if (!region) {
             return
-        }; 
+        }
+
 
         let words = region.data.words;
         if (!words) {
             return
-        }; 
+        }
+
 
         let i = 0;
 
@@ -833,6 +839,16 @@ class MainController {
 
         let newSelectedWord =
             document.getElementById('word_{0}_{1}'.format(fileIndex, (i).toString()));
+
+        let newWordSpeaker = words[i].speaker
+
+        if (newWordSpeakerElement && newWordSpeaker) {
+            if (newWordSpeakerElement.textContent !== newWordSpeaker.id) {
+                newWordSpeakerElement.textContent = newWordSpeaker.id
+            }
+        } else if (newWordSpeakerElement) {
+            newWordSpeakerElement.textContent = ''
+        }
 
         if (newSelectedWord) {
             newSelectedWord.classList.add('selected-word');
@@ -900,9 +916,9 @@ class MainController {
     findClosestRegionToTimeBackward(fileIndex, time) {
         var closest = null;
         this.iterateRegions(function (region) {
-                if (region.end < time && (closest === null || region.end > closest.end)) {
-                    closest = region;
-                }
+            if (region.end < time && (closest === null || region.end > closest.end)) {
+                closest = region;
+            }
         }, fileIndex);
 
         return closest;
@@ -929,6 +945,7 @@ class MainController {
                 let speakers = String(speakerId).split(constants.SPEAKERS_SEPARATOR);
 
                 // TODO: remove and put colors as metadata outside monologues
+                // also, maybe save representativeStart,representativeStart there too
                 if (speakers.length === 1) {
                     // forcefully set the color of the speaker
                     if (monologue.speaker.color) {
@@ -972,7 +989,11 @@ class MainController {
 
             for (var i = 0; i < monologues.length; i++) {
                 var monologue = monologues[i];
-                var speakerId = monologue.speaker.id.toString();
+
+                var speakerId = "";
+                if (monologue.speaker){
+                    speakerId = monologue.speaker.id.toString();
+                }
 
                 var start = monologue.start;
                 var end = monologue.end;
@@ -994,7 +1015,7 @@ class MainController {
                         initFinished: true,
                         text: monologue.text,
                         fileIndex: fileIndex,
-                        speaker: speakerId.split(constants.SPEAKERS_SEPARATOR),
+                        speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x=>x), //removing empty speaker
                         words: monologue.words
                     },
                     drag: false,
@@ -1126,7 +1147,7 @@ class MainController {
             var last_end = 0;
             this.iterateRegions(function (region) {
                 if (region.end <= region.start) {
-                    throw "Negative duration in file {}\n Start: {1}\n End: {2}"
+                    throw "Negative duration in file {0}\n Start: {1}\n End: {2}"
                         .format(self.filesData[fileIndex].filename, region.start, region.end);
                 }
 
@@ -1691,6 +1712,21 @@ class MainController {
         reader.readAsText(file);
     }
 
+    initAudioContext() {
+        var context;
+
+        try {
+            // Fix up for prefixing
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            context = new AudioContext();
+        } catch (e) {
+            alert('Web Audio API is not supported in this browser');
+        }
+
+        this.audioContext = context;
+
+
+    }
     openShortcutsInfo() {
         var self = this;
         var modalInstance = this.$uibModal.open({
@@ -1736,7 +1772,7 @@ class MainController {
 
     wordClick(word, e) {
         const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
-        const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
+        const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
         const isDownCtrl = isMacMeta || isOtherControl
         if (isDownCtrl) {
             this.wavesurfer.play(word.start)

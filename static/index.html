@@ -102,9 +102,9 @@
             <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
                    max="100"
                    style="width: 100%"/>
-<!--            <div class="text-center">-->
-<!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
-<!--            </div>-->
+            <!--            <div class="text-center">-->
+            <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
+            <!--            </div>-->
         </div>
 
         <div class="col-md-1">
@@ -117,11 +117,11 @@
 
     <div class="row" style="text-align: center; margin-bottom: 2em">
         <div class="col-md-12">
-            <button class="btn btn-primary" ng-if="!ctrl.isPlaying" ng-click="ctrl.playPause()">
+            <button class="btn btn-primary" ng-show="!ctrl.isPlaying" ng-click="ctrl.playPause()">
                 <i class="glyphicon glyphicon-play"></i>
                 Play
             </button>
-            <button class="btn btn-primary" ng-if="ctrl.isPlaying" ng-click="ctrl.playPause()">
+            <button class="btn btn-primary" ng-show="ctrl.isPlaying" ng-click="ctrl.playPause()">
                 <i class="glyphicon glyphicon-pause"></i>
                 Pause
             </button>
@@ -140,7 +140,7 @@
                     title="Set the play speed">
                     <li role="menuitem" ng-repeat="speed in ctrl.playbackSpeeds">
                         <a href="#" ng-click="ctrl.setPlaybackSpeed(speed)">x{{ speed }}
-                            <i ng-if="speed == ctrl.currentPlaybackSpeed" class="glyphicon glyphicon-ok"></i>
+                            <i ng-show="speed == ctrl.currentPlaybackSpeed" class="glyphicon glyphicon-ok"></i>
                         </a>
                     </li>
                 </ul>
@@ -260,13 +260,16 @@
                 </div>
                 <div class="panel-body">
                     <div ng-show="ctrl.selectedRegion">
-                        <dt>Segment Time: {{ctrl.selectedRegion.start | number : 2}} - {{ctrl.selectedRegion.end | number : 2}}
-                            ({{ ctrl.selectedRegion.end - ctrl.selectedRegion.start | number : 2}}s)</dt>
+                        <dt>Segment Time: {{ctrl.selectedRegion.start | number : 2}} - {{ctrl.selectedRegion.end |
+                            number : 2}}
+                            ({{ ctrl.selectedRegion.end - ctrl.selectedRegion.start | number : 2}}s)
+                        </dt>
                     </div>
 
                     <div ng-hide="ctrl.selectedRegion">
                         <dt>Silence Time: {{ ctrl.silence.start | number : 2}} - {{ ctrl.silence.end | number : 2}}
-                            ({{ ctrl.silence.end - ctrl.silence.start | number : 2}}s)</dt>
+                            ({{ ctrl.silence.end - ctrl.silence.start | number : 2}}s)
+                        </dt>
                     </div>
                     <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion">
                         <div class="form-group">
@@ -276,13 +279,11 @@
                                 <input type="checkbox"
                                        value="{{speaker}}"
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
-                                       ng-click="ctrl.speakerChanged(speaker)">
+                                       ng-click="ctrl.speakerChanged(speaker)"
+                                       ng-disabled="!ctrl.selectedRegion">
                                 {{ speaker }}
-
-                                <!--                                <input type="radio" ng-change="ctrl.segmentSpeakerChanged()"-->
-                                <!--                                       ng-model="ctrl.selectedRegion.data.speaker"-->
-                                <!--                                       ng-value="speaker">-->
-                                <!--                                <span editable ng-model="speaker"> {{ speaker }} </span>-->
+                                <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
+                                           representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>
                                 <input type="color" ng-model="color" class="pull-right"
                                        ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker, color)"/>
                             </label>
@@ -368,7 +369,8 @@
 
         </div>
 
-        <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text" ng-repeat="file in ctrl.filesData track by $index">
+        <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
+             ng-repeat="file in ctrl.filesData track by $index">
             <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
