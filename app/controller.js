@@ -311,6 +311,7 @@ class MainController {
                 region.data.fileIndex = self.selectedFileIndex;
                 // region.data.speaker = constants.UNKNOWN_SPEAKER;
                 region.data.speaker = [];
+                region.data.words = [];
 
                 region.data.initFinished = false;
             } else {
@@ -339,6 +340,7 @@ class MainController {
             // }
 
             self.regionUpdated(region);
+            self.updateView();
         });
 
         this.wavesurfer.on("region-updated", function (region) {
@@ -445,13 +447,15 @@ class MainController {
 
 
     handleCtm() {
-        if (this.ctmData.length !== 2) return;
+        if (this.ctmData.length !== 2 || this.filesData.length !== 2) return;
 
         let diff = Diff.diffArrays(this.ctmData[0], this.ctmData[1], {
             comparator: function (x, y) {
                 return x.text === y.text;
             }
         });
+
+        // discrepancies is also the indication if we are in ctm comparing mode
         this.discrepancies = [];
         this.wavesurfer.params.autoCenter = true;
 
@@ -593,7 +597,6 @@ class MainController {
 
     // change region visually
     regionUpdated(region) {
-        // if (region.data.speaker !== 'EDER') {
 
         region.element.style.background = "";
 
@@ -613,19 +616,6 @@ class MainController {
 
         }
 
-        if (region.data.words) {
-            region.data.words.forEach((w) => {
-                if (region.data.speaker.length === 0) {
-                    w.speaker.id = null
-                } else {
-                    if (w.speaker.id !== region.data.speaker[0]) {
-                        w.speaker.id = region.data.speaker[0]
-                    }
-                }
-            })
-        }
-        // }
-
         //TODO: This also happens at other times so we cannot determine things after it
         // unless we fork the repo and set an "afterrender" event so we could change the region however we'd like
         region.updateRender();
@@ -643,7 +633,7 @@ class MainController {
             id: region.id,
             data: {
                 initFinished: region.data.initFinished,
-                text: region.data.text,
+                words: JSON.parse(JSON.stringify(region.data.words)),
                 fileIndex: region.data.fileIndex,
                 speaker: region.data.speaker.slice() // copy by value
             },
@@ -679,6 +669,7 @@ class MainController {
             }
         }
 
+        this.updateView();
         this.$scope.$evalAsync();
     }
 
@@ -803,26 +794,12 @@ class MainController {
         let time = self.wavesurfer.getCurrentTime();
 
         let region = self.currentRegions[fileIndex];
-        let newWordSpeakerElement = document.getElementById('speaker_{0}'.format(fileIndex));
-        if (!region) {
-            if (newWordSpeakerElement) {
-                newWordSpeakerElement.textContent = ''
-            }
-            return
-        }
-
+        if (!region) return;
 
         let words = region.data.words;
-        if (!words) {
-            if (newWordSpeakerElement) {
-                newWordSpeakerElement.textContent = ''
-            }
-            return
-        }
-
+        if (!words) return;
 
         let i = 0;
-
         for (; i < words.length; i++) {
             if (words[i].start > time) {
                 break;
@@ -832,16 +809,6 @@ class MainController {
 
         let newSelectedWord =
             document.getElementById('word_{0}_{1}'.format(fileIndex, (i).toString()));
-
-        let newWordSpeaker = words[i].speaker
-
-        if (newWordSpeakerElement && newWordSpeaker) {
-            if (newWordSpeakerElement.textContent !== newWordSpeaker.id) {
-                newWordSpeakerElement.textContent = newWordSpeaker.id
-            }
-        } else if (newWordSpeakerElement) {
-            newWordSpeakerElement.textContent = ''
-        }
 
         if (newSelectedWord) {
             newSelectedWord.classList.add('selected-word');
@@ -984,7 +951,7 @@ class MainController {
                 var monologue = monologues[i];
 
                 var speakerId = "";
-                if (monologue.speaker){
+                if (monologue.speaker) {
                     speakerId = monologue.speaker.id.toString();
                 }
 
@@ -1006,9 +973,8 @@ class MainController {
                     end: end,
                     data: {
                         initFinished: true,
-                        text: monologue.text,
                         fileIndex: fileIndex,
-                        speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x=>x), //removing empty speaker
+                        speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x => x), //removing empty speaker
                         words: monologue.words
                     },
                     drag: false,
@@ -1033,6 +999,8 @@ class MainController {
         this.regionsHistory[region.id].push(null);
 
         this.__deleteRegion(region);
+
+        this.updateView();
     }
 
     __deleteRegion(region) {
@@ -1099,7 +1067,7 @@ class MainController {
     setCurrentTime() {
         // this.currentTimeSeconds = time;
         this.currentTime = secondsToMinutes(this.wavesurfer.getCurrentTime());
-        this.$scope.$apply();
+        this.$scope.$evalAsync();
     }
 
 
@@ -1177,7 +1145,7 @@ class MainController {
                 speaker: {id: self.formatSpeaker(region.data.speaker), color: region.color},
                 start: region.start,
                 end: region.end,
-                text: region.data.text
+                terms: region.data.words
             });
 
         }, fileIndex, true);
@@ -1186,45 +1154,30 @@ class MainController {
     }
 
     convertRegionsToCtm(fileIndex) {
-        const speakersMap = {}
-        this.iterateRegions(function (region) {
-            region.data.words.forEach((word) => {
-                if (!speakersMap[word.speaker.id]) {
-                    speakersMap[word.speaker.id] = []
-                }
-                speakersMap[word.speaker.id].push({
-                    confidence: word.confidence.toFixed(2),
-                    end: word.end.toFixed(2),
-                    segment_id: word.segment_id,
-                    start: word.start.toFixed(2),
-                    text: word.text,
-                    diff: (word.end - word.start).toFixed(2)
-                })
-            })
-        }, fileIndex, true);
-
+        var self = this;
+        var segment_id = 0;
         const output = []
 
-        let keys = []
-        for (var key in speakersMap) {
-            keys.push(key)
-        }
-        keys = keys.sort()
+        this.iterateRegions(function (region) {
+            let speaker = self.formatSpeaker(region.data.speaker);
 
-        keys.forEach((key) => {
-            speakersMap[key].forEach((w) => {
+            region.data.words.forEach((word) => {
+                let confidence = word.confidence || constants.NO_CONFIDENCE;
+
                 output.push('{0}_{1}_audio 1 {2} {3} {4} {5}'.format(
-                    key,
-                    w.segment_id.toString().padStart(5, '0'),
-                    w.start.padStart(8, '0'),
-                    w.diff,
-                    w.text,
-                    w.confidence
-                ))
-            })
-        })
+                    speaker,
+                    segment_id.toString().padStart(5, '0'),
+                    word.start.toFixed(2).padStart(8, '0'),
+                    (word.end - word.start).toFixed(2),
+                    word.text,
+                    confidence.toFixed(2)
+                ));
+            });
 
-        return output.join('\n')
+            segment_id++;
+        }, fileIndex, true);
+
+        return output.sort().join('\n')
     }
 
     convertRegionsToRTTM(fileIndex) {
@@ -1364,6 +1317,7 @@ class MainController {
     loadClientMode() {
         var self = this;
         var modalInstance = this.$uibModal.open({
+            backdrop: 'static',
             templateUrl: 'static/templates/selectAudioModal.html',
             controller: function ($scope, $uibModalInstance, $timeout, zoom) {
                 $scope.newSegmentFiles = [undefined];
@@ -1558,18 +1512,25 @@ class MainController {
             if (monologue.end === undefined) monologue.end = monologue.terms.slice(-1)[0].end;
 
 
-            if (!monologue.text && monologue.terms) {
-                monologue.text = "";
-                for (var t = 0; t < monologue.terms.length; t++) {
-                    var term = monologue.terms[t];
-                    if (term.text) {
-                        if (term.type === "WORD") {
-                            monologue.text += " ";
-                        }
+            // if (!monologue.text && monologue.terms) {
+            //     monologue.text = "";
+            //     for (var t = 0; t < monologue.terms.length; t++) {
+            //         var term = monologue.terms[t];
+            //         if (term.text) {
+            //             if (term.type === "WORD") {
+            //                 monologue.text += " ";
+            //             }
+            //
+            //             monologue.text += term.text;
+            //         }
+            //     }
+            // }
 
-                        monologue.text += term.text;
-                    }
-                }
+            if (monologue.terms) {
+                monologue.words = monologue.terms;
+                delete monologue.terms;
+            } else {
+                monologue.words = [];
             }
         }
         return monologues;
@@ -1587,6 +1548,10 @@ class MainController {
             let start = parseFloat(cells[2]);
             let duration = parseFloat(cells[3]);
             let end = start + duration;
+            let confidence = parseFloat(cells[5])
+            if (confidence === constants.NO_CONFIDENCE){
+                confidence = undefined;
+            }
 
             return {
                 speaker: {id: cells[0].split('_')[0]},
@@ -1594,7 +1559,7 @@ class MainController {
                 start: start,
                 end: end,
                 text: cells[4],
-                confidence: parseFloat(cells[5])
+                confidence: confidence
             }
         });
 
@@ -1610,9 +1575,10 @@ class MainController {
         })
 
         words.forEach(function (word) {
-
             if (word.segment_id !== lastMonologue) {
                 lastMonologue = word.segment_id;
+                let speaker = word.speaker;
+
                 monologues.push({
                     speaker: word.speaker,
                     start: word.start,
@@ -1622,6 +1588,9 @@ class MainController {
                 monologues[monologues.length - 1].words.push(word);
             }
 
+            // this information is now on the segment/monologue
+            delete word.segment_id;
+            delete word.speaker;
         });
 
         monologues.forEach(function (m) {
@@ -1720,6 +1689,7 @@ class MainController {
 
 
     }
+
     openShortcutsInfo() {
         var self = this;
         var modalInstance = this.$uibModal.open({
