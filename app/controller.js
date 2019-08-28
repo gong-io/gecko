@@ -813,19 +813,12 @@ class MainController {
         let time = self.wavesurfer.getCurrentTime();
 
         let region = self.currentRegions[fileIndex];
-        let newWordSpeakerElement = document.getElementById('speaker_{0}'.format(fileIndex));
         if (!region) {
-            if (newWordSpeakerElement) {
-                newWordSpeakerElement.textContent = ''
-            }
             return
         }; 
 
         let words = region.data.words;
         if (!words) {
-            if (newWordSpeakerElement) {
-                newWordSpeakerElement.textContent = ''
-            }
             return
         }; 
 
@@ -840,16 +833,6 @@ class MainController {
 
         let newSelectedWord =
             document.getElementById('word_{0}_{1}'.format(fileIndex, (i).toString()));
-
-        let newWordSpeaker = words[i].speaker
-        
-        if (newWordSpeakerElement && newWordSpeaker) {
-            if (newWordSpeakerElement.textContent !== newWordSpeaker.id) {
-                newWordSpeakerElement.textContent = newWordSpeaker.id
-            }
-        } else if (newWordSpeakerElement) {
-            newWordSpeakerElement.textContent = ''
-        }
 
         if (newSelectedWord) {
             newSelectedWord.classList.add('selected-word');
