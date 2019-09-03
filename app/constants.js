@@ -1,12 +1,12 @@
-export const DEFAULT_TEXT = "";
+// export const DEFAULT_TEXT = "";
 
-export const SEGMENT_DUMMY = {
-    start: null,
-    end: null,
-    speaker: null,
-    text: DEFAULT_TEXT,
-    annotations: []
-}
+// export const SEGMENT_DUMMY = {
+//     start: null,
+//     end: null,
+//     speaker: null,
+//     text: DEFAULT_TEXT,
+//     annotations: []
+// }
 
 export const PLAYBACK_SPEED = [
     0.5, 0.75, 1, 1.25, 1.5, 1.75, 2
@@ -31,6 +31,8 @@ export const SPEAKER_COLORS = [
 export const UNKNOWN_SPEAKER = "<NA>";
 
 export const SPEAKERS_SEPARATOR = "+";
+
+export const NO_CONFIDENCE = -1;
 
 var speakers = {
     '[crosstalk]': "#e1c7ff",
@@ -64,3 +66,7 @@ export const ZOOM = 20;
 export const PANEL_HEIGHT = 300; //px
 
 export const EXTRA_DISCREPANCY_TIME = 1;
+
+export const PUNCTUATIONS = ". ! , … ?".split(' ');
+export const PUNCTUATION_TYPE = "PUNCTUATION"
+export const WORD_TYPE = "WORD"
