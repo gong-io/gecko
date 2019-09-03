@@ -1,3 +1,5 @@
+const playPartTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/playPart.html')
+
 export function playPartDirective() {
     return {
         replace: true,
@@ -7,7 +9,7 @@ export function playPartDirective() {
             'audioBackend': '=',
             'rep': '=representative'
         },
-        templateUrl: 'static/templates/playPart.html',
+        templateUrl: playPartTemplate,
         link: function (scope, element, attrs) {
             if(!scope.rep){
                 scope.rep = {};

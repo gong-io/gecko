@@ -840,16 +840,6 @@ class MainController {
         let newSelectedWord =
             document.getElementById('word_{0}_{1}'.format(fileIndex, (i).toString()));
 
-        let newWordSpeaker = words[i].speaker
-
-        if (newWordSpeakerElement && newWordSpeaker) {
-            if (newWordSpeakerElement.textContent !== newWordSpeaker.id) {
-                newWordSpeakerElement.textContent = newWordSpeaker.id
-            }
-        } else if (newWordSpeakerElement) {
-            newWordSpeakerElement.textContent = ''
-        }
-
         if (newSelectedWord) {
             newSelectedWord.classList.add('selected-word');
         }
@@ -1352,13 +1342,13 @@ class MainController {
         }, fileIndex);
     }
 
-    loadServerMode() {
+    loadServerMode(config) {
         var self = this;
 
         if (self.wavesurfer) self.wavesurfer.destroy();
         self.init(self.$scope);
 
-        this.dataManager.loadFileFromServer().then(function (res) {
+        this.dataManager.loadFileFromServer(config).then(function (res) {
             // var uint8buf = new Uint8Array(res.audioFile);
             // self.wavesurfer.loadBlob(new Blob([uint8buf]));
             self.wavesurfer.loadBlob(res.audioFile);
