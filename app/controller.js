@@ -305,7 +305,7 @@ class MainController {
             // indication when file was created by drag
             if (region.data.fileIndex === undefined) {
                 // to notify "region-update" for the first update
-                // (to get the start value which for some reason we gon't get on "region-created")
+                // (to get the start value which for some reason we don't get on "region-created")
 
                 self.calcCurrentFileIndex(event);
 
@@ -1142,10 +1142,10 @@ class MainController {
 
         while (constants.PUNCTUATIONS.indexOf(text[text.length - 1]) !== -1) {
             punct = text[text.length - 1] + punct;
-            text = text.substring(0, text.length-1)
+            text = text.substring(0, text.length - 1)
         }
 
-        if(punct === '...'){
+        if (punct === '...') {
             punct = '…';
         }
 
