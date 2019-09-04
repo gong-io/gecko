@@ -284,7 +284,8 @@
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
                                        ng-disabled="!ctrl.selectedRegion">
-                                {{ speaker }}
+<!--                                Didn't use CSS because it looks bad:-->
+                                <span title="{{speaker}}">{{speaker | limitTo : 20}}</span><span ng-show="{{speaker.slice(20)}}">...</span>
                                 <div class="pull-right">
                                     <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
                                                representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>
