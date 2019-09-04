@@ -91,6 +91,7 @@ class MainController {
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
 
+        // history variables
         this.undoStack = [];
         this.regionsHistory = {};
         this.updateOtherRegions = new Set();
@@ -129,6 +130,10 @@ class MainController {
                 self.deleteRegionAction(self.selectedRegion);
             } else if (e.key === 'ArrowRight' && isDownCtrl) {
                 self.jumpNextDiscrepancy();
+            } else if (e.key === 'ArrowRight' && e.shiftKey) {
+                self.jumpRegion(true);
+            } else if (e.key === 'ArrowLeft' && e.shiftKey) {
+                self.jumpRegion(false);
             } else if (e.key === "ArrowLeft") {
                 self.wavesurfer.skip(-1);
             } else if (e.key === "ArrowRight") {
@@ -317,7 +322,7 @@ class MainController {
             // indication when file was created by drag
             if (region.data.fileIndex === undefined) {
                 // to notify "region-update" for the first update
-                // (to get the start value which for some reason we gon't get on "region-created")
+                // (to get the start value which for some reason we don't get on "region-created")
 
                 self.calcCurrentFileIndex(event);
 
@@ -407,10 +412,11 @@ class MainController {
     // for debugging
     _printRegionsInfo(fileIndex) {
         var self = this;
-
+        let i = 0;
         var formatted = {};
         this.iterateRegions(function (region) {
             var r = self.copyRegion(region);
+            r.i = i;
             r.fileIndex = r.data.fileIndex;
             r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
             r.initFinished = r.data.initFinished;
@@ -420,6 +426,7 @@ class MainController {
             var id = r.id;
             delete r.id;
             formatted[id] = r;
+            i++;
         }, fileIndex, true);
 
         console.table(formatted);
@@ -752,6 +759,28 @@ class MainController {
         this.selectedRegion = region;
     }
 
+    jumpRegion(next) {
+        var region;
+
+        if (this.selectedRegion) {
+            if (next) {
+                region = this.wavesurfer.regions.list[this.selectedRegion.next];
+            } else {
+                region = this.wavesurfer.regions.list[this.selectedRegion.prev];
+            }
+        } else {
+            if (next) {
+                region = this.findClosestRegionToTime(this.selectedFileIndex, this.wavesurfer.getCurrentTime());
+            } else {
+                region = this.findClosestRegionToTime(this.selectedFileIndex, this.wavesurfer.getCurrentTime(), true);
+            }
+        }
+
+        if (region) {
+            region.play();
+        }
+    }
+
     jumpNextDiscrepancy() {
         let time = this.wavesurfer.getCurrentTime();
 
@@ -1005,6 +1034,37 @@ class MainController {
 
     }
 
+    splitSegment() {
+        let region = this.selectedRegion;
+        if (!region) return;
+        let time = this.wavesurfer.getCurrentTime();
+
+        let first = this.copyRegion(region);
+        let second = this.copyRegion(region);
+
+        delete  first.id;
+        delete  second.id;
+        first.end = time;
+        second.start = time;
+
+        let words =  JSON.parse(JSON.stringify(region.data.words));
+        let i;
+        for (i = 0; i < words.length; i++){
+            if (words[i].start > time) break;
+        }
+
+        first.data.words = words.slice(0, i);
+        second.data.words = words.slice(i);
+
+        this.__deleteRegion(region);
+        first = this.wavesurfer.addRegion(first);
+        second = this.wavesurfer.addRegion(second);
+
+        //the list order matters!
+        this.undoStack.push([first.id, second.id, region.id])
+        this.regionsHistory[region.id].push(null);
+    }
+
     deleteRegionAction(region) {
         if (!region) return;
 
@@ -1027,7 +1087,6 @@ class MainController {
 
         this.deselectRegion();
         region.remove();
-        this.silence = this.calcSilenceRegion();
     }
 
 
@@ -1154,10 +1213,10 @@ class MainController {
 
         while (constants.PUNCTUATIONS.indexOf(text[text.length - 1]) !== -1) {
             punct = text[text.length - 1] + punct;
-            text = text.substring(0, text.length-1)
+            text = text.substring(0, text.length - 1)
         }
 
-        if(punct === '...'){
+        if (punct === '...') {
             punct = '…';
         }
 
@@ -1771,6 +1830,7 @@ class MainController {
                     {'key': 'Space bar', 'desc': 'Play/Pause'},
                     {'key': 'Enter', 'desc': 'Play segment'},
                     {'key': 'Right/Left Arrow', 'desc': 'Skip forward/backward'},
+                    {'key': 'Shift + Right/Left Arrow', 'desc': 'Next/Previous region'},
                     {'key': 'Ctrl + Right Arrow', 'desc': 'Next difference (comparing mode)'},
                     {'key': 'Delete/Backspace', 'desc': 'Delete segment'},
                     {'key': 'Ctrl + z', 'desc': 'Undo'},
