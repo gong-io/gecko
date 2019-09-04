@@ -120,6 +120,10 @@ class MainController {
                 self.deleteRegionAction(self.selectedRegion);
             } else if (e.key === 'ArrowRight' && e.ctrlKey) {
                 self.jumpNextDiscrepancy();
+            } else if (e.key === 'ArrowRight' && e.shiftKey) {
+                self.jumpRegion(true);
+            } else if (e.key === 'ArrowLeft' && e.shiftKey) {
+                self.jumpRegion(false);
             } else if (e.key === "ArrowLeft") {
                 self.wavesurfer.skip(-1);
             } else if (e.key === "ArrowRight") {
@@ -738,6 +742,28 @@ class MainController {
         region.element.classList.add("selected-region");
 
         this.selectedRegion = region;
+    }
+
+    jumpRegion(next) {
+        var region;
+
+        if (this.selectedRegion) {
+            if (next) {
+                region = this.wavesurfer.regions.list[this.selectedRegion.next];
+            } else {
+                region = this.wavesurfer.regions.list[this.selectedRegion.prev];
+            }
+        } else {
+            if (next) {
+                region = this.findClosestRegionToTime(this.selectedFileIndex, this.wavesurfer.getCurrentTime());
+            } else {
+                region = this.findClosestRegionToTime(this.selectedFileIndex, this.wavesurfer.getCurrentTime(), true);
+            }
+        }
+
+        if (region) {
+            region.play();
+        }
     }
 
     jumpNextDiscrepancy() {
@@ -1759,6 +1785,7 @@ class MainController {
                     {'key': 'Space bar', 'desc': 'Play/Pause'},
                     {'key': 'Enter', 'desc': 'Play segment'},
                     {'key': 'Right/Left Arrow', 'desc': 'Skip forward/backward'},
+                    {'key': 'Shift + Right/Left Arrow', 'desc': 'Next/Previous region'},
                     {'key': 'Ctrl + Right Arrow', 'desc': 'Next difference (comparing mode)'},
                     {'key': 'Delete/Backspace', 'desc': 'Delete segment'},
                     {'key': 'Ctrl + z', 'desc': 'Undo'},
