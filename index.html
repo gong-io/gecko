@@ -153,7 +153,13 @@
             <button class="btn btn-default" ng-click="ctrl.toggleAutoCenter()"
                     title="Determines whether to auto-scroll the timeline so that the current time is always centered">
                 <i class="glyphicon glyphicon-screenshot"></i>
-                Toggle Auto Center
+                Auto Center
+            </button>
+
+            <button class="btn btn-default" ng-click="ctrl.splitSegment()"
+                    title="Split Segment"
+                    ng-disabled="!ctrl.selectedRegion">
+                <i class="glyphicon glyphicon-scissors"></i>
             </button>
 
             <button class="btn btn-default" ng-click="ctrl.deleteRegionAction(ctrl.selectedRegion)"
@@ -161,6 +167,9 @@
                     ng-disabled="!ctrl.selectedRegion">
                 <i class="glyphicon glyphicon-trash"></i>
             </button>
+
+
+
 
             <button class="btn btn-default" ng-click="ctrl.undo()" ng-disabled="!ctrl.undoStack.length"
                     title="Undo the last operation"

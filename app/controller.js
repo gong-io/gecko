@@ -86,6 +86,7 @@ class MainController {
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
 
+        // history variables
         this.undoStack = [];
         this.regionsHistory = {};
         this.updateOtherRegions = new Set();
@@ -1019,6 +1020,36 @@ class MainController {
 
     }
 
+    splitSegment() {
+        let region = this.selectedRegion;
+        if (!region) return;
+        let time = this.wavesurfer.getCurrentTime();
+
+        let first = this.copyRegion(region);
+        let second = this.copyRegion(region);
+
+        delete  first.id;
+        delete  second.id;
+        first.end = time;
+        second.start = time;
+
+        let words =  JSON.parse(JSON.stringify(region.data.words));
+        let i;
+        for (i = 0; i < words.length; i++){
+            if (words[i].start > time) break;
+        }
+
+        first.data.words = words.slice(0, i);
+        second.data.words = words.slice(i);
+
+        this.__deleteRegion(region);
+        first = this.wavesurfer.addRegion(first);
+        second = this.wavesurfer.addRegion(second);
+
+        this.undoStack.push([region.id, first.id, second.id])
+        this.regionsHistory[region.id].push(null);
+    }
+
     deleteRegionAction(region) {
         if (!region) return;
 
@@ -1041,7 +1072,6 @@ class MainController {
 
         this.deselectRegion();
         region.remove();
-        this.silence = this.calcSilenceRegion();
     }
 
 
