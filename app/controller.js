@@ -400,10 +400,11 @@ class MainController {
     // for debugging
     _printRegionsInfo(fileIndex) {
         var self = this;
-
+        let i = 0;
         var formatted = {};
         this.iterateRegions(function (region) {
             var r = self.copyRegion(region);
+            r.i = i;
             r.fileIndex = r.data.fileIndex;
             r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
             r.initFinished = r.data.initFinished;
@@ -413,6 +414,7 @@ class MainController {
             var id = r.id;
             delete r.id;
             formatted[id] = r;
+            i++;
         }, fileIndex, true);
 
         console.table(formatted);
@@ -1046,7 +1048,8 @@ class MainController {
         first = this.wavesurfer.addRegion(first);
         second = this.wavesurfer.addRegion(second);
 
-        this.undoStack.push([region.id, first.id, second.id])
+        //the list order matters!
+        this.undoStack.push([first.id, second.id, region.id])
         this.regionsHistory[region.id].push(null);
     }
 
