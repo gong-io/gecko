@@ -127,21 +127,19 @@ class MainController {
                 self.playPause();
             } else if (e.key === "Delete" || e.key === "Backspace") {
                 self.deleteRegionAction(self.selectedRegion);
-            } else if (e.key === 'ArrowRight' && e.ctrlKey) {
+            } else if (e.key === 'ArrowRight' && isDownCtrl) {
                 self.jumpNextDiscrepancy();
             } else if (e.key === "ArrowLeft") {
                 self.wavesurfer.skip(-1);
             } else if (e.key === "ArrowRight") {
                 self.wavesurfer.skip(1);
-            } else if (e.key === "z" && e.ctrlKey) {
+            } else if (e.key === "z" && isDownCtrl) {
                 self.undo();
             } else if (e.key === 'Enter') {
                 self.playRegion();
-            } else if (isDownCtrl) {
-                if (e.which === 219) {
-                    e.preventDefault()
-                    self.moveBack()
-                }
+            } else if (e.which === 219 && isDownCtrl) {
+                e.preventDefault()
+                self.wavesurfer.skip(-5)
             } else {
                 let number = parseInt(e.key);
                 if (!isNaN(number) && number >= 1 && number <= 9) {
@@ -1853,19 +1851,8 @@ class MainController {
             }
         } else if (keys === 'alt_space') {
             this.playRegion()
-        } else if (which) {
-            if (which === 219) {
-                this.moveBack()
-            }
-        }
-    }
-
-    moveBack () {
-        const toTime = this.wavesurfer.getCurrentTime()
-        if (toTime > 5) {
-            this.wavesurfer.setCurrentTime(toTime - 5)
-        } else {
-            this.wavesurfer.setCurrentTime(0)
+        } else if (which === 219) {
+            this.wavesurfer.skip(-5)
         }
     }
 }
