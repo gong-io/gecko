@@ -150,7 +150,13 @@
             <button class="btn btn-default" ng-click="ctrl.toggleAutoCenter()"
                     title="Determines whether to auto-scroll the timeline so that the current time is always centered">
                 <i class="glyphicon glyphicon-screenshot"></i>
-                Toggle Auto Center
+                Auto Center
+            </button>
+
+            <button class="btn btn-default" ng-click="ctrl.splitSegment()"
+                    title="Split Segment"
+                    ng-disabled="!ctrl.selectedRegion">
+                <i class="glyphicon glyphicon-scissors"></i>
             </button>
 
             <button class="btn btn-default" ng-click="ctrl.deleteRegionAction(ctrl.selectedRegion)"
@@ -158,6 +164,9 @@
                     ng-disabled="!ctrl.selectedRegion">
                 <i class="glyphicon glyphicon-trash"></i>
             </button>
+
+
+
 
             <button class="btn btn-default" ng-click="ctrl.undo()" ng-disabled="!ctrl.undoStack.length"
                     title="Undo the last operation"
@@ -281,11 +290,14 @@
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
                                        ng-disabled="!ctrl.selectedRegion">
-                                {{ speaker }}
-                                <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
-                                           representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>
-                                <input type="color" ng-model="color" class="pull-right"
-                                       ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker, color)"/>
+<!--                                Didn't use CSS because it looks bad:-->
+                                <span title="{{speaker}}">{{speaker | limitTo : 20}}</span><span ng-show="{{speaker.slice(20)}}">...</span>
+                                <div class="pull-right">
+                                    <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
+                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>
+                                    <input type="color" ng-model="color" class="pull-right"
+                                           ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker, color)"/>
+                                </div>
                             </label>
                         </div>
 
@@ -382,16 +394,16 @@
                     <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
                     <span ng-repeat="word in ctrl.currentRegions[$index].data.words track by $index">
                         <span style="color: rgba(0,0,0, {{ word.confidence }})"
-                          ng-style="word.wasEdited && {'color':'rgba(129, 42, 193, ' + word.confidence + ')'}"
-                          class="segment-text__word-wrapper"
-                          ng-class="{'low-confidence': word.confidence < 0.95 && word.confidence >= 0}"
-                          title="Confidence: {{ word.confidence }}"
-                          editable
-                          ng-model="word.text"
-                          changed="ctrl.wordChanged($parent.$index, $index)"
-                          keys-mapping="ctrl.editableKeysMapping($parent.$index, $index, keys)"
-                          ng-click="ctrl.wordClick(word, $event)"
-                          id="word_{{$parent.$index}}_{{$index}}"></span>
+                              ng-style="word.wasEdited && {'color':'rgba(129, 42, 193, ' + word.confidence + ')'}"
+                              class="segment-text__word-wrapper"
+                              ng-class="{'low-confidence': word.confidence < 0.95 && word.confidence >= 0}"
+                              title="Confidence: {{ word.confidence }}"
+                              editable
+                              ng-model="word.text"
+                              changed="ctrl.wordChanged($parent.$index, $index)"
+                              keys-mapping="ctrl.editableKeysMapping($parent.$index, $index, keys, which)"
+                              ng-click="ctrl.wordClick(word, $event)"
+                              id="word_{{$parent.$index}}_{{$index}}"></span>
                 </span>
                 </div>
             </div>

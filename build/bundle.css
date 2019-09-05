@@ -22,9 +22,11 @@
     border: 1px solid #eee;
     padding: 1em;
 }
+
 .segment-text__word-wrapper {
     padding: 0 1px;
 }
+
 .row {
     margin-left: 0;
     margin-right: 0;
@@ -116,6 +118,7 @@ label {
 .panel {
     border: solid 1px transparent;
 }
+
 .selected-file {
     border: solid 1px #54F2D9;
 }
@@ -123,52 +126,62 @@ label {
 .selected-word {
     border-bottom: 5px solid #54F2D9
 }
+
 .discrepancy-selected {
     background-color: #fbeb9b82;
 }
+
 .selected-discrepancy {
     background-color: #FBEB9B;
 }
+
 hr.half-rule {
     width: 50%;
 }
 
 
-
-
-.navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.active>a:hover, .navbar-inverse .navbar-nav>.active>a:focus {
+.navbar-inverse .navbar-nav > .active > a, .navbar-inverse .navbar-nav > .active > a:hover, .navbar-inverse .navbar-nav > .active > a:focus {
     background-color: #a94dec;
 }
+
 .navbar-inverse {
     background-color: #812AC1;
 }
 
-.navbar-inverse .navbar-nav>.open>a, .navbar-inverse .navbar-nav>.open>a:hover, .navbar-inverse .navbar-nav>.open>a:focus {
+.navbar-inverse .navbar-nav > .open > a, .navbar-inverse .navbar-nav > .open > a:hover, .navbar-inverse .navbar-nav > .open > a:focus {
     background-color: #a94dec;
 }
-.nav .open>a, .nav .open>a:hover, .nav .open>a:focus {
+
+.nav .open > a, .nav .open > a:hover, .nav .open > a:focus {
     background-color: #eeeeee;
     border-color: #a94dec;
 }
+
 .btn-primary {
     background-color: #a94dec;
 }
+
 .btn-primary:active {
     background-color: #a94dec;
 }
+
 .btn-primary:focus {
     background-color: #a94dec;
 }
+
 .btn-primary:focus, .btn-primary.focus {
     color: #ffffff;
     background-color: #a94dec;
 }
+
 .btn-primary:hover, .btn-primary:active:hover {
     background-color: #a94dec;
 }
-.navbar-inverse .navbar-nav>li>a {
+
+.navbar-inverse .navbar-nav > li > a {
     color: #fff;
 }
+
 .navbar-inverse .navbar-brand {
     color: #fff;
 }
@@ -176,23 +189,26 @@ hr.half-rule {
 .btn-primary:active {
     background-image: radial-gradient(circle, #812AC1 10%, #a94dec 11%);
 }
+
 a {
     color: #a94dec;
 }
+
 a:hover, a:focus {
     color: #812AC1;
 }
+
 .segment-text__word-wrapper.low-confidence {
     font-style: italic;
 }
 
 #logo {
-    transform:rotate(90deg);
+    transform: rotate(90deg);
     height: 50px;
 }
 
 [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
-  display: none !important;
+    display: none !important;
 }
 .uib-position-measure {
   display: block !important;

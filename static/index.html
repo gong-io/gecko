@@ -401,7 +401,7 @@
                               editable
                               ng-model="word.text"
                               changed="ctrl.wordChanged($parent.$index, $index)"
-                              keys-mapping="ctrl.editableKeysMapping($parent.$index, $index, keys)"
+                              keys-mapping="ctrl.editableKeysMapping($parent.$index, $index, keys, which)"
                               ng-click="ctrl.wordClick(word, $event)"
                               id="word_{{$parent.$index}}_{{$index}}"></span>
                 </span>
