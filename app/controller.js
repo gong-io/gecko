@@ -79,7 +79,7 @@ class MainController {
         }
     }
 
-    init($scope) {
+    init() {
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
@@ -155,7 +155,7 @@ class MainController {
                 }
             }
 
-            $scope.$evalAsync();
+            self.$scope.$evalAsync();
 
         };
 
@@ -166,19 +166,11 @@ class MainController {
             }
 
             self.isRegionClicked = false;
-
-            // $scope.$evalAsync();
         };
 
         this.wavesurfer.on('audioprocess', function (e) {
             self.updateView();
         });
-
-
-        // this.wavesurfer.on('zoom', function (e) {
-        //     console.log('zoom changed');
-        //     self.draw();
-        // });
 
         this.wavesurfer.on('error', function (e) {
             alert('wavesurfer error');
@@ -187,7 +179,7 @@ class MainController {
         });
 
         this.wavesurfer.on('loading', function () {
-            $scope.$evalAsync(function () {
+            self.$scope.$evalAsync(function () {
                 self.loader = true;
             });
         });
@@ -201,7 +193,7 @@ class MainController {
                     minLength: constants.MINIMUM_LENGTH
                 });
 
-            $scope.$watch(() => self.zoomLevel, function (newVal) {
+            self.$scope.$watch(() => self.zoomLevel, function (newVal) {
                 if (newVal) {
                     self.wavesurfer.zoom(self.zoomLevel);
                 }
@@ -290,13 +282,13 @@ class MainController {
                 }
 
                 self.isPlaying = true;
-                $scope.$evalAsync();
+                self.$scope.$evalAsync();
             });
 
             self.wavesurfer.on('pause', function () {
                 self.soundtouchNode && self.soundtouchNode.disconnect();
                 self.isPlaying = false;
-                $scope.$evalAsync();
+                self.$scope.$evalAsync();
             });
 
 
@@ -307,13 +299,13 @@ class MainController {
                 return confirm("Confirm refresh");
             };
 
-            $scope.$evalAsync();
+            self.$scope.$evalAsync();
         });
 
         this.wavesurfer.on('seek', function (e) {
             self.updateView();
 
-            $scope.$evalAsync();
+            self.$scope.$evalAsync();
         });
 
         this.wavesurfer.on("region-created", function (region) {
@@ -380,7 +372,7 @@ class MainController {
             self.updateOtherRegions.clear()
             self.undoStack.push(multiEffect);
 
-            $scope.$evalAsync();
+            self.$scope.$evalAsync();
         });
 
         // this.wavesurfer.on('region-in', function (region) {
@@ -1414,7 +1406,7 @@ class MainController {
         var self = this;
 
         if (self.wavesurfer) self.wavesurfer.destroy();
-        self.init(self.$scope);
+        self.init();
 
         this.dataManager.loadFileFromServer(config).then(function (res) {
             // var uint8buf = new Uint8Array(res.audioFile);
@@ -1426,12 +1418,17 @@ class MainController {
         })
     }
 
+    //TODO: move all that to a different file
     loadClientMode() {
         var self = this;
         var modalInstance = this.$uibModal.open({
             templateUrl: audioModalTemplate,
             backdrop: 'static',
             controller: function ($scope, $uibModalInstance, $timeout, zoom) {
+                $scope.runDemo = function(){
+
+                };
+
                 $scope.newSegmentFiles = [undefined];
 
                 $scope.ok = function () {
@@ -1865,7 +1862,7 @@ class MainController {
         const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
         const isDownCtrl = isMacMeta || isOtherControl
         if (isDownCtrl) {
-            this.wavesurfer.play(word.start)
+            this.wavesurfer.seekTo(word.start/ this.wavesurfer.getDuration());
         }
         e.preventDefault()
         e.stopPropagation()
