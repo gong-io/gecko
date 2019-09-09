@@ -12,10 +12,6 @@ var Diff = require('diff')
 const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
 const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
 
-window.onbeforeunload = function (event) {
-    return confirm("Confirm refresh");
-};
-
 function sortDict(dict, sortBy, sortFunction) {
     var sorted = {};
 
@@ -116,7 +112,7 @@ class MainController {
             }
 
             const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
-            const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
+            const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
             const isDownCtrl = isMacMeta || isOtherControl
 
             // wavesurfer does not get focus for some reason, so body it is
@@ -306,6 +302,10 @@ class MainController {
 
             self.loader = false;
             self.ready = true;
+
+            window.onbeforeunload = function (event) {
+                return confirm("Confirm refresh");
+            };
 
             $scope.$evalAsync();
         });
@@ -1042,14 +1042,14 @@ class MainController {
         let first = this.copyRegion(region);
         let second = this.copyRegion(region);
 
-        delete  first.id;
-        delete  second.id;
+        delete first.id;
+        delete second.id;
         first.end = time;
         second.start = time;
 
-        let words =  JSON.parse(JSON.stringify(region.data.words));
+        let words = JSON.parse(JSON.stringify(region.data.words));
         let i;
-        for (i = 0; i < words.length; i++){
+        for (i = 0; i < words.length; i++) {
             if (words[i].start > time) break;
         }
 
