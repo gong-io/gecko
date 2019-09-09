@@ -20,49 +20,47 @@ class dataManager {
 
     }
 
-    loadFileFromServer(call_id) {
-        return this._fakeServerRequest();
+    loadFileFromServer(config) {
+        return this.serverRequest(config);
         //TODO: change to an actual ONE server request containing all the data same as in the "res" object.
     }
 
-    _fakeServerRequest() {
+    serverRequest(config) {
         let promises = [];
 
         let res = {segmentFiles: []}
 
         promises.push(this.$http({
             method: 'GET',
-            url: 'http://127.0.0.1:8000/data/temp/audio/1853674366752009473.wav',
-            responseType: 'blob'
+            url: config.audio.url,
+            responseType: 'blob',
+            headers: {
+                'Access-Control-Allow-Origin': true
+            }
         }).then(function successCallback(response) {
 
             res.audioFile = response.data;
-            res.audioFileName = "123.wav";
+            res.audioFileName = config.audio.fileName;
 
         }, function errorCallback(response) {
             // called asynchronously if an error occurs
             // or server returns response with an error status.
         }));
 
-        promises.push(this.$http({
-            method: 'GET',
-            url: 'http://127.0.0.1:8000/data/temp/root/human/1853674366752009473_old.ctm'
-        }).then(function (response) {
-            res.segmentFiles.push({
-                filename: "old.ctm",
-                data: response.data
-            });
-        }));
-
-        promises.push(this.$http({
-            method: 'GET',
-            url: 'http://127.0.0.1:8000/data/temp/root/machine/1853674366752009473_new.ctm'
-        }).then(function (response) {
-            res.segmentFiles.push({
-                filename: "new.ctm",
-                data: response.data
-            });
-        }));
+        config.ctms.forEach((ctm) => {
+            promises.push(this.$http({
+                method: 'GET',
+                url: ctm.url
+            }).then(function (response) {
+                res.segmentFiles.push({
+                    filename: ctm.fileName,
+                    data: response.data,
+                    headers: {
+                        'Access-Control-Allow-Origin': true
+                    }
+                });
+            }))
+        })
 
 
         return this.$q.all(promises).then(function () {

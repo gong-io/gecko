@@ -9,6 +9,9 @@ import {PUNCTUATION_TYPE} from "./constants";
 
 var Diff = require('diff')
 
+const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
+const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
+
 window.onbeforeunload = function (event) {
     return confirm("Confirm refresh");
 };
@@ -70,9 +73,11 @@ class MainController {
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
+    }
 
-        if (config.isServerMode) {
-            this.loadServerMode();
+    loadApp(config) {
+        if (config.mode === 'server') {
+            this.loadServerMode(config);
         } else {
             this.loadClientMode();
         }
@@ -110,6 +115,10 @@ class MainController {
                 return;
             }
 
+            const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+            const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
+            const isDownCtrl = isMacMeta || isOtherControl
+
             // wavesurfer does not get focus for some reason, so body it is
             // if (e.target.nodeName !== 'BODY') return;
             if (e.target.type === 'text') return;
@@ -119,7 +128,7 @@ class MainController {
                 self.playPause();
             } else if (e.key === "Delete" || e.key === "Backspace") {
                 self.deleteRegionAction(self.selectedRegion);
-            } else if (e.key === 'ArrowRight' && e.ctrlKey) {
+            } else if (e.key === 'ArrowRight' && isDownCtrl) {
                 self.jumpNextDiscrepancy();
             } else if (e.key === 'ArrowRight' && e.shiftKey) {
                 self.jumpRegion(true);
@@ -129,10 +138,13 @@ class MainController {
                 self.wavesurfer.skip(-1);
             } else if (e.key === "ArrowRight") {
                 self.wavesurfer.skip(1);
-            } else if (e.key === "z" && e.ctrlKey) {
+            } else if (e.key === "z" && isDownCtrl) {
                 self.undo();
             } else if (e.key === 'Enter') {
                 self.playRegion();
+            } else if (e.which === 219 && isDownCtrl) {
+                e.preventDefault()
+                self.wavesurfer.skip(-5)
             } else {
                 let number = parseInt(e.key);
                 if (!isNaN(number) && number >= 1 && number <= 9) {
@@ -1398,13 +1410,13 @@ class MainController {
         }, fileIndex);
     }
 
-    loadServerMode() {
+    loadServerMode(config) {
         var self = this;
 
         if (self.wavesurfer) self.wavesurfer.destroy();
         self.init(self.$scope);
 
-        this.dataManager.loadFileFromServer().then(function (res) {
+        this.dataManager.loadFileFromServer(config).then(function (res) {
             // var uint8buf = new Uint8Array(res.audioFile);
             // self.wavesurfer.loadBlob(new Blob([uint8buf]));
             self.wavesurfer.loadBlob(res.audioFile);
@@ -1417,8 +1429,8 @@ class MainController {
     loadClientMode() {
         var self = this;
         var modalInstance = this.$uibModal.open({
+            templateUrl: audioModalTemplate,
             backdrop: 'static',
-            templateUrl: 'static/templates/selectAudioModal.html',
             controller: function ($scope, $uibModalInstance, $timeout, zoom) {
                 $scope.newSegmentFiles = [undefined];
 
@@ -1807,7 +1819,7 @@ class MainController {
     openShortcutsInfo() {
         var self = this;
         var modalInstance = this.$uibModal.open({
-            templateUrl: 'static/templates/shortcutsInfo.html',
+            templateUrl: shortcutsInfoTemplate,
             controller: function ($scope, $uibModalInstance) {
                 $scope.ok = function () {
                     $uibModalInstance.close();
@@ -1823,7 +1835,8 @@ class MainController {
                     {'key': 'Delete/Backspace', 'desc': 'Delete segment'},
                     {'key': 'Ctrl + z', 'desc': 'Undo'},
                     {'key': '1-9', 'desc': 'Select annotation'},
-                    {'key': 'Escape', 'desc': 'Focus-out text area'}
+                    {'key': 'Escape', 'desc': 'Focus-out text area'},
+                    {'key': 'Ctrl+[', 'desc': 'Move back 5 seconds'}
                 ]
             }
         });
@@ -1858,7 +1871,7 @@ class MainController {
         e.stopPropagation()
     }
 
-    editableKeysMapping(regionIndex, wordIndex, keys) {
+    editableKeysMapping(regionIndex, wordIndex, keys, which) {
         if (keys === 'space') {
             this.playPause()
         } else if (keys === 'ArrowRight') {
@@ -1898,6 +1911,8 @@ class MainController {
             }
         } else if (keys === 'alt_space') {
             this.playRegion()
+        } else if (which === 219) {
+            this.wavesurfer.skip(-5)
         }
     }
 }
