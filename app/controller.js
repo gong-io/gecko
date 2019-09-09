@@ -6,8 +6,9 @@ import './third-party/soundtouch.js'
 
 import {config} from './config.js'
 import {PUNCTUATION_TYPE} from "./constants";
+var Diff = require('diff');
 
-var Diff = require('diff')
+var demoJson = require('../samples/sample');
 
 const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
 const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
@@ -1426,7 +1427,14 @@ class MainController {
             backdrop: 'static',
             controller: function ($scope, $uibModalInstance, $timeout, zoom) {
                 $scope.runDemo = function () {
-
+                    self.filesData = [{
+                        filename: 'demo.json',
+                        data: self.handleTextFormats('demo.json', JSON.stringify(demoJson))
+                    }];
+                    self.audioFileName = 'demo.mp3';
+                    self.init();
+                    self.wavesurfer.load('https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3');
+                    $uibModalInstance.close(false);
                 };
 
                 $scope.newSegmentFiles = [undefined];
@@ -1522,9 +1530,11 @@ class MainController {
         });
 
         modalInstance.result.then(function (res) {
-            if (self.wavesurfer) self.wavesurfer.destroy();
-            self.init(self.$scope);
-            self.parseAndLoadAudio(res);
+            if (res) {
+                if (self.wavesurfer) self.wavesurfer.destroy();
+                self.init();
+                self.parseAndLoadAudio(res);
+            }
         });
     }
 
