@@ -321,7 +321,7 @@ class MainController {
                 region.data.fileIndex = self.selectedFileIndex;
                 // region.data.speaker = constants.UNKNOWN_SPEAKER;
                 region.data.speaker = [];
-                region.data.words = [];
+                region.data.words = [{start: 0, end: 0, text: "XXX"}];
 
                 region.data.initFinished = false;
             } else {
@@ -1425,7 +1425,7 @@ class MainController {
             templateUrl: audioModalTemplate,
             backdrop: 'static',
             controller: function ($scope, $uibModalInstance, $timeout, zoom) {
-                $scope.runDemo = function(){
+                $scope.runDemo = function () {
 
                 };
 
@@ -1862,7 +1862,7 @@ class MainController {
         const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
         const isDownCtrl = isMacMeta || isOtherControl
         if (isDownCtrl) {
-            this.wavesurfer.seekTo(word.start/ this.wavesurfer.getDuration());
+            this.wavesurfer.seekTo(word.start / this.wavesurfer.getDuration());
         }
         e.preventDefault()
         e.stopPropagation()
