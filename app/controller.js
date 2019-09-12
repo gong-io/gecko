@@ -70,6 +70,7 @@ class MainController {
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
+        this.isAwsEnabled = dataManager.isS3Enabled()
     }
 
     loadApp(config) {
@@ -1150,6 +1151,20 @@ class MainController {
         }
     }
 
+    saveS3(extension, converter) {
+        for (var i = 0; i < this.filesData.length; i++) {
+            var current = this.filesData[i];
+            if (current.data) {
+                // convert the filename to "rttm" extension
+                var filename = current.filename.substr(0, current.filename.lastIndexOf('.')) + "." + extension;
+
+                if (!this.checkValidRegions(i)) return;
+
+                this.dataManager.saveDataToServer(converter(i), filename);
+            }
+        }
+    }
+
     saveDiscrepancyResults() {
         this.dataManager.downloadFileToClient(jsonStringify(this.discrepancies),
             this.filesData[0].filename + "_VS_" + this.filesData[1].filename + ".json");
@@ -1165,6 +1180,18 @@ class MainController {
 
     saveCtm() {
         this.save('ctm', this.convertRegionsToCtm.bind(this));
+    }
+
+    saveRttmS3() {
+        this.saveS3('rttm', this.convertRegionsToRTTM.bind(this));
+    }
+
+    saveJsonS3() {
+        this.saveS3('json', this.convertRegionsToJson.bind(this));
+    }
+
+    saveCtmS3() {
+        this.saveS3('ctm', this.convertRegionsToCtm.bind(this));
     }
 
     checkValidRegions(fileIndex) {

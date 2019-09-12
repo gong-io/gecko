@@ -1,7 +1,13 @@
+import uploadFile from './s3'
+
 class dataManager {
     constructor($http, $q) {
         this.$http = $http;
         this.$q = $q;
+    }
+
+    isS3Enabled () {
+        return uploadFile
     }
 
     downloadFileToClient(data, filename) {
@@ -16,8 +22,10 @@ class dataManager {
         a.dispatchEvent(e);
     }
 
-    saveDataToServer(data, call_id) {
-
+    saveDataToServer(data, filename) {
+        if (uploadFile) {
+            uploadFile(filename, data)
+        }
     }
 
     loadFileFromServer(config) {

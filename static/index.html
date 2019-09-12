@@ -68,6 +68,15 @@
                             Annotations
                         </a></li>
                         <li role="separator" class="divider"></li>
+                        <li><a href="#" ng-click="ctrl.saveRttmS3()" ng-if="ctrl.isAwsEnabled">
+                            RTTM to S3
+                        </a></li>
+                        <li><a href="#" ng-click="ctrl.saveJsonS3()" ng-if="ctrl.isAwsEnabled">
+                            JSON to S3
+                        </a></li>
+                        <li><a href="#" ng-click="ctrl.saveCtmS3()" ng-if="ctrl.isAwsEnabled">
+                            CTM to S3
+                        </a></li>
                     </ul>
                 </li>
 
