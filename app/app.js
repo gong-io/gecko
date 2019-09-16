@@ -59,7 +59,7 @@ speechRecognition.directive("editable", function () {
     return {
         restrict: "A",
         require: "ngModel",
-        scope:{
+        scope: {
             changed: '&',
             keysMapping: '&'
         },
@@ -68,11 +68,16 @@ speechRecognition.directive("editable", function () {
 
             function read() {
                 // view -> model
-                var text = element.text();
-                if (ngModel.$viewValue !== text && scope.changed) {
-                    scope.changed()
+                let newText = element.text();
+                let oldText = ngModel.$viewValue;
+
+                if (oldText !== newText) {
+                    ngModel.$setViewValue(newText);
+
+                    if (scope.changed) {
+                        scope.changed()
+                    }
                 }
-                ngModel.$setViewValue(text);
             }
 
             // model -> view
@@ -87,7 +92,7 @@ speechRecognition.directive("editable", function () {
                 if (e.which === 13 || e.which === 27) {
                     this.blur();
                     e.preventDefault();
-                } 
+                }
 
                 e.stopPropagation()
             });
@@ -95,11 +100,11 @@ speechRecognition.directive("editable", function () {
             element.bind("keydown", function (e) {
                 const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
                 const isAlt = e.altKey
-                const isOtherControl =  window.navigator.platform !== 'MacIntel' && e.ctrlKey
+                const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
                 const isDownCtrl = isMacMeta || isOtherControl
                 if (isDownCtrl || isAlt) {
                     if (e.which === 32) {
-                        scope.keysMapping({ keys: 'space' })
+                        scope.keysMapping({keys: 'space'})
                         e.preventDefault()
                         e.stopPropagation()
                         return
@@ -107,12 +112,12 @@ speechRecognition.directive("editable", function () {
                 }
 
                 if (isDownCtrl) {
-                    scope.keysMapping({ keys: e.key, which: e.which })
+                    scope.keysMapping({keys: e.key, which: e.which})
                     e.preventDefault()
                     e.stopPropagation()
                     return
                 }
-                
+
             })
         }
     };

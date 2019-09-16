@@ -6,6 +6,7 @@ import './third-party/soundtouch.js'
 
 import {config} from './config.js'
 import {PUNCTUATION_TYPE} from "./constants";
+
 var Diff = require('diff');
 
 var demoJson = require('../samples/sample');
@@ -322,7 +323,6 @@ class MainController {
                 region.data.fileIndex = self.selectedFileIndex;
                 // region.data.speaker = constants.UNKNOWN_SPEAKER;
                 region.data.speaker = [];
-                region.data.words = [{start: 0, end: 0, text: "XXX"}];
 
                 region.data.initFinished = false;
             } else {
@@ -331,6 +331,10 @@ class MainController {
 
                 // when file is added by dragging, update-end will take care of history
                 self.addHistory(region);
+            }
+            //TODO: creating a new word is bad if we want to keep the segment clear.
+            if (!region.data.words || region.data.words.length === 0){
+                region.data.words = [{start: region.start, end: region.end, text: ""}];
             }
 
             var elem = region.element;
@@ -1850,21 +1854,25 @@ class MainController {
     }
 
     wordChanged(regionIndex, wordIndex) {
-        let newWord = this.currentRegions[regionIndex].data.words[wordIndex]
-        newWord.wasEdited = true
+        let currentRegion = this.currentRegions[regionIndex];
+        let newWord = currentRegion.data.words[wordIndex];
+        newWord.wasEdited = true;
         if (newWord.text.length) {
-            let newWordSplited = newWord.text.split(' ')
+            let newWordSplited = newWord.text.split(' ');
             if (newWordSplited.length > 1) {
-                this.currentRegions[regionIndex].data.words[wordIndex].text = newWordSplited[0]
+                currentRegion.data.words[wordIndex].text = newWordSplited[0];
                 for (let i = newWordSplited.length - 1; i >= 1; i--) {
-                    let wordCopy = Object.assign({}, this.currentRegions[regionIndex].data.words[wordIndex])
-                    wordCopy.text = newWordSplited[i]
-                    this.currentRegions[regionIndex].data.words.splice(wordIndex + 1, 0, wordCopy)
+                    let wordCopy = Object.assign({}, currentRegion.data.words[wordIndex]);
+                    wordCopy.text = newWordSplited[i];
+                    currentRegion.data.words.splice(wordIndex + 1, 0, wordCopy);
                 }
             }
         } else {
-            this.currentRegions[regionIndex].data.words.splice(wordIndex, 1)
+            currentRegion.data.words.splice(wordIndex, 1);
         }
+
+        this.addHistory(currentRegion);
+        this.undoStack.push([currentRegion.id]);
     }
 
     wordClick(word, e) {
