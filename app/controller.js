@@ -1170,6 +1170,28 @@ class MainController {
             this.filesData[0].filename + "_VS_" + this.filesData[1].filename + ".json");
     }
 
+    saveData() {
+        for (var i = 0; i < this.filesData.length; i++) {
+            const current = this.filesData[i]
+            const splName = current.filename.split('.')
+            const extension = splName[splName.length - 1]
+            const saveFunction = this.isAwsEnabled ? this.saveS3.bind(this) : this.save.bind(this)
+            switch (extension) {
+                case 'rttm':
+                    saveFunction('rttm', this.convertRegionsToRTTM.bind(this))
+                    break;
+                case 'json':
+                    saveFunction('json', this.convertRegionsToJson.bind(this));
+                    break;
+                case 'ctm':
+                    saveFunction('ctm', this.convertRegionsToCtm.bind(this));
+                    break;
+                default:
+                    alert('Unsupported file format')
+            }
+        }
+    }
+
     saveRttm() {
         this.save('rttm', this.convertRegionsToRTTM.bind(this));
     }

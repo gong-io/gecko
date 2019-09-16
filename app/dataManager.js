@@ -33,7 +33,7 @@ class dataManager {
             }
         }).then((function (resp) {
             if (resp.data && resp.data.OK) {
-                alert('Successefully uploaded')
+                alert(`File ${filename} successefully uploaded`)
             } else {
                 alert('Upload error:', resp.data.error)
             }
