@@ -1,5 +1,3 @@
-import uploadFile from './s3'
-
 class dataManager {
     constructor($http, $q) {
         this.$http = $http;
@@ -7,7 +5,7 @@ class dataManager {
     }
 
     isS3Enabled () {
-        return uploadFile
+        return process.env.UPLOAD_SERVER_ROOT && process.env.UPLOAD_SERVER_ROOT.length
     }
 
     downloadFileToClient(data, filename) {
@@ -23,9 +21,23 @@ class dataManager {
     }
 
     saveDataToServer(data, filename) {
-        if (uploadFile) {
-            uploadFile(filename, data)
-        }
+        this.$http({
+            method: 'POST',
+            url: process.env.UPLOAD_SERVER_ROOT + '/upload_s3',
+            headers: {
+                'Access-Control-Allow-Origin': true
+            },
+            data: {
+                filename,
+                data
+            }
+        }).then((function (resp) {
+            if (resp.data && resp.data.OK) {
+                alert('Successefully uploaded')
+            } else {
+                alert('Upload error:', resp.data.error)
+            }
+        }))
     }
 
     loadFileFromServer(config) {
