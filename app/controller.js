@@ -846,20 +846,15 @@ class MainController {
         let words = region.data.words;
         if (!words) return;
 
-        let i = 0;
-        for (; i < words.length; i++) {
-            if (words[i].start > time) {
-                break;
+        words.forEach(function (word, i) {
+            if (word.start <= time && word.end >= time) {
+                let newSelectedWord = document.getElementById('word_{0}_{1}'.format(fileIndex, (i).toString()));
+
+                if (newSelectedWord) {
+                    newSelectedWord.classList.add('selected-word');
+                }
             }
-        }
-        i--;
-
-        let newSelectedWord =
-            document.getElementById('word_{0}_{1}'.format(fileIndex, (i).toString()));
-
-        if (newSelectedWord) {
-            newSelectedWord.classList.add('selected-word');
-        }
+        });
     }
 
     updateSelectedWordInFiles() {
@@ -949,7 +944,7 @@ class MainController {
 
                 let speakerId = monologue.speaker.id;
 
-                if (speakerId === constants.UNKNOWN_SPEAKER){
+                if (speakerId === constants.UNKNOWN_SPEAKER) {
                     speakerId = "";
                 }
 
@@ -1006,7 +1001,7 @@ class MainController {
                     speakerId = monologue.speaker.id.toString();
                 }
 
-                if (speakerId === constants.UNKNOWN_SPEAKER){
+                if (speakerId === constants.UNKNOWN_SPEAKER) {
                     speakerId = "";
                 }
 
