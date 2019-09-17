@@ -12,10 +12,6 @@ app.use(cors())
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))
 app.use(bodyParser.json({limit: '50mb', extended: true}))
 
-app.get('/', function (req, res) {
-  res.send('Hello World!');
-});
-
 app.post('/upload_s3', function (req, res) {
   const filename = req.body.filename
   const data = req.body.data
