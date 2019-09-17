@@ -6,7 +6,7 @@ var bodyParser = require("body-parser");
 
 const uploadFile = require('./s3')
 
-const port = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(cors())
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))
@@ -35,5 +35,4 @@ app.post('/upload_s3', function (req, res) {
   }
 })
 
-app.listen(port, function () {
-});
+app.listen(PORT, '0.0.0.0');

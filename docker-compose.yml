@@ -1,0 +1,37 @@
+version: '3'
+services:
+
+################################
+# Setup node container
+################################
+  server:
+    build: ./gecko-upload-server
+    expose:
+      - ${GECKO_SERVER_PORT}
+    environment:
+      GECKO_SERVER_PORT: ${GECKO_SERVER_PORT}
+      AWS_BUCKET: ${AWS_BUCKET}
+      AWS_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_COGNITO_POOL: ${AWS_COGNITO_POOL}
+      AWS_FOLDER: ${AWS_FOLDER}
+    ports:
+      - ${GECKO_SERVER_PORT}:${GECKO_SERVER_PORT}
+    command: npm run start
+
+################################
+# Setup client container
+################################
+  client:
+    build: ./
+    expose:
+      - ${GECKO_APP_PORT}
+    environment:
+      GECKO_APP_HOST: ${GECKO_APP_HOST}
+      GECKO_APP_PORT: ${GECKO_APP_PORT}
+    ports:
+      - ${GECKO_APP_PORT}:${GECKO_APP_PORT}
+    links:
+      - server
+    command: npm run dev
