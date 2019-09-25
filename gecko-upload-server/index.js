@@ -6,7 +6,7 @@ var bodyParser = require("body-parser");
 
 const uploadFile = require('./s3')
 
-const PORT = 3000;
+const PORT = process.env.GECKO_SERVER_CONTAINER_PORT;
 
 app.use(cors())
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))

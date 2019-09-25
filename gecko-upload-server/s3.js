@@ -12,34 +12,26 @@ if (isAwsEnabled) {
         awsConfig = {region: process.env.AWS_REGION, credentials: new AWS.CognitoIdentityCredentials({
             IdentityPoolId: process.env.AWS_COGNITO_POOL
         })}
-    } else if (process.env.AWS_ACCESS_KEY && process.env.AWS_SECRET_ACCESS_KEY) {
-        awsConfig = {
-            region: process.env.AWS_REGION, 
-            accessKeyId: process.env.AWS_ACCESS_KEY,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        }
+        AWS.config.update(awsConfig);
     }
 }
 
 let uploadFile = false
-if (awsConfig) {
-    AWS.config.update(awsConfig);
-    const s3 = new AWS.S3({apiVersion: '2006-03-01'});
-    uploadFile = (fileName, file, successCallback, failCallback) => {
-        const Key = process.env.AWS_FOLDER ? `${process.env.AWS_FOLDER}//${fileName}` : fileName
-        s3.upload({
-            Key,
-            Body: file,
-            Bucket: process.env.AWS_BUCKET,
-            ACL: 'public-read'
-            }, function(err, data) {
-            if (err) {
-                failCallback(err.message)
-            } else {
-                successCallback()
-            }
-        });
-    }
+const s3 = new AWS.S3({apiVersion: '2006-03-01'});
+uploadFile = (fileName, file, successCallback, failCallback) => {
+    const Key = process.env.AWS_FOLDER ? `${process.env.AWS_FOLDER}//${fileName}` : fileName
+    s3.upload({
+        Key,
+        Body: file,
+        Bucket: process.env.AWS_BUCKET,
+        ACL: 'public-read'
+        }, function(err, data) {
+        if (err) {
+            failCallback(err.message)
+        } else {
+            successCallback()
+        }
+    });
 }
 
 

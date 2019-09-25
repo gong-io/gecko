@@ -1,4 +1,9 @@
 version: '3'
+
+networks:
+  gecko:
+    driver: bridge
+
 services:
 
 ################################
@@ -7,17 +12,20 @@ services:
   server:
     build: ./gecko-upload-server
     expose:
-      - ${GECKO_SERVER_PORT}
+      - ${GECKO_SERVER_HOST_PORT}
     environment:
-      GECKO_SERVER_PORT: ${GECKO_SERVER_PORT}
+      GECKO_SERVER_PORT: ${GECKO_SERVER_HOST_PORT}
+      GECKO_SERVER_CONTAINER_PORT: ${GECKO_SERVER_CONTAINER_PORT}
       AWS_BUCKET: ${AWS_BUCKET}
       AWS_REGION: ${AWS_REGION}
-      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_COGNITO_POOL: ${AWS_COGNITO_POOL}
       AWS_FOLDER: ${AWS_FOLDER}
+    networks:
+      - gecko
     ports:
-      - ${GECKO_SERVER_PORT}:${GECKO_SERVER_PORT}
+      - ${GECKO_SERVER_HOST_PORT}:${GECKO_SERVER_CONTAINER_PORT}
     command: npm run start
 
 ################################
@@ -26,12 +34,13 @@ services:
   client:
     build: ./
     expose:
-      - ${GECKO_APP_PORT}
+      - ${GECKO_APP_HOST_PORT}
     environment:
       GECKO_APP_HOST: ${GECKO_APP_HOST}
-      GECKO_APP_PORT: ${GECKO_APP_PORT}
+      GECKO_APP_HOST_PORT: ${GECKO_APP_HOST_PORT}
+      GECKO_APP_CONTAINER_PORT: ${GECKO_APP_CONTAINER_PORT}
     ports:
-      - ${GECKO_APP_PORT}:${GECKO_APP_PORT}
-    links:
-      - server
+      - ${GECKO_APP_HOST_PORT}:${GECKO_APP_CONTAINER_PORT}
+    networks:
+      - gecko
     command: npm run dev
