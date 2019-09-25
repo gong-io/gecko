@@ -19,6 +19,7 @@ module.exports = {
     port: process.env.GECKO_APP_CONTAINER_PORT || 4000, // Port Number
     host: process.env.GECKO_APP_HOST || 'localhost', // Change to '0.0.0.0' for external facing server
     historyApiFallback: true,
+    disableHostCheck: true
   },
   module: {
     rules: [
