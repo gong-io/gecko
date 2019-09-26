@@ -1,4 +1,4 @@
-<NA>_00005_audio 1 00033.25 1.45 ummm -1.00
+<NA>_00005_audio 1 00033.25 1.45 ummm 0.9
 Roger_00000_audio 1 00000.03 0.06 Hi, -1.00
 Roger_00000_audio 1 00000.09 0.57 Virgil -1.00
 Roger_00000_audio 1 00000.96 0.21 good -1.00
@@ -115,7 +115,7 @@ Roger_00011_audio 1 00081.51 0.48 virtual -1.00
 Roger_00011_audio 1 00082.50 0.21 what's -1.00
 Roger_00011_audio 1 00082.71 0.12 the -1.00
 Roger_00011_audio 1 00082.83 0.45 impact -1.00
-Roger_00011_audio 1 00083.28 0.12 of -1.00
+Roger_00011_audio 1 00083.28 0.12 of 0.5
 Roger_00011_audio 1 00083.43 0.33 not -1.00
 Roger_00011_audio 1 00083.79 0.45 having -1.00
 Roger_00011_audio 1 00084.27 0.39 everyone -1.00
@@ -249,7 +249,7 @@ Roger_00016_audio 1 00146.93 0.15 have -1.00
 Roger_00016_audio 1 00147.08 0.12 your -1.00
 Roger_00016_audio 1 00147.20 0.42 attention -1.00
 Roger_00016_audio 1 00147.62 0.27 now? -1.00
-Roger_00016_audio 1 00147.89 0.36 Virgins? -1.00
+Roger_00016_audio 1 00147.89 1.36 Virgins? 0.3
 Roger_00018_audio 1 00152.98 0.48 Oh, -1.00
 Roger_00018_audio 1 00153.46 0.27 forget -1.00
 Roger_00018_audio 1 00153.73 0.15 about -1.00
