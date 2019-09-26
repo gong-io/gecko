@@ -26,11 +26,11 @@ class dataManager {
             url = process.env.UPLOAD_SERVER_ROOT
         } else {
             url = window.location.protocol + '//' + window.location.hostname
+            if (process.env.GECKO_SERVER_HOST_PORT) {
+                url += ':' + process.env.GECKO_SERVER_HOST_PORT
+            }
         }
 
-        if (process.env.GECKO_SERVER_HOST_PORT) {
-            url += ':' + process.env.GECKO_SERVER_HOST_PORT
-        }
         this.$http({
             method: 'POST',
             url:  url + '/upload_s3',
