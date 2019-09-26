@@ -4,7 +4,7 @@
 
  Gecko allows efficient and effective segmentation of the voice signal by speaker as well as annotation of the linguistic content of the conversation. A key feature of Gecko is the presentation of the output of automatic segmentation and transcription systems in an intuitive user interface for editing. Gecko allows annotation of Voice Activity Detection (VAD), Diarization, Speaker Identiﬁcation and ASR outputs on a large scale, and leads to faster and more accurate annotated datasets. 
  
- For an overview of the main features, see this [video](https://youtu.be/CBYA0YC1NBI) and the corresponding [paper](./docs/Gecko_intersepeech2019_proposal.pdf). \
+ For an overview of the main features, see this [video](https://youtu.be/CBYA0YC1NBI) and the corresponding [paper](./docs/gecko_interspeech_2019_paper.pdf). \
  You can also play with the online [working platform](https://gong-io.github.io/gecko/).
 
 ## Features

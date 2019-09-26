@@ -6,9 +6,10 @@ import './third-party/soundtouch.js'
 
 import {config} from './config.js'
 import {PUNCTUATION_TYPE} from "./constants";
+
 var Diff = require('diff');
 
-var demoJson = require('../samples/sample');
+var demoJson = require('../samples/demo');
 
 const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
 const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
@@ -323,7 +324,6 @@ class MainController {
                 region.data.fileIndex = self.selectedFileIndex;
                 // region.data.speaker = constants.UNKNOWN_SPEAKER;
                 region.data.speaker = [];
-                region.data.words = [{start: 0, end: 0, text: "XXX"}];
 
                 region.data.initFinished = false;
             } else {
@@ -332,6 +332,10 @@ class MainController {
 
                 // when file is added by dragging, update-end will take care of history
                 self.addHistory(region);
+            }
+            //TODO: creating a new word is bad if we want to keep the segment clear.
+            if (!region.data.words || region.data.words.length === 0) {
+                region.data.words = [{start: region.start, end: region.end, text: ""}];
             }
 
             var elem = region.element;
@@ -612,6 +616,11 @@ class MainController {
     // change region visually
     regionUpdated(region) {
 
+        // fix first and last words
+        let words = region.data.words;
+        words[0].start = region.start;
+        words[words.length - 1].end = region.end;
+
         region.element.style.background = "";
 
         if (region.data.speaker.length === 0) {
@@ -645,12 +654,13 @@ class MainController {
         // and then handle "words" correctly
         return {
             id: region.id,
-            data: {
-                initFinished: region.data.initFinished,
-                words: JSON.parse(JSON.stringify(region.data.words)),
-                fileIndex: region.data.fileIndex,
-                speaker: region.data.speaker.slice() // copy by value
-            },
+            // data: {
+            //     initFinished: region.data.initFinished,
+            //     words: JSON.parse(JSON.stringify(region.data.words)),
+            //     fileIndex: region.data.fileIndex,
+            //     speaker: region.data.speaker.slice() // copy by value
+            // },
+            data: JSON.parse(JSON.stringify(region.data)),
             start: region.start,
             end: region.end,
             drag: region.drag,
@@ -776,6 +786,8 @@ class MainController {
     }
 
     jumpNextDiscrepancy() {
+        if (!this.discrepancies) return;
+
         let time = this.wavesurfer.getCurrentTime();
 
         let i = 0;
@@ -938,7 +950,11 @@ class MainController {
 
                 let speakerId = monologue.speaker.id;
 
-                let speakers = String(speakerId).split(constants.SPEAKERS_SEPARATOR);
+                if (speakerId === constants.UNKNOWN_SPEAKER){
+                    speakerId = "";
+                }
+
+                let speakers = String(speakerId).split(constants.SPEAKERS_SEPARATOR).filter(x => x);
 
                 // TODO: remove and put colors as metadata outside monologues
                 // also, maybe save representativeStart,representativeStart there too
@@ -989,6 +1005,10 @@ class MainController {
                 var speakerId = "";
                 if (monologue.speaker) {
                     speakerId = monologue.speaker.id.toString();
+                }
+
+                if (speakerId === constants.UNKNOWN_SPEAKER){
+                    speakerId = "";
                 }
 
                 var start = monologue.start;
@@ -1749,7 +1769,7 @@ class MainController {
         let lastMonologue = -1;
 
         words.sort(function (x, y) {
-            if (x.start > y.start) {
+            if (x.start >= y.start) {
                 return 1;
             }
 
@@ -1899,21 +1919,25 @@ class MainController {
     }
 
     wordChanged(regionIndex, wordIndex) {
-        let newWord = this.currentRegions[regionIndex].data.words[wordIndex]
-        newWord.wasEdited = true
+        let currentRegion = this.currentRegions[regionIndex];
+        let newWord = currentRegion.data.words[wordIndex];
+        newWord.wasEdited = true;
         if (newWord.text.length) {
-            let newWordSplited = newWord.text.split(' ')
+            let newWordSplited = newWord.text.split(' ');
             if (newWordSplited.length > 1) {
-                this.currentRegions[regionIndex].data.words[wordIndex].text = newWordSplited[0]
+                currentRegion.data.words[wordIndex].text = newWordSplited[0];
                 for (let i = newWordSplited.length - 1; i >= 1; i--) {
-                    let wordCopy = Object.assign({}, this.currentRegions[regionIndex].data.words[wordIndex])
-                    wordCopy.text = newWordSplited[i]
-                    this.currentRegions[regionIndex].data.words.splice(wordIndex + 1, 0, wordCopy)
+                    let wordCopy = Object.assign({}, currentRegion.data.words[wordIndex]);
+                    wordCopy.text = newWordSplited[i];
+                    currentRegion.data.words.splice(wordIndex + 1, 0, wordCopy);
                 }
             }
         } else {
-            this.currentRegions[regionIndex].data.words.splice(wordIndex, 1)
+            currentRegion.data.words.splice(wordIndex, 1);
         }
+
+        this.addHistory(currentRegion);
+        this.undoStack.push([currentRegion.id]);
     }
 
     wordClick(word, e) {
