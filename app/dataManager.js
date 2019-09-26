@@ -5,7 +5,7 @@ class dataManager {
     }
 
     isS3Enabled () {
-        return process.env.UPLOAD_SERVER_ROOT && process.env.UPLOAD_SERVER_ROOT.length
+        return process.env.GECKO_APP_HOST && process.env.GECKO_APP_HOST.length && process.env.GECKO_SERVER_HOST_PORT && process.env.GECKO_SERVER_HOST_PORT.length 
     }
 
     downloadFileToClient(data, filename) {
@@ -21,9 +21,19 @@ class dataManager {
     }
 
     saveDataToServer(data, filename) {
+        let url
+        if (!process.env.GECKO_APP_HOST.includes('http')) {
+            url = window.location.protocol+ '//' + process.env.GECKO_APP_HOST
+        } else {
+            url = process.env.GECKO_APP_HOST
+        }
+
+        if (process.env.GECKO_SERVER_HOST_PORT) {
+            url += ':' + process.env.GECKO_SERVER_HOST_PORT
+        }
         this.$http({
             method: 'POST',
-            url: process.env.UPLOAD_SERVER_ROOT + '/upload_s3',
+            url:  url + '/upload_s3',
             headers: {
                 'Access-Control-Allow-Origin': true
             },
