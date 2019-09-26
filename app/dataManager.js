@@ -22,10 +22,10 @@ class dataManager {
 
     saveDataToServer(data, filename) {
         let url
-        if (!process.env.GECKO_APP_HOST.includes('http')) {
-            url = window.location.protocol+ '//' + process.env.GECKO_APP_HOST
+        if (process.env.UPLOAD_SERVER_ROOT) {
+            url = process.env.UPLOAD_SERVER_ROOT
         } else {
-            url = process.env.GECKO_APP_HOST
+            url = window.location.protocol + '//' + window.location.hostname
         }
 
         if (process.env.GECKO_SERVER_HOST_PORT) {
