@@ -1,13 +1,12 @@
 FROM node:8.7.0-alpine
 
-RUN mkdir -p /srv/app/gecko-front
-WORKDIR /srv/app/gecko-front
+RUN mkdir -p /srv/app/gecko
+WORKDIR /srv/app/gecko
 
 COPY package*.json ./
 RUN npm install
 
 COPY . .
+RUN npm run build
 
-EXPOSE 4000
-
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "server"]

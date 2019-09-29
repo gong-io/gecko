@@ -21,19 +21,9 @@ class dataManager {
     }
 
     saveDataToServer(data, filename) {
-        let url
-        if (process.env.UPLOAD_SERVER_ROOT) {
-            url = process.env.UPLOAD_SERVER_ROOT
-        } else {
-            url = window.location.protocol + '//' + window.location.hostname
-            if (process.env.GECKO_SERVER_HOST_PORT) {
-                url += ':' + process.env.GECKO_SERVER_HOST_PORT
-            }
-        }
-
         this.$http({
             method: 'POST',
-            url:  url + '/upload_s3',
+            url:  '/upload_s3',
             headers: {
                 'Access-Control-Allow-Origin': true
             },

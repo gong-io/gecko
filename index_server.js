@@ -4,10 +4,11 @@ var app = express();
 var cors = require('cors')
 var bodyParser = require("body-parser");
 
-const uploadFile = require('./s3')
+const uploadFile = require('./gecko-upload-server/s3')
 
 const PORT = process.env.GECKO_SERVER_CONTAINER_PORT;
 
+app.use(express.static('build'))
 app.use(cors())
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))
 app.use(bodyParser.json({limit: '50mb', extended: true}))

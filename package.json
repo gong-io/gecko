@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev-old": "node_modules/.bin/webpack-dev-server --watch",
     "dev": "webpack-dev-server",
-    "build": "webpack"
+    "build": "webpack",
+    "server": "node index_server.js"
   },
   "author": "",
   "license": "ISC",
@@ -20,7 +21,12 @@
     "jquery": "^3.4.1",
     "ngstorage": "^0.3.11",
     "underscore": "^1.9.1",
-    "wavesurfer.js": "^3.0.0"
+    "wavesurfer.js": "^3.0.0",
+    "aws-sdk": "^2.528.0",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.1.0",
+    "express": "^4.17.1"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
