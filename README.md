@@ -22,12 +22,26 @@ Gecko is written in Javascript and is based on Angular.js V1.X.
  The audio player uses the popular [wavesurfer.js](https://github.com/katspaugh/wavesurfer.js) library.
 
 
-
 ## Deployment and Installation
 See [this page](INSTALLATION.md).
 
 ## Publications
-Gecko will be presented in Interspeech 2019, the world's leading Speech Technology conference. See this [video](https://youtu.be/CBYA0YC1NBI) for an overview and the accepted [paper](./docs/Gecko_intersepeech2019_proposal.pdf).
+Gecko was presented in Interspeech 2019, the world's leading Speech Technology conference. See this [video](https://youtu.be/CBYA0YC1NBI) for an overview and the accepted [paper](./docs/Gecko_intersepeech2019_proposal.pdf).
+
+## Citation
+If you use `Gecko` please use the following
+
+```bibtex
+    @inproceedings{Gecko2019,
+      Author = {Golan Levy, Raquel Sitman, Ido Amir, Eduard Golshtein, Ran Mochary, Eilon Reshef, Reichart, Omri Allouche},
+      Title = {GECKO - A Tool for Effective Annotation of Human Conversations},
+      Booktitle = {20th Annual Conference of the International Speech Communication Association, Interspeech 2019},
+      Year = {2019},
+      Month = {September},
+      Address = {Herzliya, Israel},
+      Url = {https://github.com/gong-io/gecko/blob/master/docs/gecko_interspeech_2019_paper.pdf}
+    }
+```
 
 ## Contribution
 See [this page](CONTRIBUTING.md).
