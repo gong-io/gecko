@@ -14,7 +14,7 @@
 <nav class="navbar navbar-inverse" style="margin-bottom: 0">
     <div class="container">
         <div class="navbar-header">
-            <img id="logo" src="cf602c540f0db52121e748c0b95886c2.svg" alt="Gecko">
+            <img id="logo" src="b39f101ac0cde22f57db8e075f1dc762.svg" alt="Gecko">
         </div>
         <div class="navbar-header">
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
@@ -48,7 +48,7 @@
                         <i class="glyphicon glyphicon-open"></i>
                         Load
                     </a></li>
-                <li class="dropdown">
+                <li class="dropdown" ng-if="!ctrl.isAwsEnabled">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                        aria-expanded="false">
                         <i class="glyphicon glyphicon-save"></i>
@@ -70,6 +70,14 @@
                         </a></li>
                         <li role="separator" class="divider"></li>
                     </ul>
+                </li>
+                <li class="dropdown" ng-if="ctrl.isAwsEnabled">
+                    <a href="#" 
+                       class="dropdown-toggle" role="button"
+                       ng-click="ctrl.saveData()">
+                        <i class="glyphicon glyphicon-save"></i>
+                        Save
+                    </a>
                 </li>
 
                 <li>

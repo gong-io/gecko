@@ -4,6 +4,10 @@ class dataManager {
         this.$q = $q;
     }
 
+    isS3Enabled () {
+        return process.env.GECKO_APP_HOST && process.env.GECKO_APP_HOST.length && process.env.GECKO_SERVER_HOST_PORT && process.env.GECKO_SERVER_HOST_PORT.length 
+    }
+
     downloadFileToClient(data, filename) {
         var blob = new Blob([data], {type: 'text/json'});
         var e = document.createEvent('MouseEvents');
@@ -16,8 +20,24 @@ class dataManager {
         a.dispatchEvent(e);
     }
 
-    saveDataToServer(data, call_id) {
-
+    saveDataToServer(data, filename) {
+        this.$http({
+            method: 'POST',
+            url:  '/upload_s3',
+            headers: {
+                'Access-Control-Allow-Origin': true
+            },
+            data: {
+                filename,
+                data
+            }
+        }).then((function (resp) {
+            if (resp.data && resp.data.OK) {
+                alert(`File ${filename} successefully uploaded`)
+            } else {
+                alert('Upload error:', resp.data.error)
+            }
+        }))
     }
 
     loadFileFromServer(config) {
