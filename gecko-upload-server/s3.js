@@ -19,7 +19,7 @@ if (isAwsEnabled) {
 let uploadFile = false
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 uploadFile = (fileName, file, successCallback, failCallback) => {
-    const Key = process.env.AWS_FOLDER ? `${process.env.AWS_FOLDER}//${fileName}` : fileName
+    const Key = process.env.AWS_FOLDER ? `${process.env.AWS_FOLDER}/${fileName}` : fileName
     s3.upload({
         Key,
         Body: file,
