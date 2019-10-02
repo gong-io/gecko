@@ -2,6 +2,7 @@ var webpack = require('webpack')
 const path = require('path')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   devtool: 'eval-source-map',
@@ -15,9 +16,10 @@ module.exports = {
     contentBase: 'build/', // Relative directory for base of server
     publicPath: '/', // Live-reload
     inline: true,
-    port: process.env.PORT || 3000, // Port Number
-    host: 'localhost', // Change to '0.0.0.0' for external facing server
+    port: process.env.GECKO_APP_CONTAINER_PORT || 4000, // Port Number
+    host: process.env.GECKO_APP_HOST || 'localhost', // Change to '0.0.0.0' for external facing server
     historyApiFallback: true,
+    disableHostCheck: true
   },
   module: {
     rules: [
@@ -70,6 +72,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: './static/index.html'
-    })
+    }),
+    new Dotenv()
   ]
 }
