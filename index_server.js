@@ -3,6 +3,7 @@ var express = require('express');
 var app = express();
 var cors = require('cors')
 var bodyParser = require("body-parser");
+var proxy = require('express-http-proxy');
 
 const uploadFile = require('./gecko-upload-server/s3')
 
@@ -12,6 +13,8 @@ app.use(express.static('build'))
 app.use(cors())
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))
 app.use(bodyParser.json({limit: '50mb', extended: true}))
+
+app.use('/s3_files', proxy(process.env.AWS_BUCKET + '.s3.amazonaws.com/'));
 
 app.post('/upload_s3', function (req, res) {
   const filename = req.body.filename
