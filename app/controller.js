@@ -71,7 +71,7 @@ class MainController {
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
-        this.isServerMode = dataManager.isS3Enabled()
+        this.isServerMode = false
     }
 
     loadApp(config) {
