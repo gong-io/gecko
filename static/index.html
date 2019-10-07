@@ -48,7 +48,7 @@
                         <i class="glyphicon glyphicon-open"></i>
                         Load
                     </a></li>
-                <li class="dropdown" ng-if="!ctrl.isAwsEnabled">
+                <li class="dropdown" ng-if="!ctrl.isServerMode">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                        aria-expanded="false">
                         <i class="glyphicon glyphicon-save"></i>
@@ -71,7 +71,7 @@
                         <li role="separator" class="divider"></li>
                     </ul>
                 </li>
-                <li class="dropdown" ng-if="ctrl.isAwsEnabled">
+                <li class="dropdown" ng-if="ctrl.isServerMode">
                     <a href="#" 
                        class="dropdown-toggle" role="button"
                        ng-click="ctrl.saveData()">
