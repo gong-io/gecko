@@ -181,8 +181,10 @@ class MainController {
                 self.jumpRegion(false);
             } else if (e.key === "ArrowLeft") {
                 self.wavesurfer.skip(-1);
+                event.preventDefault();
             } else if (e.key === "ArrowRight") {
                 self.wavesurfer.skip(1);
+                event.preventDefault();
             } else if (e.key === "z" && isDownCtrl) {
                 self.undo();
             } else if (e.key === 'Enter') {
