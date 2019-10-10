@@ -72,7 +72,7 @@
                     </ul>
                 </li>
                 <li class="dropdown" ng-if="ctrl.isServerMode">
-                    <a href="#" 
+                    <a href="#"
                        class="dropdown-toggle" role="button"
                        ng-click="ctrl.saveData()">
                         <i class="glyphicon glyphicon-save"></i>
@@ -302,10 +302,14 @@
                                        value="{{speaker}}"
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
-                                       ng-disabled="!ctrl.selectedRegion">
-                                <!--                                Didn't use CSS because it looks bad:-->
-                                <span title="{{speaker}}">{{speaker | limitTo : 20}}</span><span
-                                    ng-show="{{speaker.slice(20)}}">...</span>
+                                       ng-disabled="!ctrl.selectedRegion"
+                                style="margin-bottom: 0px">
+                                <span editable
+                                      changed="ctrl.speakerNameChanged(oldText,newText)"
+                                      ng-model="speaker"
+                                      title="{{speaker}}"
+                                class="speaker-legend">
+                                </span>
                                 <div class="pull-right">
                                     <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
                                                representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>

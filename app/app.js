@@ -75,7 +75,14 @@ speechRecognition.directive("editable", function () {
                     ngModel.$setViewValue(newText);
 
                     if (scope.changed) {
-                        scope.changed()
+                        let returnValue = scope.changed({oldText: oldText, newText: newText})
+
+                        if (returnValue === false){
+                            ngModel.$setViewValue(oldText);
+                            // force render
+                            // probably because old == new so it does not render
+                            ngModel.$render();
+                        }
                     }
                 }
             }
@@ -85,9 +92,15 @@ speechRecognition.directive("editable", function () {
                 element.text(ngModel.$viewValue || "");
             };
 
+            element.bind('click', function () {
+                event.stopPropagation();
+                event.preventDefault();
+            });
+
             element.bind("blur", function () {
                 scope.$apply(read);
             });
+
             element.bind("keydown keypress", function (e) {
                 if (e.which === 13 || e.which === 27) {
                     this.blur();
@@ -96,6 +109,7 @@ speechRecognition.directive("editable", function () {
 
                 e.stopPropagation()
             });
+
 
             element.bind("keydown", function (e) {
                 const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey

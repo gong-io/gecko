@@ -198,3 +198,10 @@ a:hover, a:focus {
 [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
     display: none !important;
 }
+
+.speaker-legend{
+    display:inline-block;
+    width:150px;
+    white-space: nowrap;
+    overflow: hidden;
+}
