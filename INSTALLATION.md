@@ -1,10 +1,6 @@
 ## Deployment
 
-Copy the following to an annotator machine:
-* index.html
-* bundle.js
-* 'static' folder
-
+Copy the `build` folder to an annotator machine.
 Run index.html
 
 
