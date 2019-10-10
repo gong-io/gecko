@@ -8,7 +8,8 @@
     "dev-old": "node_modules/.bin/webpack-dev-server --watch",
     "dev": "webpack-dev-server",
     "build": "webpack",
-    "server": "node index_server.js"
+    "server": "node index_server.js",
+    "deploy": "webpack && git subtree push --prefix build origin gh-pages"
   },
   "author": "",
   "license": "ISC",

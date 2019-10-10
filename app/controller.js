@@ -87,7 +87,7 @@ class MainController {
 
         const audio = urlParams.get('audio')
         let formats = ['rttm', 'tsv', 'json', 'ctm']
-        formats = formats.map((f) => { 
+        formats = formats.map((f) => {
             if (urlParams.get(f)) {
                 return {
                     format: f,
@@ -716,11 +716,23 @@ class MainController {
 
 
     undo() {
+        let self = this;
         if (!this.undoStack.length) {
             return;
         }
 
         var regionIds = this.undoStack.pop();
+
+        if (regionIds[0] === constants.SPEAKER_NAME_CHANGED_OPERATION_ID) {
+            let fileIndex = regionIds[1];
+            let oldSpeaker = regionIds[2];
+            let newSpeaker = regionIds[3];
+
+            self.updateLegend(fileIndex, newSpeaker, oldSpeaker);
+
+            regionIds = regionIds[4];
+        }
+
 
         for (let regionId of regionIds) {
 
@@ -1444,14 +1456,37 @@ class MainController {
         this.regionUpdated(self.selectedRegion);
     }
 
-    // segmentSpeakerChanged() {
-    //     var self = this;
-    //
-    //     self.addHistory(self.selectedRegion);
-    //     self.undoStack.push([self.selectedRegion.id]);
-    //
-    //     this.regionUpdated(self.selectedRegion);
-    // }
+    speakerNameChanged(oldText, newText) {
+        let self = this;
+
+        // Check that there is no duplicate speaker.
+        if (self.filesData[self.selectedFileIndex].legend[newText] !== undefined) return false;
+
+        self.updateLegend(self.selectedFileIndex, oldText, newText);
+
+        let changedRegions = [];
+        self.iterateRegions(region => {
+            let index = region.data.speaker.indexOf(oldText);
+
+            if (index > -1) {
+                region.data.speaker[index] = newText;
+                self.addHistory(region);
+                changedRegions.push(region.id);
+            }
+        }, self.selectedFileIndex);
+
+        // notify the undo mechanism to change the legend as well as the regions
+        self.undoStack.push([constants.SPEAKER_NAME_CHANGED_OPERATION_ID, self.selectedFileIndex, oldText, newText, changedRegions]);
+    }
+
+    updateLegend(fileIndex, oldSpeaker, newSpeaker) {
+        let self = this;
+        let fileData = self.filesData[fileIndex];
+
+        fileData.legend[newSpeaker] = fileData.legend[oldSpeaker];
+        delete fileData.legend[oldSpeaker];
+        fileData.legend = self.sortLegend(fileData.legend);
+    }
 
     newSpeakerKeyUp(e) {
         if (e.keyCode === 13) {

@@ -3,3 +3,4 @@ node_modules
 *.db
 .idea/
 .env
+/private_samples/
