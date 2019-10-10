@@ -1,6 +1,7 @@
 ## Deployment
 
 Copy the `build` folder to an annotator machine.
+
 Run index.html
 
 
