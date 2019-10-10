@@ -17,17 +17,17 @@
     "angular": "^1.7.8",
     "angular-ui-bootstrap": "^2.5.6",
     "angularjs": "0.0.1",
+    "aws-sdk": "^2.528.0",
+    "body-parser": "^1.19.0",
     "bootstrap3": "^3.3.5",
+    "cors": "^2.8.5",
     "diff": "^4.0.1",
+    "dotenv": "^8.1.0",
+    "express": "^4.17.1",
     "jquery": "^3.4.1",
     "ngstorage": "^0.3.11",
     "underscore": "^1.9.1",
-    "wavesurfer.js": "^3.0.0",
-    "aws-sdk": "^2.528.0",
-    "body-parser": "^1.19.0",
-    "cors": "^2.8.5",
-    "dotenv": "^8.1.0",
-    "express": "^4.17.1"
+    "wavesurfer.js": "^3.0.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",

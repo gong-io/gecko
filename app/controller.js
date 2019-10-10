@@ -71,12 +71,58 @@ class MainController {
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
-        this.isAwsEnabled = dataManager.isS3Enabled()
+        this.isServerMode = false
     }
 
     loadApp(config) {
-        if (config.mode === 'server') {
-            this.loadServerMode(config);
+        const urlParams = new URLSearchParams(window.location.search)
+        const saveMode = urlParams.get('save_mode')
+        if (saveMode) {
+            if (saveMode === 'server') {
+                this.isServerMode = true
+            } else if (saveMode === 'local') {
+                this.isServerMode = false
+            }
+        }
+
+        const audio = urlParams.get('audio')
+        let formats = ['rttm', 'tsv', 'json', 'ctm']
+        formats = formats.map((f) => { 
+            if (urlParams.get(f)) {
+                return {
+                    format: f,
+                    url: urlParams.get(f)
+                }
+            }
+            return null
+        }).filter(Boolean)
+        let serverConfig = null
+        if (audio || formats.length) {
+            serverConfig = {
+                mode: 'server',
+                ctms: []
+            }
+
+            if (audio) {
+                serverConfig.audio = {
+                    url: audio
+                }
+            }
+
+            if (formats.length) {
+                formats.forEach(f => {
+                    const fileName = f.url.split('/').pop().split('.')[0]
+                    serverConfig.ctms = [
+                        {
+                            url: f.url,
+                            fileName: fileName + '.' + f.format
+                        }
+                    ]
+                })
+            }
+        }
+        if (config.mode === 'server' || serverConfig) {
+            this.loadServerMode(serverConfig ? serverConfig : config);
         } else {
             this.loadClientMode();
         }
@@ -1190,7 +1236,7 @@ class MainController {
             const current = this.filesData[i]
             const splName = current.filename.split('.')
             const extension = splName[splName.length - 1]
-            const saveFunction = this.isAwsEnabled ? this.saveS3.bind(this) : this.save.bind(this)
+            const saveFunction = this.isServerMode ? this.saveS3.bind(this) : this.save.bind(this)
             switch (extension) {
                 case 'rttm':
                     saveFunction('rttm', this.convertRegionsToRTTM.bind(this))
@@ -1676,7 +1722,9 @@ class MainController {
     }
 
     readGongJson(data) {
-        data = JSON.parse(data)
+        if (typeof data === 'string') {
+            data = JSON.parse(data)
+        }
 
         // this.EDER = data['EDER'];
         //this.segmentation = data['Segmentation'];

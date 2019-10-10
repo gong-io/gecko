@@ -23,7 +23,6 @@ services:
       AWS_COGNITO_POOL: ${AWS_COGNITO_POOL}
       AWS_FOLDER: ${AWS_FOLDER}
       GECKO_APP_HOST: ${GECKO_APP_HOST}
-      GECKO_APP_CONTAINER_PORT: ${GECKO_APP_CONTAINER_PORT}
     networks:
       - gecko
     ports:
