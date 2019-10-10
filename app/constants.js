@@ -72,3 +72,5 @@ export const EXTRA_DISCREPANCY_TIME = 1;
 export const PUNCTUATIONS = ". ! , … ?".split(' ');
 export const PUNCTUATION_TYPE = "PUNCTUATION"
 export const WORD_TYPE = "WORD"
+
+export const TOLERANCE = 0.00001;
