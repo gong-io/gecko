@@ -21,10 +21,17 @@
 }
 
 .annotation-label {
-    padding: 3px 10px;
+    padding: 3px 10px 0px;
     margin-bottom: 0;
     border: 1px solid #f1f1f1;
     border-collapse: collapse;
+}
+
+.speaker-legend{
+    display:inline-block;
+    max-width:120px;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 p.highlighted {
@@ -197,11 +204,4 @@ a:hover, a:focus {
 
 [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
     display: none !important;
-}
-
-.speaker-legend{
-    display:inline-block;
-    width:150px;
-    white-space: nowrap;
-    overflow: hidden;
 }

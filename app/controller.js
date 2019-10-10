@@ -181,8 +181,10 @@ class MainController {
                 self.jumpRegion(false);
             } else if (e.key === "ArrowLeft") {
                 self.wavesurfer.skip(-1);
+                event.preventDefault();
             } else if (e.key === "ArrowRight") {
                 self.wavesurfer.skip(1);
+                event.preventDefault();
             } else if (e.key === "z" && isDownCtrl) {
                 self.undo();
             } else if (e.key === 'Enter') {
@@ -760,7 +762,6 @@ class MainController {
         this.silence = this.calcSilenceRegion();
         this.setCurrentTime();
         this.calcCurrentRegions();
-        this.updateSelectedWordInFiles();
         this.updateSelectedDiscrepancy();
     }
 
@@ -792,6 +793,8 @@ class MainController {
         for (let i = 0; i < this.filesData.length; i++) {
             this.currentRegions[i] = this.getCurrentRegion(i);
         }
+
+        this.$scope.$$postDigest(this.updateSelectedWordInFiles.bind(this));
     }
 
     getCurrentRegion(fileIndex) {
@@ -799,7 +802,7 @@ class MainController {
 
         var time = this.wavesurfer.getCurrentTime();
         this.iterateRegions(function (r) {
-            if (time >= r.start && time <= r.end) {
+            if (time >= r.start - constants.TOLERANCE && time <= r.end + constants.TOLERANCE) {
                 region = r;
             }
         }, fileIndex);
@@ -1070,7 +1073,7 @@ class MainController {
 
                 // check overlapping with accuracy up to 5 decimal points
                 // else if (last_end > start + 0.00001) {
-                if (last_end > start + 0.00001) {
+                if (last_end > start + constants.TOLERANCE) {
                     console.error("overlapping monologues. file index: {0} time: {1}".format(fileIndex, last_end.toFixed(2)));
                 }
 
@@ -1299,7 +1302,7 @@ class MainController {
                         .format(self.filesData[fileIndex].filename, region.start, region.end);
                 }
 
-                if (last_end > region.start + 0.00001) {
+                if (last_end > region.start + constants.TOLERANCE) {
                     throw "Overlapping in file: {0}. \n Time: {1}".format(self.filesData[fileIndex].filename, last_end.toFixed(2));
                 }
                 last_end = region.end;
@@ -2018,29 +2021,46 @@ class MainController {
         this.undoStack.push([currentRegion.id]);
     }
 
+    seek(time, leanTo) {
+        let offset = 0;
+
+        if (leanTo === 'right'){
+            offset =  0.0001;
+        }
+        else if(leanTo === 'left'){
+            offset = - 0.0001;
+        }
+
+        this.wavesurfer.seekTo((time + offset) / this.wavesurfer.getDuration());
+    }
+
     wordClick(word, e) {
         const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
         const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
         const isDownCtrl = isMacMeta || isOtherControl
         if (isDownCtrl) {
-            this.wavesurfer.seekTo(word.start / this.wavesurfer.getDuration());
+            this.seek(word.start, 'right');
         }
         e.preventDefault()
         e.stopPropagation()
     }
 
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
+        const currentRegion = this.currentRegions[regionIndex];
+        const words = currentRegion.data.words;
+
         if (keys === 'space') {
             this.playPause()
         } else if (keys === 'ArrowRight') {
-            let nextIndex = wordIndex + 1
-            if (nextIndex < this.currentRegions[regionIndex].data.words.length) {
-                const nextWord = document.getElementById(`word_${regionIndex}_${nextIndex}`)
-                nextWord.focus()
+            let nextIndex = wordIndex + 1;
+            if (nextIndex < words.length) {
+                const nextWord = document.getElementById(`word_${regionIndex}_${nextIndex}`);
+                nextWord.focus();
+                // this.seek(words[nextIndex].start, 'right');
             } else {
-                var nextRegion = this.findClosestRegionToTime(this.currentRegions[regionIndex].data.fileIndex, this.currentRegions[regionIndex].end)
+                var nextRegion = this.getRegion(currentRegion.next);
                 if (nextRegion) {
-                    this.wavesurfer.setCurrentTime(nextRegion.start)
+                    this.seek(nextRegion.data.words[0].start, 'right');
                     this.$timeout(() => {
                         const nextWord = document.getElementById(`word_${regionIndex}_0`)
                         if (nextWord) {
@@ -2054,12 +2074,13 @@ class MainController {
             if (prevIndex >= 0) {
                 const prevWord = document.getElementById(`word_${regionIndex}_${prevIndex}`)
                 prevWord.focus()
+                // this.seek(words[prevIndex].start, 'right');
             } else {
-                var prevRegion = this.findClosestRegionToTimeBackward(this.currentRegions[regionIndex].data.fileIndex, this.currentRegions[regionIndex].end)
+                var prevRegion = this.getRegion(currentRegion.prev);
                 if (prevRegion) {
-                    this.wavesurfer.setCurrentTime(prevRegion.end)
+                    const lastIndex = prevRegion.data.words.length - 1;
+                    this.seek(prevRegion.data.words[lastIndex].start, 'right');
                     this.$timeout(() => {
-                        const lastIndex = this.currentRegions[regionIndex].data.words.length - 1
                         const prevWord = document.getElementById(`word_${regionIndex}_${lastIndex}`)
                         if (prevWord) {
                             prevWord.focus()
