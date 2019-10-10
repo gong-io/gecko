@@ -2,7 +2,7 @@
 
 Copy the `build` folder to an annotator machine.
 
-Run index.html
+Run `index.html`
 
 
 ## Installation
@@ -13,5 +13,3 @@ Install Node.js
 npm install
 npm run dev
 ```
-
-Run index.html
