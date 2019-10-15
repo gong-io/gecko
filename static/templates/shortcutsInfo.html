@@ -9,7 +9,7 @@
     <div ng-repeat="shortcut in shortcuts"
          class="row" style="align-items:center; margin-bottom:2em">
         <div class="col-md-12">
-            <b>{{shortcut.key}}:</b> {{shortcut.desc}}
+            <p><span ng-bind-html="shortcut.key | to_trusted"></span>: {{ shortcut.desc }}</p>
         </div>
     </div>
 

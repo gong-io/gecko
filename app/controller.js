@@ -7,6 +7,8 @@ import './third-party/soundtouch.js'
 import {config} from './config.js'
 import {PUNCTUATION_TYPE} from "./constants";
 
+import Shortcuts from './shortcuts'
+
 var Diff = require('diff');
 
 var demoJson = require('../samples/demo');
@@ -72,6 +74,8 @@ class MainController {
         this.$scope = $scope;
         this.$timeout = $timeout
         this.isServerMode = false
+        this.shortcuts = new Shortcuts(this, constants)
+        this.shortcuts.bindKeys()
     }
 
     loadApp(config) {
@@ -152,7 +156,7 @@ class MainController {
 
         var self = this;
 
-        document.onkeydown = function (e) {
+        document.onkeydown = (e) => {
             if (e.key === 'Escape') {
                 if (document.activeElement) {
                     document.activeElement.blur();
@@ -160,54 +164,11 @@ class MainController {
                 return;
             }
 
-            const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
-            const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
-            const isDownCtrl = isMacMeta || isOtherControl
-
-            // wavesurfer does not get focus for some reason, so body it is
-            // if (e.target.nodeName !== 'BODY') return;
-            if (e.target.type === 'text') return;
-
-            if (e.key === " ") {
-                e.preventDefault();
-                self.playPause();
-            } else if (e.key === "Delete" || e.key === "Backspace") {
-                self.deleteRegionAction(self.selectedRegion);
-            } else if (e.key === 'ArrowRight' && isDownCtrl) {
+            // this.shortcuts.checkKeys(e)
+            this.$scope.$evalAsync()
+            /* if (e.key === 'ArrowRight' && isDownCtrl) {
                 self.jumpNextDiscrepancy();
-            } else if (e.key === 'ArrowRight' && e.shiftKey) {
-                self.jumpRegion(true);
-            } else if (e.key === 'ArrowLeft' && e.shiftKey) {
-                self.jumpRegion(false);
-            } else if (e.key === "ArrowLeft") {
-                self.wavesurfer.skip(-1);
-                event.preventDefault();
-            } else if (e.key === "ArrowRight") {
-                self.wavesurfer.skip(1);
-                event.preventDefault();
-            } else if (e.key === "z" && isDownCtrl) {
-                self.undo();
-            } else if (e.key === 'Enter') {
-                self.playRegion();
-            } else if (e.which === 219 && isDownCtrl) {
-                e.preventDefault()
-                self.wavesurfer.skip(-5)
-            } else {
-                let number = parseInt(e.key);
-                if (!isNaN(number) && number >= 1 && number <= 9) {
-                    let index = number - 1;
-                    if (self.selectedRegion) {
-                        let fileIndex = self.selectedRegion.data.fileIndex;
-                        let speakers = Object.keys(self.filesData[fileIndex].legend);
-                        if (index < speakers.length) {
-                            self.speakerChanged(speakers[index]);
-                        }
-                    }
-                }
-            }
-
-            self.$scope.$evalAsync();
-
+            } */
         };
 
         this.wavesurferElement.onclick = function (e) {
@@ -1981,20 +1942,7 @@ class MainController {
                 $scope.ok = function () {
                     $uibModalInstance.close();
                 };
-
-                //TODO: prettify the html by integrating symbols
-                $scope.shortcuts = [
-                    {'key': 'Space bar', 'desc': 'Play/Pause'},
-                    {'key': 'Enter', 'desc': 'Play segment'},
-                    {'key': 'Right/Left Arrow', 'desc': 'Skip forward/backward'},
-                    {'key': 'Shift + Right/Left Arrow', 'desc': 'Next/Previous region'},
-                    {'key': 'Ctrl + Right Arrow', 'desc': 'Next difference (comparing mode)'},
-                    {'key': 'Delete/Backspace', 'desc': 'Delete segment'},
-                    {'key': 'Ctrl + z', 'desc': 'Undo'},
-                    {'key': '1-9', 'desc': 'Select annotation'},
-                    {'key': 'Escape', 'desc': 'Focus-out text area'},
-                    {'key': 'Ctrl+[', 'desc': 'Move back 5 seconds'}
-                ]
+                $scope.shortcuts = self.shortcuts.getInfo()
             }
         });
     }
