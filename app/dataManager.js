@@ -21,6 +21,11 @@ class dataManager {
     }
 
     saveDataToServer(data, filename) {
+        const spl = filename.split('.')
+        const ext = spl.pop()
+        const d = new Date()
+        const datestring = d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0' + d.getDate()).slice(-2) + '-' + ('0' + d.getHours()).slice(-2) + ('0' + d.getMinutes()).slice(-2)
+        const timestampedFilename = `${spl.join('.')}_${datestring}.${ext}`
         this.$http({
             method: 'POST',
             url:  '/upload_s3',
@@ -28,12 +33,12 @@ class dataManager {
                 'Access-Control-Allow-Origin': true
             },
             data: {
-                filename,
+                filename: timestampedFilename,
                 data
             }
         }).then((function (resp) {
             if (resp.data && resp.data.OK) {
-                alert(`File ${filename} successefully uploaded`)
+                alert(`File ${timestampedFilename} successefully uploaded`)
             } else {
                 alert('Upload error:', resp.data.error)
             }
