@@ -66,11 +66,13 @@ function secondsToMinutes(time) {
 }
 
 class MainController {
-    constructor($scope, $uibModal, dataManager, $timeout) {
+    constructor($scope, $uibModal, dataManager, dataBase, $timeout, $interval) {
         this.dataManager = dataManager;
+        this.dataBase = dataBase;
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
+        this.$interval = $interval
         this.isServerMode = false
     }
 
@@ -143,7 +145,6 @@ class MainController {
 
         this.isRegionClicked = false;
         this.isTextChanged = false;
-
         this.wavesurfer = initWaveSurfer();
         this.wavesurferElement = this.wavesurfer.drawer.container;
 
@@ -453,6 +454,15 @@ class MainController {
             //self.updateView();
         });
 
+        this.$interval(() => {
+            this.saveToDB()
+        }, constants.SAVE_THRESHOLD)
+
+    }
+
+    async saveToDB () {
+        await this.dataBase.clearFiles()
+        await this.dataBase.saveFiles(this.filesData)
     }
 
     // for debugging
@@ -1213,7 +1223,11 @@ class MainController {
     }
 
 
-    save(extension, converter) {
+    async save(extension, converter) {
+        try {
+            await this.dataBase.clearDB()
+        } catch (e) {
+        }
         for (var i = 0; i < this.filesData.length; i++) {
             var current = this.filesData[i];
             if (current.data) {
@@ -1227,7 +1241,11 @@ class MainController {
         }
     }
 
-    saveS3(extension, converter) {
+    async saveS3(extension, converter) {
+        try {
+            await this.dataBase.clearDB()
+        } catch (e) {
+        }
         for (var i = 0; i < this.filesData.length; i++) {
             var current = this.filesData[i];
             if (current.data) {
@@ -1573,7 +1591,14 @@ class MainController {
         var modalInstance = this.$uibModal.open({
             templateUrl: audioModalTemplate,
             backdrop: 'static',
-            controller: function ($scope, $uibModalInstance, $timeout, zoom) {
+            controller: async ($scope, $uibModalInstance, $timeout, zoom) => {
+                $scope.draftAvailable = false
+                const draftCounts = await this.dataBase.getCounts()
+                if (draftCounts) {
+                    self.$timeout(() => {
+                        $scope.draftAvailable = true
+                    })
+                } 
                 $scope.runDemo = function () {
                     self.filesData = [{
                         filename: 'demo.json',
@@ -1582,6 +1607,16 @@ class MainController {
                     self.audioFileName = 'demo.mp3';
                     self.init();
                     self.wavesurfer.load('https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3');
+                    $uibModalInstance.close(false);
+                };
+
+                $scope.loadDraft = async () => {
+                    self.init()
+                    const audio = self.dataBase.getLastAudioFile()
+                    const files = self.dataBase.getFiles()
+                    const res = await Promise.all([ audio, files ])
+                    self.loadFromDB(res)
+
                     $uibModalInstance.close(false);
                 };
 
@@ -1695,15 +1730,39 @@ class MainController {
             self.parseAndLoadText(res);
 
         } else {
-
-            self.readAudioFile(res.audio, function (data) {
-                var uint8buf = new Uint8Array(data);
-                // ldb.set('audioData', uint8buf);
-                self.wavesurfer.loadBlob(new Blob([uint8buf]));
-                self.parseAndLoadText(res);
+            self.readAudioFile(res.audio, async (data) => {
+                await this.dataBase.clearDB()
+                this.dataBase.addAudioFile({
+                    fileName: this.audioFileName,
+                    fileData: data
+                })
+                const uint8buf = new Uint8Array(data);
+                this.wavesurfer.loadBlob(new Blob([uint8buf]));
+                this.parseAndLoadText(res);
             });
         }
 
+    }
+
+    loadFromDB (res) {
+        const audioFile = res[0]
+        const files = res[1]
+        if (audioFile) {
+            this.audioFileName = audioFile.fileName
+            const uint8buf = new Uint8Array(audioFile.fileData)
+            this.wavesurfer.loadBlob(new Blob([uint8buf]))
+        }
+
+        if (files && files.length) {
+            this.filesData = files.map((f) => {
+                return {
+                    filename: f.fileName,
+                    data: f.fileData
+                }
+            })
+        } else {
+            this.filesData = []
+        }
     }
 
     parseAndLoadText(res) {
@@ -1713,8 +1772,13 @@ class MainController {
         var i = 0;
 
         // force recursion in order to keep the order of the files
-        function cb(data) {
-            self.filesData.push({filename: res.segmentsFiles[i].name, data: data});
+        const cb = async (data) => {
+            const file = {filename: res.segmentsFiles[i].name, data}
+            self.filesData.push(file);
+            await this.dataBase.addFile({
+                fileName: file.filename,
+                fileData: file.data
+            })
             i++;
             if (i < res.segmentsFiles.length) {
                 self.readTextFile(res.segmentsFiles[i], cb);
@@ -1723,7 +1787,6 @@ class MainController {
 
         if (i < res.segmentsFiles.length) {
             self.readTextFile(res.segmentsFiles[i], cb);
-
         } else {
             var filename = self.audioFileName.substr(0, self.audioFileName.lastIndexOf('.')) + ".txt";
             if (filename === ".txt") {
@@ -1733,7 +1796,8 @@ class MainController {
                 {
                     filename: filename,
                     data: []
-                });
+                }
+            );
         }
     }
 
@@ -1743,16 +1807,12 @@ class MainController {
         switch (ext) {
             case "rttm":
                 return this.readRTTM(data)
-                break;
             case "tsv":
                 return this.readTSV(data);
-                break;
             case "json":
                 return this.readGongJson(data);
-                break;
             case "ctm":
                 return this.readCTM(data);
-                break;
             default:
                 alert("format " + ext + " is not supported");
                 return undefined;
@@ -1951,7 +2011,8 @@ class MainController {
 
         var self = this;
         reader.onload = function (e) {
-            cb(self.handleTextFormats(file.name, e.target.result));
+            const result = self.handleTextFormats(file.name, e.target.result)
+            cb(result);
         };
 
         reader.readAsText(file);
@@ -2097,7 +2158,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'dataManager', '$timeout'];
+    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', '$timeout','$interval'];
 export {
     MainController
 }
