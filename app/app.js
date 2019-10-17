@@ -5,8 +5,8 @@ import '../static/js/bootstrap.min.js'
 
 import {MainController} from './controller.js'
 import {dataManager} from './dataManager.js'
+import {dataBase} from './dataBase.js'
 import {Checklist} from './third-party/checked-list.js'
-import angular from 'angularjs';
 import dropdown from 'angular-ui-bootstrap/src/dropdown'
 import modal from 'angular-ui-bootstrap/src/modal'
 import collapse from 'angular-ui-bootstrap/src/collapse'
@@ -19,6 +19,7 @@ speechRecognition.controller('MainController', MainController);
 
 
 speechRecognition.service('dataManager', dataManager);
+speechRecognition.service('dataBase', dataBase);
 speechRecognition.directive('playPart', playPartDirective);
 speechRecognition.directive('checklistModel', Checklist);
 speechRecognition.directive("fileread", [function () {

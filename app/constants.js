@@ -63,6 +63,8 @@ export const ANNOTATIONS = [
 
 export const THRESHOLD_MS = 200;
 
+export const SAVE_THRESHOLD = 60 * 1000
+
 export const ZOOM = 20;
 
 export const PANEL_HEIGHT = 300; //px
