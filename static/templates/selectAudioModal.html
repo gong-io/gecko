@@ -46,6 +46,7 @@
 </div>
 <div class="modal-footer">
     <button class="btn btn-default pull-left" type="button" ng-click="runDemo()">Load Demo</button>
+    <button class="btn btn-default pull-left" type="button" ng-if="draftAvailable" ng-click="loadDraft()">Load Draft</button>
     <button class="btn btn-primary" type="button"
             ng-disabled="!newAudioFile" ng-click="ok()">OK
     </button>
