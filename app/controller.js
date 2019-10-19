@@ -165,12 +165,26 @@ class MainController {
                 return;
             }
 
+            const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+            const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
+
+            if ((isOtherControl && e.which === 17) || (isMacMeta && e.which === 91)) {
+                this.isDownCtrl = true
+                console.log('down button')
+            }
+
             // this.shortcuts.checkKeys(e)
             this.$scope.$evalAsync()
             /* if (e.key === 'ArrowRight' && isDownCtrl) {
                 self.jumpNextDiscrepancy();
             } */
         };
+
+        document.onkeyup = (e) => {
+            if (e.which === 17 || e.which === 91) {
+                this.isDownCtrl = false
+            }
+        }
 
         this.wavesurferElement.onclick = function (e) {
             if (!self.isRegionClicked) {
@@ -322,6 +336,7 @@ class MainController {
         });
 
         this.wavesurfer.on("region-created", function (region) {
+            console.log('created', self.isDownCtrl)
             var numOfFiles = self.filesData.length;
 
             // indication when file was created by drag
@@ -370,25 +385,28 @@ class MainController {
         });
 
         this.wavesurfer.on("region-updated", function (region) {
-            self.regionPositionUpdated(region);
-
+            if (!self.isDownCtrl) {
+                self.regionPositionUpdated(region);
+            }
         });
 
         this.wavesurfer.on('region-update-end', function (region) {
-            self.regionPositionUpdated(region);
+            if (!self.isDownCtrl) {
+                self.regionPositionUpdated(region);
 
-            var multiEffect = [region.id];
-            self.addHistory(region);
+                var multiEffect = [region.id];
+                self.addHistory(region);
 
-            for (let r of self.updateOtherRegions) {
-                self.addHistory(r);
-                multiEffect.push(r.id);
+                for (let r of self.updateOtherRegions) {
+                    self.addHistory(r);
+                    multiEffect.push(r.id);
+                }
+
+                self.updateOtherRegions.clear()
+                self.undoStack.push(multiEffect);
+
+                self.$scope.$evalAsync();
             }
-
-            self.updateOtherRegions.clear()
-            self.undoStack.push(multiEffect);
-
-            self.$scope.$evalAsync();
         });
 
         // this.wavesurfer.on('region-in', function (region) {
