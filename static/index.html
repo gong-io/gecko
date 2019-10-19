@@ -108,7 +108,7 @@
 <!--</div>-->
 
 <div class="wrapper" ng-show="ctrl.ready">
-    <div id="zoom" class="row" style="margin-bottom: 2em">
+    <div id="zoom" class="row" style="margin-bottom: 2em;">
         <div class="col-md-1">
             <i class="glyphicon glyphicon-zoom-out"></i>
         </div>
@@ -127,10 +127,12 @@
         </div>
     </div>
 
+    <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram"></div>
+
     <div id="file-data" style="text-align:center">
     </div>
 
-    <div class="row" style="text-align: center; margin-bottom: 2em">
+    <div class="row" style="text-align: center; margin-bottom: 2em; margin-top: 2em">
         <div class="col-md-12">
             <button class="btn btn-primary" ng-show="!ctrl.isPlaying" ng-click="ctrl.playPause()">
                 <i class="glyphicon glyphicon-play"></i>
@@ -186,6 +188,14 @@
                     data-toggle="tooltip" data-placement="top">
                 <i class="glyphicon glyphicon-share-alt" style="transform: scaleX(-1);"></i>
                 Undo
+            </button>
+
+            <button class="btn btn-default" ng-click="ctrl.toggleSpectrogram()"
+                    title="Show/hide Spectrogram"
+                    ng-if="ctrl.showSpectrogramButton"
+                    data-toggle="tooltip" data-placement="top">
+                <i class="glyphicon glyphicon-stats"></i>
+                Toggle Spectrogram
             </button>
         </div>
     </div>
