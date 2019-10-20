@@ -1721,7 +1721,6 @@ class MainController {
         if (audioFile) {
             this.audioFileName = audioFile.fileName
             const uint8buf = new Uint8Array(audioFile.fileData)
-            console.log(uint8buf)
             this.wavesurfer.loadBlob(new Blob([uint8buf]))
         }
 
