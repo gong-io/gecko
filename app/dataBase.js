@@ -5,7 +5,7 @@ class dataBase {
         this.db = new Dexie('GeckoDatabase')
         this.db.version(1).stores(
             { 
-                audioFiles: '++id,fileName,fileData',
+                audioFiles: '++id,fileName,fileData,isFromVideo',
                 files: '++id,fileName,fileData'
             })
     }
@@ -52,9 +52,9 @@ class dataBase {
         }
     }
 
-    async addAudioFile ({ fileName, fileData }) {
+    async addAudioFile ({ fileName, fileData, isFromVideo }) {
         try {
-           await this.db.audioFiles.add({ fileName, fileData })
+           await this.db.audioFiles.add({ fileName, fileData, isFromVideo })
         } catch (e) {
             console.error('Error savig to DB: ' + (e.stack || e));
         }

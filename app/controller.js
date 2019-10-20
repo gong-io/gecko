@@ -12,6 +12,7 @@ import Shortcuts from './shortcuts'
 var Diff = require('diff');
 
 var demoJson = require('../samples/demo');
+import { Encoder } from './third-party/audiobuffer-arraybuffer-serializer'
 
 const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
 const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
@@ -1701,6 +1702,12 @@ class MainController {
                     const uint8buf = new Uint8Array(data);
                     this.wavesurfer.loadBlob(new Blob([uint8buf]));
                 } else {
+                    const encoder = new Encoder()
+                    const dataEncoded = encoder.execute(data)
+                    this.dataBase.addAudioFile({
+                        fileName: this.audioFileName,
+                        fileData: dataEncoded
+                    })
                     this.wavesurfer.loadDecodedBuffer(data);
                 }
             });
@@ -1714,6 +1721,7 @@ class MainController {
         if (audioFile) {
             this.audioFileName = audioFile.fileName
             const uint8buf = new Uint8Array(audioFile.fileData)
+            console.log(uint8buf)
             this.wavesurfer.loadBlob(new Blob([uint8buf]))
         }
 
@@ -1730,7 +1738,6 @@ class MainController {
     }
 
     parseAndLoadText(res) {
-        console.log('parse and load text')
         var self = this;
         self.filesData = []
 
@@ -1956,8 +1963,6 @@ class MainController {
                 return;
             }
 
-            var self = this;
-
             reader.onload = (function (theFile) {
                 return function (e) {
                     cb(e.target.result);
@@ -1968,7 +1973,7 @@ class MainController {
         } else if (file.type.includes('video')) {
             this.audioFileName = file.name;
             var reader = new FileReader();
-            const audioContext = new(window.AudioContext || window.webkitAudioContext)();
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             reader.onload = function () {
                 var videoFileAsBuffer = reader.result
                 audioContext.decodeAudioData(videoFileAsBuffer).then(function (decodedAudioData) {
