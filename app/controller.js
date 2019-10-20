@@ -9,6 +9,8 @@ import {PUNCTUATION_TYPE} from "./constants";
 
 import Shortcuts from './shortcuts'
 
+import { Encoder } from './third-party/audiobuffer-serializer'
+
 var Diff = require('diff');
 
 var demoJson = require('../samples/demo');
@@ -1684,7 +1686,7 @@ class MainController {
 
     parseAndLoadAudio(res) {
         var self = this;
-
+        console.log('prs', this.wavesurfer.loadDecodedBuffer)
         if (res.call_from_url) {
             self.audioFileName = res.call_from_url.id;
             self.wavesurfer.load(res.call_from_url.url);
@@ -1692,14 +1694,21 @@ class MainController {
 
         } else {
             self.readAudioFile(res.audio, async (data) => {
+                console.log('data', data)
                 await this.dataBase.clearDB()
                 this.dataBase.addAudioFile({
                     fileName: this.audioFileName,
                     fileData: data
                 })
-                const uint8buf = new Uint8Array(data);
-                this.wavesurfer.loadBlob(new Blob([uint8buf]));
-                this.parseAndLoadText(res);
+                if (!data.fromVideo) {
+                    const uint8buf = new Uint8Array(data);
+                    this.wavesurfer.loadBlob(new Blob([uint8buf]));
+                    this.parseAndLoadText(res);
+                } else {
+                    this.wavesurfer.loadDecodedBuffer(data);
+                    this.parseAndLoadText(res);
+                }
+                
             });
         }
 
@@ -1944,22 +1953,41 @@ class MainController {
     }
 
     readAudioFile(file, cb) {
-        this.audioFileName = file.name;
-        var reader = new FileReader();
-        var f = file;
-        if (!f) {
-            return;
-        }
+        if (file.type.includes('audio')) {
+            this.audioFileName = file.name;
+            var reader = new FileReader();
+            var f = file;
+            if (!f) {
+                return;
+            }
 
-        var self = this;
+            var self = this;
 
-        reader.onload = (function (theFile) {
-            return function (e) {
-                cb(e.target.result);
+            reader.onload = (function (theFile) {
+                return function (e) {
+                    cb(e.target.result);
+                };
+            })(f);
+
+            reader.readAsArrayBuffer(f);
+        } else if (file.type.includes('video')) {
+            var reader = new FileReader();
+            console.log(file)
+            const audioContext = new(window.AudioContext || window.webkitAudioContext)();
+            const sampleRate = 16000;
+            const numberOfChannels = 1;
+            let myBuffer
+            reader.onload = function () {
+                var videoFileAsBuffer = reader.result; // arraybuffer
+                audioContext.decodeAudioData(videoFileAsBuffer).then(function (decodedAudioData) {
+                    let encoder = new Encoder()
+                    let arrayBuffer = encoder.execute(decodedAudioData);
+                    cb(decodedAudioData)
+                });
             };
-        })(f);
-
-        reader.readAsArrayBuffer(f);
+            reader.readAsArrayBuffer(file); // video file
+        }
+        
     }
 
     readTextFile(file, cb) {
