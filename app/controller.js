@@ -9,8 +9,6 @@ import {PUNCTUATION_TYPE} from "./constants";
 
 import Shortcuts from './shortcuts'
 
-import { Encoder } from './third-party/audiobuffer-serializer'
-
 var Diff = require('diff');
 
 var demoJson = require('../samples/demo');
@@ -1686,7 +1684,6 @@ class MainController {
 
     parseAndLoadAudio(res) {
         var self = this;
-        console.log('prs', this.wavesurfer.loadDecodedBuffer)
         if (res.call_from_url) {
             self.audioFileName = res.call_from_url.id;
             self.wavesurfer.load(res.call_from_url.url);
@@ -1694,21 +1691,18 @@ class MainController {
 
         } else {
             self.readAudioFile(res.audio, async (data) => {
-                console.log('data', data)
+                this.parseAndLoadText(res);
                 await this.dataBase.clearDB()
-                this.dataBase.addAudioFile({
-                    fileName: this.audioFileName,
-                    fileData: data
-                })
                 if (!data.fromVideo) {
+                    this.dataBase.addAudioFile({
+                        fileName: this.audioFileName,
+                        fileData: data
+                    })
                     const uint8buf = new Uint8Array(data);
                     this.wavesurfer.loadBlob(new Blob([uint8buf]));
-                    this.parseAndLoadText(res);
                 } else {
                     this.wavesurfer.loadDecodedBuffer(data);
-                    this.parseAndLoadText(res);
                 }
-                
             });
         }
 
@@ -1736,6 +1730,7 @@ class MainController {
     }
 
     parseAndLoadText(res) {
+        console.log('parse and load text')
         var self = this;
         self.filesData = []
 
@@ -1971,21 +1966,17 @@ class MainController {
 
             reader.readAsArrayBuffer(f);
         } else if (file.type.includes('video')) {
+            this.audioFileName = file.name;
             var reader = new FileReader();
-            console.log(file)
             const audioContext = new(window.AudioContext || window.webkitAudioContext)();
-            const sampleRate = 16000;
-            const numberOfChannels = 1;
-            let myBuffer
             reader.onload = function () {
-                var videoFileAsBuffer = reader.result; // arraybuffer
+                var videoFileAsBuffer = reader.result
                 audioContext.decodeAudioData(videoFileAsBuffer).then(function (decodedAudioData) {
-                    let encoder = new Encoder()
-                    let arrayBuffer = encoder.execute(decodedAudioData);
+                    decodedAudioData.fromVideo = true
                     cb(decodedAudioData)
                 });
             };
-            reader.readAsArrayBuffer(file); // video file
+            reader.readAsArrayBuffer(file)
         }
         
     }
