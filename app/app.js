@@ -3,6 +3,8 @@ import '../static/css/app.css'
 
 import '../static/js/bootstrap.min.js'
 
+import 'video.js/dist/video-js.min.css'
+
 import {MainController} from './controller.js'
 import {dataManager} from './dataManager.js'
 import {dataBase} from './dataBase.js'

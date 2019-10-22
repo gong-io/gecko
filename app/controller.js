@@ -7,6 +7,8 @@ import './third-party/soundtouch.js'
 import {config} from './config.js'
 import {PUNCTUATION_TYPE} from "./constants";
 
+import videojs from 'video.js'
+
 import Shortcuts from './shortcuts'
 
 var Diff = require('diff');
@@ -142,6 +144,7 @@ class MainController {
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
+        this.videoMode = false
 
         // history variables
         this.undoStack = [];
@@ -318,6 +321,7 @@ class MainController {
 
         this.wavesurfer.on('seek', function (e) {
             self.updateView();
+            self.videoPlayer.currentTime(self.wavesurfer.getCurrentTime())
 
             self.$scope.$evalAsync();
         });
@@ -1138,7 +1142,13 @@ class MainController {
     }
 
     playPause() {
-        this.isPlaying ? this.wavesurfer.pause() : this.wavesurfer.play();
+        if (this.isPlaying) {
+            this.wavesurfer.pause()
+            this.videoPlayer.pause()
+        } else {
+            this.wavesurfer.play()
+            this.videoPlayer.play()
+        }
     }
 
     playRegion() {
@@ -1574,7 +1584,7 @@ class MainController {
 
                 $scope.loadDraft = async () => {
                     self.init()
-                    const audio = self.dataBase.getLastAudioFile()
+                    const audio = self.dataBase.getLastMediaFile()
                     const files = self.dataBase.getFiles()
                     const res = await Promise.all([ audio, files ])
                     self.loadFromDB(res)
@@ -1683,47 +1693,45 @@ class MainController {
         });
     }
 
-    parseAndLoadAudio(res) {
+    async parseAndLoadAudio(res) {
         var self = this;
         if (res.call_from_url) {
             self.audioFileName = res.call_from_url.id;
             self.wavesurfer.load(res.call_from_url.url);
             self.parseAndLoadText(res);
-
         } else {
-            self.readAudioFile(res.audio, async (data) => {
-                this.parseAndLoadText(res);
-                await this.dataBase.clearDB()
-                if (!data.fromVideo) {
-                    this.dataBase.addAudioFile({
-                        fileName: this.audioFileName,
-                        fileData: data
-                    })
-                    const uint8buf = new Uint8Array(data);
-                    this.wavesurfer.loadBlob(new Blob([uint8buf]));
-                } else {
-                    const encoder = new Encoder()
-                    const dataEncoded = encoder.execute(data)
-                    this.dataBase.addAudioFile({
-                        fileName: this.audioFileName,
-                        fileData: dataEncoded
-                    })
-                    this.wavesurfer.loadDecodedBuffer(data);
-                }
-            });
+            const fileResult = await this.readMediaFile(res.audio)
+            this.parseAndLoadText(res);
+            await this.dataBase.clearDB()
+            if (!this.videoMode) {
+                this.dataBase.addMediaFile({
+                    fileName: this.audioFileName,
+                    fileData: fileResult
+                })
+                this.wavesurfer.loadBlob(fileResult);
+            } else {
+                this.dataBase.addMediaFile({
+                    fileName: this.audioFileName,
+                    fileData: res.audio,
+                    isVideo: true
+                })
+                this.videoPlayer = videojs('video-js')
+                this.videoPlayer.ready(function () {
+                    var fileUrl = URL.createObjectURL(res.audio);
+                    var fileType = res.audio.type;
+                    this.src({ type: fileType, src: fileUrl });
+                    this.load();
+                })
+                this.wavesurfer.loadDecodedBuffer(fileResult);
+            }
         }
 
     }
 
-    loadFromDB (res) {
-        const audioFile = res[0]
+    async loadFromDB (res) {
+        const mediaFile = res[0]
         const files = res[1]
-        if (audioFile) {
-            this.audioFileName = audioFile.fileName
-            const uint8buf = new Uint8Array(audioFile.fileData)
-            this.wavesurfer.loadBlob(new Blob([uint8buf]))
-        }
-
+        
         if (files && files.length) {
             this.filesData = files.map((f) => {
                 return {
@@ -1733,6 +1741,23 @@ class MainController {
             })
         } else {
             this.filesData = []
+        }
+
+        if (mediaFile) {
+            this.audioFileName = mediaFile.fileName
+            if (!mediaFile.isVideo) {
+                this.wavesurfer.loadBlob(mediaFile.fileData)
+            } else {
+                const fileResult = await this.readVideoFile(mediaFile.fileData)
+                this.videoPlayer = videojs('video-js')
+                this.videoPlayer.ready(function () {
+                    var fileUrl = URL.createObjectURL(mediaFile.fileData);
+                    var fileType = mediaFile.fileData.type;
+                    this.src({ type: fileType, src: fileUrl });
+                    this.load();
+                })
+                this.wavesurfer.loadDecodedBuffer(fileResult)
+            }
         }
     }
 
@@ -1953,36 +1978,40 @@ class MainController {
         return monologues;
     }
 
-    readAudioFile(file, cb) {
-        if (file.type.includes('audio')) {
+    readAudioFile (file) {
+        return new Promise((resolve, reject) => {
+            resolve(file)
+        })
+    }
+
+    readVideoFile (file) {
+        const self = this
+        return new Promise(async (resolve, reject) => {
             this.audioFileName = file.name;
             var reader = new FileReader();
-            var f = file;
-            if (!f) {
-                return;
-            }
-
-            reader.onload = (function (theFile) {
-                return function (e) {
-                    cb(e.target.result);
-                };
-            })(f);
-
-            reader.readAsArrayBuffer(f);
-        } else if (file.type.includes('video')) {
-            this.audioFileName = file.name;
-            var reader = new FileReader();
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)()
             reader.onload = function () {
                 var videoFileAsBuffer = reader.result
                 audioContext.decodeAudioData(videoFileAsBuffer).then(function (decodedAudioData) {
-                    decodedAudioData.fromVideo = true
-                    cb(decodedAudioData)
-                });
-            };
+                    self.videoMode = true
+                    resolve(decodedAudioData)
+                })
+            }
             reader.readAsArrayBuffer(file)
-        }
-        
+        })
+    }
+
+    async readMediaFile(file) {
+        return new Promise(async (resolve, reject) => {
+            this.audioFileName = file.name;
+            if (file.type.includes('audio')) {
+                const result = await this.readAudioFile(file)
+                resolve(result)
+            } else if (file.type.includes('video')) {
+                const result = await this.readVideoFile(file)
+                resolve(result)
+            }
+        })
     }
 
     readTextFile(file, cb) {

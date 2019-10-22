@@ -5,14 +5,14 @@ class dataBase {
         this.db = new Dexie('GeckoDatabase')
         this.db.version(1).stores(
             { 
-                audioFiles: '++id,fileName,fileData,isFromVideo',
+                mediaFiles: '++id,fileName,fileData,isVideo',
                 files: '++id,fileName,fileData'
             })
     }
 
     async getCounts () {
         try {
-            const res = await this.db.audioFiles.count()
+            const res = await this.db.mediaFiles.count()
             return res
         } catch (e) {
             console.error('Error getting count from DB: ' + (e.stack || e))
@@ -21,7 +21,7 @@ class dataBase {
     }
 
     async clearDB () {
-        const deleteFiles = this.db.audioFiles.clear()
+        const deleteFiles = this.db.mediaFiles.clear()
         const deleteCTMS = this.db.files.clear()
         try {
             const result = await Promise.all([ deleteFiles, deleteCTMS ])
@@ -52,9 +52,9 @@ class dataBase {
         }
     }
 
-    async addAudioFile ({ fileName, fileData, isFromVideo }) {
+    async addMediaFile ({ fileName, fileData, isVideo }) {
         try {
-           await this.db.audioFiles.add({ fileName, fileData, isFromVideo })
+           await this.db.mediaFiles.add({ fileName, fileData, isVideo })
         } catch (e) {
             console.error('Error savig to DB: ' + (e.stack || e));
         }
@@ -68,9 +68,9 @@ class dataBase {
         }
     }
 
-    async getLastAudioFile () {
+    async getLastMediaFile () {
         try {
-            const result = await this.db.audioFiles.orderBy('id').last()
+            const result = await this.db.mediaFiles.orderBy('id').last()
             return result      
         } catch (e) {
             return {}
@@ -83,7 +83,7 @@ class dataBase {
             const result = await this.db.files.toArray()
             return result
         } catch (e) {
-            console.log('get error', e)
+            console.error('get error', e)
             return []
         }
         
