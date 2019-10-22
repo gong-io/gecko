@@ -14,7 +14,6 @@ import Shortcuts from './shortcuts'
 var Diff = require('diff');
 
 var demoJson = require('../samples/demo');
-import { Encoder } from './third-party/audiobuffer-arraybuffer-serializer'
 
 const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
 const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
