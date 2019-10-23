@@ -11,6 +11,10 @@ import videojs from 'video.js'
 
 import Shortcuts from './shortcuts'
 
+import { parse as parseTextFormats, convert as convertTextFormats } from './textFormats'
+
+import { jsonStringify } from './utils'
+
 var Diff = require('diff');
 
 var demoJson = require('../samples/demo');
@@ -33,16 +37,6 @@ function sortDict(dict, sortBy, sortFunction) {
     });
 
     return sorted;
-}
-
-function jsonStringify(json) {
-    return JSON.stringify(json, function (key, value) {
-        // limit precision of floats
-        if (typeof value === 'number') {
-            return parseFloat(value.toFixed(2));
-        }
-        return value;
-    })
 }
 
 // First, checks if it isn't implemented yet.
@@ -325,7 +319,7 @@ class MainController {
 
         this.wavesurfer.on('seek', function (e) {
             self.updateView();
-            self.videoPlayer.currentTime(self.wavesurfer.getCurrentTime())
+            self.videoPlayer && self.videoPlayer.currentTime(self.wavesurfer.getCurrentTime())
 
             self.$scope.$evalAsync();
         });
@@ -1148,10 +1142,10 @@ class MainController {
     playPause() {
         if (this.isPlaying) {
             this.wavesurfer.pause()
-            this.videoPlayer.pause()
+            this.videoPlayer && this.videoPlayer.pause()
         } else {
             this.wavesurfer.play()
-            this.videoPlayer.play()
+            this.videoPlayer && this.videoPlayer.play()
         }
     }
 
@@ -1246,51 +1240,14 @@ class MainController {
             const splName = current.filename.split('.')
             const extension = splName[splName.length - 1]
             const saveFunction = this.isServerMode ? this.saveS3.bind(this) : this.save.bind(this)
-            switch (extension) {
-                case 'rttm':
-                    saveFunction('rttm', this.convertRegionsToRTTM.bind(this))
-                    break;
-                case 'json':
-                    saveFunction('json', this.convertRegionsToJson.bind(this));
-                    break;
-                case 'ctm':
-                    saveFunction('ctm', this.convertRegionsToCtm.bind(this));
-                    break;
-                case 'srt':
-                    saveFunction('srt', this.convertRegionsToSrt.bind(this));
-                    break;
-                default:
-                    alert('Unsupported file format')
-            }
+            saveFunction(extension, convertTextFormats(extension, this, config.parserOptions))
         }
     }
 
-    saveRttm() {
-        this.save('rttm', this.convertRegionsToRTTM.bind(this));
-    }
-
-    saveJson() {
-        this.save('json', this.convertRegionsToJson.bind(this));
-    }
-
-    saveCtm() {
-        this.save('ctm', this.convertRegionsToCtm.bind(this));
-    }
-
-    saveSrt() {
-        this.save('srt', this.convertRegionsToSrt.bind(this));
-    }
-
-    saveRttmS3() {
-        this.saveS3('rttm', this.convertRegionsToRTTM.bind(this));
-    }
-
-    saveJsonS3() {
-        this.saveS3('json', this.convertRegionsToJson.bind(this));
-    }
-
-    saveCtmS3() {
-        this.saveS3('ctm', this.convertRegionsToCtm.bind(this));
+    saveClient(extension) {
+        for (var i = 0; i < this.filesData.length; i++) {
+            this.save(extension, convertTextFormats(extension, this, config.parserOptions))
+        }
     }
 
     checkValidRegions(fileIndex) {
@@ -1340,122 +1297,6 @@ class MainController {
         }
 
         return [text, punct];
-    }
-
-    convertRegionsToJson(fileIndex) {
-        var self = this;
-        var data = {schemaVersion: "2.0", monologues: []};
-        this.iterateRegions(function (region) {
-            let words = region.data.words;
-            let terms = []
-            if (words) {
-                words.forEach(w => {
-                    // copy word to cancel references
-                    let t = JSON.parse(JSON.stringify(w))
-
-                    t.type = constants.WORD_TYPE;
-                    terms.push(t);
-
-                    let textAndPunct = self.splitPunctuation(t.text);
-                    if (textAndPunct[1] !== "") {
-
-                        //trim the punctuation from the original
-                        t.text = textAndPunct[0]
-
-                        terms.push({
-                            start: t.end,
-                            end: t.end,
-                            text: textAndPunct[1],
-                            confidence: t.confidence,
-                            type: constants.PUNCTUATION_TYPE
-                        })
-                    }
-                })
-            }
-            data.monologues.push({
-                speaker: {id: self.formatSpeaker(region.data.speaker), color: region.color},
-                start: region.start,
-                end: region.end,
-                terms: terms
-            });
-
-        }, fileIndex, true);
-
-        return jsonStringify(data);
-    }
-
-    convertRegionsToCtm(fileIndex) {
-        var self = this;
-        var segment_id = 0;
-        const output = []
-
-        this.iterateRegions(function (region) {
-            let speaker = self.formatSpeaker(region.data.speaker);
-
-            region.data.words.forEach((word) => {
-                let confidence = word.confidence || constants.NO_CONFIDENCE;
-
-                output.push('{0}_{1}_audio 1 {2} {3} {4} {5}'.format(
-                    speaker,
-                    segment_id.toString().padStart(5, '0'),
-                    word.start.toFixed(2).padStart(8, '0'),
-                    (word.end - word.start).toFixed(2),
-                    word.text,
-                    confidence.toFixed(2)
-                ));
-            });
-
-            segment_id++;
-        }, fileIndex, true);
-
-        return output.sort().join('\n')
-    }
-
-    convertRegionsToSrt (fileIndex) {
-        var self = this;
-        var segment_id = 1;
-        var region_id = 0;
-        const output = []
-
-        const toHHMMSS = (seconds) => {
-            return new Date(seconds * 1000).toISOString().substr(11, 8)
-        }
-
-        const getFract = (second) => {
-            const frac = second % 1
-            return frac.toFixed(3).split('.')[1]
-        }
-
-        this.iterateRegions(function (region) {
-            let speaker = self.formatSpeaker(region.data.speaker);
-            region.data.words.forEach((word) => {
-                let segment = `${segment_id}\n`
-                segment += `${toHHMMSS(word.start)},${getFract(word.start)} --> ${toHHMMSS(word.end)},${getFract(word.end)}\n`
-                segment += `(${speaker}_${region_id.toString().padStart(5, '0')}_audio)\n`
-                segment +=`${word.text}\n`
-                segment +=`\n`
-                output.push(segment)
-                segment_id++;
-            });
-            region_id++
-        }, fileIndex, true);
-
-        return output.join('')
-    }
-
-    convertRegionsToRTTM(fileIndex) {
-        var self = this;
-        var data = [];
-
-        this.iterateRegions(function (region) {
-            data.push('SPEAKER <NA> <NA> {0} {1} <NA> <NA> {2} <NA> <NA>'.format(
-                region.start.toFixed(2),
-                (region.end - region.start).toFixed(2),
-                self.formatSpeaker(region.data.speaker)));
-
-        }, fileIndex, true);
-
-        return data.join('\n');
     }
 
     textareaBlur() {
@@ -1764,6 +1605,7 @@ class MainController {
                     var fileType = res.audio.type;
                     this.src({ type: fileType, src: fileUrl });
                     this.load();
+                    this.muted(true)
                 })
                 this.wavesurfer.loadDecodedBuffer(fileResult);
             }
@@ -1798,6 +1640,7 @@ class MainController {
                     var fileType = mediaFile.fileData.type;
                     this.src({ type: fileType, src: fileUrl });
                     this.load();
+                    this.muted(true)
                 })
                 this.wavesurfer.loadDecodedBuffer(fileResult)
             }
@@ -1841,259 +1684,7 @@ class MainController {
     }
 
     handleTextFormats(filename, data) {
-        var ext = filename.substr(filename.lastIndexOf('.') + 1);
-
-        switch (ext) {
-            case "rttm":
-                return this.readRTTM(data)
-            case "tsv":
-                return this.readTSV(data);
-            case "json":
-                return this.readGongJson(data);
-            case "ctm":
-                return this.readCTM(data);
-            case "srt":
-                return this.readSRT(data);
-            default:
-                alert("format " + ext + " is not supported");
-                return undefined;
-        }
-    }
-
-    readGongJson(data) {
-        if (typeof data === 'string') {
-            data = JSON.parse(data)
-        }
-
-        // this.EDER = data['EDER'];
-        //this.segmentation = data['Segmentation'];
-
-        var monologues = data['monologues'];
-        for (var i = 0; i < monologues.length; i++) {
-            var monologue = monologues[i];
-
-
-            if (!monologue.speaker) {
-                // monologue.speaker = {id: constants.UNKNOWN_SPEAKER};
-                monologue.speaker = "";
-            }
-
-            if (monologue.start === undefined) monologue.start = monologue.terms[0].start;
-            if (monologue.end === undefined) monologue.end = monologue.terms.slice(-1)[0].end;
-
-
-            // if (!monologue.text && monologue.terms) {
-            //     monologue.text = "";
-            //     for (var t = 0; t < monologue.terms.length; t++) {
-            //         var term = monologue.terms[t];
-            //         if (term.text) {
-            //             if (term.type === "WORD") {
-            //                 monologue.text += " ";
-            //             }
-            //
-            //             monologue.text += term.text;
-            //         }
-            //     }
-            // }
-
-
-            if (monologue.terms) {
-                monologue.words = monologue.terms;
-                delete monologue.terms;
-            } else {
-                monologue.words = [];
-            }
-
-
-            // attach punctuation to the previous word
-            for (let j = 1; j < monologue.words.length;) {
-                let current = monologue.words[j];
-
-                if (current.type === constants.PUNCTUATION_TYPE) {
-                    monologue.words[j - 1].text += current.text;
-                    monologue.words.splice(j, 1);
-                } else {
-                    j++;
-                }
-            }
-        }
-        return monologues;
-    }
-
-    readSRT (data) {
-        let monologues = [];
-
-        const lines = data.split(/\r|\n/);
-        
-        let acc = []
-        const blocks = [] 
-        const lLength = lines.length
-        for (let i = 0; i < lLength; i++) {
-            if (lines[i] !== '') {
-                acc.push(lines[i])
-            } else {
-                blocks.push(acc)
-                acc = []
-            }
-        }
-        const HMSToSeconds = (str) => {
-            const spl = str.split(',')
-            const hms = spl[0]
-            const a = hms.split(':')
-            const seconds = (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2])
-            const frac = parseFloat(`0.${spl[1]}`)
-            return seconds + frac
-        }
-        let words = blocks.filter((block) => block.length).map(function (block) {
-            const ret = {}
-            const timeStr = block[1]
-            if (block.length === 4) {
-                ret.text = block[3]
-                const idStr = block[2].replace('(', '').replace(')', '')
-                const spl = idStr.split('_')
-                ret.speaker = { id: spl[0] }
-                ret.segment_id = spl[1]
-            } else {
-                ret.text = block[2]
-            }
-
-            const splTimeStr = timeStr.split('-->').map(s => s.trim())
-            ret.start = HMSToSeconds(splTimeStr[0])
-            ret.end = HMSToSeconds(splTimeStr[1])
-
-            return ret
-        });
-
-        let lastMonologue = -1;
-
-        words.forEach(function (word) {
-            if (word.segment_id !== lastMonologue) {
-                lastMonologue = word.segment_id;
-                let speaker = word.speaker;
-
-                monologues.push({
-                    speaker: word.speaker,
-                    start: word.start,
-                    words: [word]
-                });
-            } else {
-                monologues[monologues.length - 1].words.push(word);
-            }
-            delete word.segment_id;
-            delete word.speaker;
-        });
-
-        monologues.forEach(function (m) {
-            let lastWord = m.words[m.words.length - 1];
-            m.end = lastWord.end;
-        });
-
-        this.ctmData.push(words);
-
-        return monologues;
-    }
-
-    readCTM(data) {
-        let monologues = [];
-
-        let lines = data.split(/\r|\n/);
-        let words = lines.filter(function (line) {
-            return line !== "";
-        }).map(function (line) {
-            let cells = line.match(/\S+/g);
-
-            let start = parseFloat(cells[2]);
-            let duration = parseFloat(cells[3]);
-            let end = start + duration;
-            let confidence = parseFloat(cells[5])
-            if (confidence === constants.NO_CONFIDENCE) {
-                confidence = undefined;
-            }
-
-            return {
-                speaker: {id: cells[0].split('_')[0]},
-                segment_id: parseInt(cells[0].split('_')[1]),
-                start: start,
-                end: end,
-                text: cells[4],
-                confidence: confidence
-            }
-        });
-
-
-        let lastMonologue = -1;
-
-        words.sort(function (x, y) {
-            if (x.start >= y.start) {
-                return 1;
-            }
-
-            return -1;
-        })
-
-        words.forEach(function (word) {
-            if (word.segment_id !== lastMonologue) {
-                lastMonologue = word.segment_id;
-                let speaker = word.speaker;
-
-                monologues.push({
-                    speaker: word.speaker,
-                    start: word.start,
-                    words: [word]
-                });
-            } else {
-                monologues[monologues.length - 1].words.push(word);
-            }
-
-            // this information is now on the segment/monologue
-            delete word.segment_id;
-            delete word.speaker;
-        });
-
-        monologues.forEach(function (m) {
-            let lastWord = m.words[m.words.length - 1];
-            m.end = lastWord.end;
-        });
-
-        this.ctmData.push(words);
-
-        return monologues;
-    }
-
-    readRTTM(data) {
-        var monologues = [];
-
-        var lines = data.split(/\r|\n/);
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i] === "") continue;
-
-            var cells = lines[i].match(/\S+/g);
-            var speaker = cells[7];
-            var start = parseFloat(cells[3]);
-            var duration = parseFloat(cells[4]);
-            var end = start + duration;
-
-            monologues.push({speaker: {id: speaker}, start: start, end: end});
-        }
-
-        return monologues;
-    }
-
-    readTSV(data) {
-        var monologues = [];
-        var lines = data.split(/\r|\n/);
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i] === "") continue;
-            var cells = lines[i].split('\t');
-
-            var speaker = cells[2];
-            var start = parseFloat(cells[0]);
-            var end = parseFloat(cells[1]);
-            monologues.push({speaker: {id: speaker}, start: start, end: end});
-
-        }
-
-        return monologues;
+        return parseTextFormats(filename, data, this, config.parserOptions)
     }
 
     readAudioFile (file) {
