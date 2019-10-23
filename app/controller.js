@@ -141,6 +141,7 @@ class MainController {
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
+        this.dummyRegion = null
 
         // history variables
         this.undoStack = [];
@@ -337,6 +338,16 @@ class MainController {
 
         this.wavesurfer.on("region-created", function (region) {
             console.log('created', self.isDownCtrl)
+            if (self.isDownCtrl) {
+                if (self.dummyRegion) {
+                    self.addHistory(self.dummyRegion)
+                    self.undoStack.push([ self.dummyRegion.id ])
+                    self.dummyRegion.remove()
+                }
+                self.dummyRegion = region
+                self.addHistory(region);
+                self.undoStack.push([ region.id ])
+            }
             var numOfFiles = self.filesData.length;
 
             // indication when file was created by drag
@@ -356,6 +367,7 @@ class MainController {
                 self.fixRegionsOrder(region);
 
                 // when file is added by dragging, update-end will take care of history
+                console.log('add 2 history')
                 self.addHistory(region);
             }
             //TODO: creating a new word is bad if we want to keep the segment clear.
@@ -713,6 +725,7 @@ class MainController {
         }
 
         var regionIds = this.undoStack.pop();
+        console.log('undo stack pop', regionIds)
 
         if (regionIds[0] === constants.SPEAKER_NAME_CHANGED_OPERATION_ID) {
             let fileIndex = regionIds[1];
@@ -722,6 +735,11 @@ class MainController {
             self.updateLegend(fileIndex, newSpeaker, oldSpeaker);
 
             regionIds = regionIds[4];
+        } else if (regionIds[0] === constants.DUMMY_REGION_ADDED_OPERATION_ID) {
+            let dummyRegionId = regionIds[1]
+            // this.wavesurfer.regions.list[dummyRegionId].remove()
+            // this.dummyRegion = null
+            regionIds = [ dummyRegionId ];
         }
 
 
