@@ -141,6 +141,11 @@ class MainController {
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
+        this.showSpectrogram = false
+        this.showSpectrogramButton = false
+        if (config.wavesurfer.useSpectrogram) {
+            this.showSpectrogramButton = true
+        }
 
         // history variables
         this.undoStack = [];
@@ -2216,6 +2221,10 @@ class MainController {
         } else if (which === 219) {
             this.wavesurfer.skip(-5)
         }
+    }
+
+    toggleSpectrogram () {
+        this.showSpectrogram = !this.showSpectrogram
     }
 }
 
