@@ -29,6 +29,7 @@
     "jquery": "^3.4.1",
     "ngstorage": "^0.3.11",
     "underscore": "^1.9.1",
+    "video.js": "^7.6.5",
     "wavesurfer.js": "^3.0.0"
   },
   "devDependencies": {
