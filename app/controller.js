@@ -1241,6 +1241,9 @@ class MainController {
                 case 'ctm':
                     saveFunction('ctm', this.convertRegionsToCtm.bind(this));
                     break;
+                case 'srt':
+                    saveFunction('srt', this.convertRegionsToSrt.bind(this));
+                    break;
                 default:
                     alert('Unsupported file format')
             }
@@ -1257,6 +1260,10 @@ class MainController {
 
     saveCtm() {
         this.save('ctm', this.convertRegionsToCtm.bind(this));
+    }
+
+    saveSrt() {
+        this.save('srt', this.convertRegionsToSrt.bind(this));
     }
 
     saveRttmS3() {
@@ -1387,6 +1394,38 @@ class MainController {
         }, fileIndex, true);
 
         return output.sort().join('\n')
+    }
+
+    convertRegionsToSrt (fileIndex) {
+        var self = this;
+        var segment_id = 1;
+        var region_id = 0;
+        const output = []
+
+        const toHHMMSS = (seconds) => {
+            return new Date(seconds * 1000).toISOString().substr(11, 8)
+        }
+
+        const getFract = (second) => {
+            const frac = second % 1
+            return frac.toFixed(3).split('.')[1]
+        }
+
+        this.iterateRegions(function (region) {
+            let speaker = self.formatSpeaker(region.data.speaker);
+            region.data.words.forEach((word) => {
+                let segment = `${segment_id}\n`
+                segment += `${toHHMMSS(word.start)},${getFract(word.start)} --> ${toHHMMSS(word.end)},${getFract(word.end)}\n`
+                segment += `(${speaker}_${region_id.toString().padStart(5, '0')}_audio)\n`
+                segment +=`${word.text}\n`
+                segment +=`\n`
+                output.push(segment)
+                segment_id++;
+            });
+            region_id++
+        }, fileIndex, true);
+
+        return output.join('')
     }
 
     convertRegionsToRTTM(fileIndex) {
@@ -1774,6 +1813,8 @@ class MainController {
                 return this.readGongJson(data);
             case "ctm":
                 return this.readCTM(data);
+            case "srt":
+                return this.readSRT(data);
             default:
                 alert("format " + ext + " is not supported");
                 return undefined;
@@ -1837,6 +1878,79 @@ class MainController {
                 }
             }
         }
+        return monologues;
+    }
+
+    readSRT (data) {
+        let monologues = [];
+
+        const lines = data.split(/\r|\n/);
+        
+        let acc = []
+        const blocks = [] 
+        const lLength = lines.length
+        for (let i = 0; i < lLength; i++) {
+            if (lines[i] !== '') {
+                acc.push(lines[i])
+            } else {
+                blocks.push(acc)
+                acc = []
+            }
+        }
+        const HMSToSeconds = (str) => {
+            const spl = str.split(',')
+            const hms = spl[0]
+            const a = hms.split(':')
+            const seconds = (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2])
+            const frac = parseFloat(`0.${spl[1]}`)
+            return seconds + frac
+        }
+        let words = blocks.filter((block) => block.length).map(function (block) {
+            const ret = {}
+            const timeStr = block[1]
+            if (block.length === 4) {
+                ret.text = block[3]
+                const idStr = block[2].replace('(', '').replace(')', '')
+                const spl = idStr.split('_')
+                ret.speaker = { id: spl[0] }
+                ret.segment_id = spl[1]
+            } else {
+                ret.text = block[2]
+            }
+
+            const splTimeStr = timeStr.split('-->').map(s => s.trim())
+            ret.start = HMSToSeconds(splTimeStr[0])
+            ret.end = HMSToSeconds(splTimeStr[1])
+
+            return ret
+        });
+
+        let lastMonologue = -1;
+
+        words.forEach(function (word) {
+            if (word.segment_id !== lastMonologue) {
+                lastMonologue = word.segment_id;
+                let speaker = word.speaker;
+
+                monologues.push({
+                    speaker: word.speaker,
+                    start: word.start,
+                    words: [word]
+                });
+            } else {
+                monologues[monologues.length - 1].words.push(word);
+            }
+            delete word.segment_id;
+            delete word.speaker;
+        });
+
+        monologues.forEach(function (m) {
+            let lastWord = m.words[m.words.length - 1];
+            m.end = lastWord.end;
+        });
+
+        this.ctmData.push(words);
+
         return monologues;
     }
 
