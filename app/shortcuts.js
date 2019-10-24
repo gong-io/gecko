@@ -64,7 +64,7 @@ class Shortcuts {
                 keys: 'ctrl+z,command+z'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Z</kbd>',
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>',
                 desc: 'Select annotation',
                 handler: (e) => this.digitHandler(e),
                 keys: digitsString
