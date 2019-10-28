@@ -10,6 +10,7 @@ import {PUNCTUATION_TYPE} from "./constants";
 import videojs from 'video.js'
 
 import Shortcuts from './shortcuts'
+import EventBus from './eventbus'
 
 var Diff = require('diff');
 
@@ -137,6 +138,7 @@ class MainController {
     }
 
     init() {
+        this.eventBus = new EventBus(this)
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
@@ -427,6 +429,12 @@ class MainController {
         this.$interval(() => {
             this.saveToDB()
         }, constants.SAVE_THRESHOLD)
+
+        this.eventBus.dispatch('geckoReady', { ready: true })
+
+        this.eventBus.listen('loadDocument', (data) => {
+            console.log('need to load doc', data)
+        })
 
     }
 
