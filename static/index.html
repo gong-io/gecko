@@ -273,7 +273,7 @@
         <!--            </div>-->
         <!--        </div>-->
 
-        <div class="col col-md-3" ng-if="!ctrl.discrepancies">
+        <div class="col col-md-4" ng-if="!ctrl.discrepancies">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
@@ -335,7 +335,7 @@
             </div>
         </div>
 
-        <div class="col col-lg-3 col-md-6 segment-text" ng-if="ctrl.discrepancies">
+        <div class="col col-lg-3 col-md-4 segment-text" ng-if="ctrl.discrepancies">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
@@ -399,7 +399,7 @@
 
         </div>
 
-        <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
+        <div class="col col-md-4 segment-text"
              ng-repeat="file in ctrl.filesData track by $index">
             <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">
