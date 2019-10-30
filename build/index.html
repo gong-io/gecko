@@ -330,7 +330,7 @@
                                 </span>
                                 <div class="pull-right">
                                     <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
-                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>
+                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]" speaker="speaker" title="{{speaker}}"></play-part>
                                     <input type="color" ng-model="color" class="pull-right"
                                            ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker, color)"/>
                                 </div>

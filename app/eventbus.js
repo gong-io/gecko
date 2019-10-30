@@ -12,3 +12,5 @@ class EventBus {
         window.document.addEventListener(name, handler , false)
     }
 }
+
+export default EventBus

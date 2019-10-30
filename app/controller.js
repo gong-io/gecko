@@ -84,6 +84,7 @@ class MainController {
     }
 
     loadApp(config) {
+        console.log('here', EventBus)
         const urlParams = new URLSearchParams(window.location.search)
         const saveMode = urlParams.get('save_mode')
         if (saveMode) {
@@ -130,7 +131,7 @@ class MainController {
                 })
             }
         }
-        if (config.mode === 'server' || serverConfig) {
+        if (config.mode === 'server' || this.isServerMode || serverConfig) {
             this.loadServerMode(serverConfig ? serverConfig : config);
         } else {
             this.loadClientMode();
@@ -430,12 +431,12 @@ class MainController {
             this.saveToDB()
         }, constants.SAVE_THRESHOLD)
 
-        this.eventBus.dispatch('geckoReady', { ready: true })
-
-        this.eventBus.listen('loadDocument', (data) => {
+        this.eventBus.listen('loadDoccano', (data) => {
             console.log('need to load doc', data)
+            this.loadDoccano(data)
         })
 
+        this.eventBus.dispatch('geckoReady', { ready: true })
     }
 
     async saveToDB () {
@@ -1156,10 +1157,10 @@ class MainController {
     playPause() {
         if (this.isPlaying) {
             this.wavesurfer.pause()
-            this.videoPlayer.pause()
+            // this.videoPlayer.pause()
         } else {
             this.wavesurfer.play()
-            this.videoPlayer.play()
+            // this.videoPlayer.play()
         }
     }
 
@@ -1598,6 +1599,20 @@ class MainController {
         if (self.wavesurfer) self.wavesurfer.destroy();
         self.init();
 
+        if (config.audio) {
+            this.dataManager.loadFileFromServer(config).then(function (res) {
+                // var uint8buf = new Uint8Array(res.audioFile);
+                // self.wavesurfer.loadBlob(new Blob([uint8buf]));
+                self.wavesurfer.loadBlob(res.audioFile);
+                self.audioFileName = res.audioFileName;
+                res.segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
+                self.filesData = res.segmentFiles;
+            })
+        }
+        
+    }
+
+    loadDoccano (config) {
         this.dataManager.loadFileFromServer(config).then(function (res) {
             // var uint8buf = new Uint8Array(res.audioFile);
             // self.wavesurfer.loadBlob(new Blob([uint8buf]));

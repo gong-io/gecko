@@ -92,7 +92,24 @@ export function playPartDirective() {
             }
 
             scope.playStop = function () {
-                scope.isPlaying ? stop() : play();
+                console.log("in playSpeaker function ");
+                var ctrl = scope.$parent.ctrl;
+                var speaker_id=scope.$parent.speaker;
+                console.log("speaker_id",speaker_id);
+                let firstRegion = null
+                ctrl.iterateRegions(function (region) {
+                    let current_speaker = region.data.speaker;
+                    if (current_speaker[0]==speaker_id){
+                        if (!firstRegion) {
+                            firstRegion = region
+                            region.play()
+                        }
+                    console.log("region of the same speaker:",region);
+                    region.on('out', function(e) {
+                        console.log("logging ",region," on out event");
+                    });
+                    }
+                });
             }
         }
     }
