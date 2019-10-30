@@ -39,7 +39,11 @@ var speakers = {
     '[dialtone]': "#e1c7ff",
     '[music]': "#e1c7ff",
     '[foreign]': "#e1c7ff",
-    '[noise]': "#e1c7ff"
+    '[noise]': "#e1c7ff",
+    '[beep]': "#e1c7ff",
+    '[laughter]': "#e1c7ff",
+    '[bubble]': "#e1c7ff",
+    '[recording]': "#e1c7ff"
 };
 
 export const UNKNOWN_SPEAKER_COLOR = '#808080';
