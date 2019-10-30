@@ -74,10 +74,6 @@ module.exports = {
       filename: 'index.html',
       template: './static/index.html'
     }),
-    new HtmlWebpackPlugin({
-      filename: 'index_doccano.html',
-      template: './static/index.html'
-    }),
     new Dotenv()
   ]
 }
