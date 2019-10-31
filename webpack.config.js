@@ -10,12 +10,10 @@ module.exports = {
   entry: "./app/app.js",
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: "gecko.js",
-    publicPath: '/static/'
+    filename: "gecko.js"
   },
   devServer: {
     contentBase: 'build/', // Relative directory for base of server
-    publicPath: '/static/', // Live-reload
     inline: true,
     port: 4000, // Port Number
     host: 'localhost', // Change to '0.0.0.0' for external facing server

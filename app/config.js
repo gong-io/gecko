@@ -10,6 +10,11 @@ var config = {
         useSpectrogram: false,
         scrollParent: true
     },
+    parserOptions: {
+        srt: {
+            groupWords: true
+        }
+    },
     slider: "#slider",
     isServerMode: false
 }

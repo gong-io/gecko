@@ -20,13 +20,13 @@ class dataManager {
         a.dispatchEvent(e);
     }
 
-    saveDataToServer(data, filename) {
+    async saveDataToServer(data, filename) {
         const spl = filename.split('.')
         const ext = spl.pop()
         const d = new Date()
         const datestring = d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0' + d.getDate()).slice(-2) + '-' + ('0' + d.getHours()).slice(-2) + ('0' + d.getMinutes()).slice(-2)
         const timestampedFilename = `${spl.join('.')}_${datestring}.${ext}`
-        this.$http({
+        const resp = await this.$http({
             method: 'POST',
             url:  '/upload_s3',
             headers: {
@@ -36,13 +36,26 @@ class dataManager {
                 filename: timestampedFilename,
                 data
             }
-        }).then((function (resp) {
-            if (resp.data && resp.data.OK) {
+        })
+
+        if (resp.data && resp.data.OK) {
+            const respSecond = await this.$http({
+                method: 'POST',
+                url:  '/upload_s3',
+                headers: {
+                    'Access-Control-Allow-Origin': true
+                },
+                data: {
+                    filename,
+                    data
+                }
+            })
+            if (respSecond.data && respSecond.data.OK) {
                 alert(`File ${timestampedFilename} successefully uploaded`)
-            } else {
-                alert('Upload error:', resp.data.error)
             }
-        }))
+        } else {
+            alert('Upload error:', resp.data.error)
+        }
     }
 
     loadFileFromServer(config) {
