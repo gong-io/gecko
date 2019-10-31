@@ -50,6 +50,45 @@ class dataManager {
         //TODO: change to an actual ONE server request containing all the data same as in the "res" object.
     }
 
+    async serverAudioRequest (config) {
+        const response = await this.$http({
+            method: 'GET',
+            url: config.audio.url,
+            responseType: 'blob',
+            headers: {
+                'Access-Control-Allow-Origin': true
+            }
+        })
+
+        return {
+            audioFile: response.data,
+            audioFileName: config.audio.fileName
+        }
+    }
+
+    async serverSegmentFilesRequest (config) {
+        let promises = [];
+        let res = {segmentFiles: []}
+
+        config.ctms.forEach((ctm) => {
+            promises.push(this.$http({
+                method: 'GET',
+                url: ctm.url
+            }).then(function (response) {
+                res.segmentFiles.push({
+                    filename: ctm.fileName,
+                    data: response.data,
+                    headers: {
+                        'Access-Control-Allow-Origin': true
+                    }
+                });
+            }))
+        })
+
+        await this.$q.all(promises)
+        return res
+    }
+
     serverRequest(config) {
         let promises = [];
 
@@ -72,19 +111,29 @@ class dataManager {
             // or server returns response with an error status.
         }));
 
-        config.ctms.forEach((ctm) => {
-            promises.push(this.$http({
-                method: 'GET',
-                url: ctm.url
-            }).then(function (response) {
+        config.ctms && config.ctms.forEach((ctm) => {
+            if (ctm.url) {
+                promises.push(this.$http({
+                    method: 'GET',
+                    url: ctm.url
+                }).then(function (response) {
+                    res.segmentFiles.push({
+                        filename: ctm.fileName,
+                        data: response.data,
+                        headers: {
+                            'Access-Control-Allow-Origin': true
+                        }
+                    });
+                }))
+            } else if (ctm.data) {
                 res.segmentFiles.push({
-                    filename: ctm.fileName,
-                    data: response.data,
+                    filename: ctm.file_name,
+                    data: ctm.data,
                     headers: {
                         'Access-Control-Allow-Origin': true
                     }
                 });
-            }))
+            }
         })
 
 

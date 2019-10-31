@@ -78,20 +78,24 @@ class MainController {
         this.$scope = $scope;
         this.$timeout = $timeout
         this.$interval = $interval
-        this.isServerMode = false
+        this.saveMode = constants.SAVE_MODES.client
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
+
+        this.constants = constants
+        this.eventBus = new EventBus(this)
     }
 
     loadApp(config) {
-        console.log('here', EventBus)
         const urlParams = new URLSearchParams(window.location.search)
         const saveMode = urlParams.get('save_mode')
         if (saveMode) {
             if (saveMode === 'server') {
-                this.isServerMode = true
+                this.saveMode = constants.SAVE_MODES.server
             } else if (saveMode === 'local') {
-                this.isServerMode = false
+                this.saveMode = constants.SAVE_MODES.client
+            } else if (saveMode === 'external') {
+                this.saveMode = constants.SAVE_MODES.external
             }
         }
 
@@ -131,15 +135,36 @@ class MainController {
                 })
             }
         }
-        if (config.mode === 'server' || this.isServerMode || serverConfig) {
+
+        if (config.mode === 'server' || this.saveMode === constants.SAVE_MODES.server || serverConfig) {
             this.loadServerMode(serverConfig ? serverConfig : config);
+        } else if (this.saveMode === constants.SAVE_MODES.external) {
+            if (this.wavesurfer) this.wavesurfer.destroy()
+            this.init()
+
+            this.eventBus.listen('loadExternal', (e) => {
+                this.loadExternalMode(e.detail)
+            })
+
+            this.eventBus.listen('loadExternalAudio', (e) => {
+                this.loadExternalAudio(e.detail)
+            })
+
+            this.eventBus.listen('loadExternalSegmentFiles', (e) => {
+                this.loadExternalSegmentFiles(e.detail)
+            })
+
+            this.eventBus.listen('loadExternalSegmentFilesData', (e) => {
+                this.loadExternalSegmentFilesData(e.detail)
+            })
+
+            this.eventBus.dispatch('geckoReady', { detail: { ready: true } })
         } else {
-            this.loadClientMode();
+            this.loadClientMode()
         }
     }
 
     init() {
-        this.eventBus = new EventBus(this)
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
@@ -430,13 +455,6 @@ class MainController {
         this.$interval(() => {
             this.saveToDB()
         }, constants.SAVE_THRESHOLD)
-
-        this.eventBus.listen('loadDoccano', (data) => {
-            console.log('need to load doc', data)
-            this.loadDoccano(data)
-        })
-
-        this.eventBus.dispatch('geckoReady', { ready: true })
     }
 
     async saveToDB () {
@@ -1244,6 +1262,25 @@ class MainController {
         }
     }
 
+    async saveExternal(extension, converter) {
+        for (var i = 0; i < this.filesData.length; i++) {
+            var current = this.filesData[i];
+            if (current.data) {
+                // convert the filename to "rttm" extension
+                var filename = current.filename.substr(0, current.filename.lastIndexOf('.')) + "." + extension;
+
+                if (!this.checkValidRegions(i)) return;
+
+                console.log('save external')
+
+                this.eventBus.dispatch('geckoSave', {
+                    data: converter(i),
+                    filename
+                })
+            }
+        }
+    }
+
     saveDiscrepancyResults() {
         this.dataManager.downloadFileToClient(jsonStringify(this.discrepancies),
             this.filesData[0].filename + "_VS_" + this.filesData[1].filename + ".json");
@@ -1254,7 +1291,20 @@ class MainController {
             const current = this.filesData[i]
             const splName = current.filename.split('.')
             const extension = splName[splName.length - 1]
-            const saveFunction = this.isServerMode ? this.saveS3.bind(this) : this.save.bind(this)
+            let saveFunction
+            switch (this.saveMode) {
+                case constants.SAVE_MODES.client:
+                    saveFunction = this.save.bind(this)
+                    break;
+                case constants.SAVE_MODES.server:
+                    saveFunction = this.saveS3.bind(this)
+                    break
+                case constants.SAVE_MODES.external:
+                    saveFunction = this.saveExternal.bind(this)
+                    break
+                default:
+                    break
+            }
             switch (extension) {
                 case 'rttm':
                     saveFunction('rttm', this.convertRegionsToRTTM.bind(this))
@@ -1612,15 +1662,35 @@ class MainController {
         
     }
 
-    loadDoccano (config) {
-        this.dataManager.loadFileFromServer(config).then(function (res) {
+    loadExternalMode (config) {
+        this.dataManager.loadFileFromServer(config).then((res) => {
             // var uint8buf = new Uint8Array(res.audioFile);
             // self.wavesurfer.loadBlob(new Blob([uint8buf]));
-            self.wavesurfer.loadBlob(res.audioFile);
-            self.audioFileName = res.audioFileName;
-            res.segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
-            self.filesData = res.segmentFiles;
+            this.wavesurfer.loadBlob(res.audioFile)
+            this.audioFileName = res.audioFileName
+            res.segmentFiles && res.segmentFiles.forEach(x => x.data = this.handleTextFormats(x.filename, x.data))
+            this.filesData = res.segmentFiles && res.segmentFiles.length ? res.segmentFiles : [{
+                filename: 'demo.json',
+                data: []
+            }]
         })
+    }
+
+    loadExternalSegmentFilesData (segmentFiles) {
+        segmentFiles && segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
+        self.filesData = segmentFiles;
+    }
+
+    async loadExternalAudio (audioConfig) {
+        const result = await this.dataManager.serverAudioRequest(audioConfig)
+        this.wavesurfer.loadBlob(result.audioFile);
+        this.audioFileName = result.audioFileName;
+    }
+
+    async loadExternalSegmentFiles (segmentsConfig) {
+        const result = await this.dataManager.serverSegmentFilesRequest(segmentsConfig)
+        result.segmentFiles && result.segmentFiles.forEach(x => x.data = this.handleTextFormats(x.filename, x.data))
+        this.filesData = result.segmentFiles
     }
 
     //TODO: move all that to a different file

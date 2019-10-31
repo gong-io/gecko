@@ -76,3 +76,9 @@ export const PUNCTUATION_TYPE = "PUNCTUATION"
 export const WORD_TYPE = "WORD"
 
 export const TOLERANCE = 0.00001;
+
+export const SAVE_MODES = {
+    client: 1,
+    server: 2,
+    external: 3
+}

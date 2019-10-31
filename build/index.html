@@ -43,12 +43,12 @@
                 </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li class="active">
+                <li class="active" ng-if="ctrl.saveMode != ctrl.constants.SAVE_MODES.external">
                     <a href="#" onclick="location.reload();">
                         <i class="glyphicon glyphicon-open"></i>
                         Load
                     </a></li>
-                <li class="dropdown" ng-if="!ctrl.isServerMode">
+                <li class="dropdown" ng-if="ctrl.saveMode == ctrl.constants.SAVE_MODES.client">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                        aria-expanded="false">
                         <i class="glyphicon glyphicon-save"></i>
@@ -74,7 +74,7 @@
                         <li role="separator" class="divider"></li>
                     </ul>
                 </li>
-                <li class="dropdown" ng-if="ctrl.isServerMode">
+                <li class="dropdown" ng-else>
                     <a href="#"
                        class="dropdown-toggle" role="button"
                        ng-click="ctrl.saveData()">
@@ -330,7 +330,7 @@
                                 </span>
                                 <div class="pull-right">
                                     <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
-                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]" speaker="speaker" title="{{speaker}}"></play-part>
+                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>
                                     <input type="color" ng-model="color" class="pull-right"
                                            ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker, color)"/>
                                 </div>

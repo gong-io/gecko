@@ -4,7 +4,7 @@ class EventBus {
     }
 
     dispatch (name, data) {
-        const event = new CustomEvent(name, data)
+        const event = new CustomEvent(name, { detail: data })
         window.parent.document.dispatchEvent(event)
     }
 
