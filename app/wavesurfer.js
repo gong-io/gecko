@@ -2,6 +2,7 @@ import { config } from './config.js'
 import colorMap from './colormap'
 import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin from 'wavesurfer.js/dist/plugin/wavesurfer.regions.min.js';
+import TimelinePlugin from 'wavesurfer.js/dist/plugin/wavesurfer.timeline.min.js';
 import SpectrorgamPlugin from 'wavesurfer.js/dist/plugin/wavesurfer.spectrogram.min.js';
 
 function debounce(func, wait, immediate) {
@@ -23,7 +24,10 @@ export default function (url) {
     url = url || config.defaultUrl;
     var opts = config.wavesurfer;
     opts.plugins = [
-		RegionsPlugin.create()
+		RegionsPlugin.create(),
+		TimelinePlugin.create(
+			{container:'#timeline'}
+		)
 	];
 
 	if (opts.useSpectrogram) {
