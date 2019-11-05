@@ -10,7 +10,8 @@ module.exports = {
   entry: "./app/app.js",
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: "gecko.js"
+    filename: "gecko.js",
+    publicPath: '/static/'
   },
   devServer: {
     contentBase: 'build/', // Relative directory for base of server
