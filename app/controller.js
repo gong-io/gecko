@@ -1810,9 +1810,9 @@ class MainController {
         const isDownCtrl = isMacMeta || isOtherControl
         if (isDownCtrl) {
             this.seek(word.start, 'right');
+            e.preventDefault()
+            e.stopPropagation()
         }
-        e.preventDefault()
-        e.stopPropagation()
     }
 
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
