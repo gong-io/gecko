@@ -1503,8 +1503,9 @@ class MainController {
 
     loadExternalMode (config) {
         this.dataManager.loadFileFromServer(config).then((res) => {
-            // var uint8buf = new Uint8Array(res.audioFile);
-            // self.wavesurfer.loadBlob(new Blob([uint8buf]));
+            if (this.wavesurfer) this.wavesurfer.destroy()
+            this.init()
+
             this.wavesurfer.loadBlob(res.audioFile)
             this.audioFileName = res.audioFileName
             res.segmentFiles && res.segmentFiles.forEach(x => x.data = this.handleTextFormats(x.filename, x.data))
