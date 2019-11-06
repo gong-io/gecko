@@ -1503,6 +1503,7 @@ class MainController {
 
     loadExternalMode (config) {
         this.dataManager.loadFileFromServer(config).then((res) => {
+            console.log('load external')
             if (this.wavesurfer) this.wavesurfer.destroy()
             this.init()
 
