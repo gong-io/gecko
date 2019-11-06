@@ -6,8 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev-old": "node_modules/.bin/webpack-dev-server --watch",
-    "dev": "webpack-dev-server",
-    "build": "webpack",
+    "dev": "webpack-dev-server --config webpack/webpack.common.js",
+    "build": "webpack --config webpack/webpack.common.js",
+    "build:external": "webpack --config webpack/webpack.external.js",
+    "dev:external": "webpack-dev-server --config webpack/webpack.external.js",
     "server": "node index_server.js",
     "deploy": "webpack && git subtree push --prefix build origin gh-pages"
   },
@@ -50,6 +52,7 @@
     "url-loader": "^2.1.0",
     "webpack": "^4.39.2",
     "webpack-cli": "^3.3.6",
-    "webpack-dev-server": "^3.8.0"
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.2.2"
   }
 }

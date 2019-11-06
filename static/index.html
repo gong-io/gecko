@@ -74,7 +74,7 @@
                         <li role="separator" class="divider"></li>
                     </ul>
                 </li>
-                <li class="dropdown" ng-else>
+                <li class="dropdown" ng-if="ctrl.saveMode == ctrl.constants.SAVE_MODES.server || ctrl.saveMode == ctrl.constants.SAVE_MODES.external">
                     <a href="#"
                        class="dropdown-toggle" role="button"
                        ng-click="ctrl.saveData()">

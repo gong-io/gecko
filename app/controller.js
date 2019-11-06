@@ -1265,8 +1265,6 @@ class MainController {
 
                 if (!this.checkValidRegions(i)) return;
 
-                console.log('save external')
-
                 this.eventBus.dispatch('geckoSave', {
                     data: converter(i),
                     filename
@@ -1299,22 +1297,7 @@ class MainController {
                 default:
                     break
             }
-            switch (extension) {
-                case 'rttm':
-                    saveFunction('rttm', this.convertRegionsToRTTM.bind(this))
-                    break;
-                case 'json':
-                    saveFunction('json', this.convertRegionsToJson.bind(this));
-                    break;
-                case 'ctm':
-                    saveFunction('ctm', this.convertRegionsToCtm.bind(this));
-                    break;
-                case 'srt':
-                    saveFunction('srt', this.convertRegionsToSrt.bind(this));
-                    break;
-                default:
-                    alert('Unsupported file format')
-            }
+            saveFunction(extension, convertTextFormats(extension, this, config.parserOptions))
         }
     }
 
