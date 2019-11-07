@@ -71,11 +71,21 @@ export const parse = (data, $parent, parserOptions) => {
         });
     } else {
         words.forEach(function (word) {
+            const { speaker, start, end, text } = word
+            const wordsArrText = text.split(' ')
+            const rWords = wordsArrText.map((t) => {
+                return {
+                    text: t,
+                    speaker,
+                    start,
+                    end
+                }
+            })
             monologues.push({
                 speaker: word.speaker,
                 start: word.start,
                 end: word.end,
-                words: [word]
+                words: rWords
             });
         })
     }
