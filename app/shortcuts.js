@@ -8,64 +8,82 @@ class Shortcuts {
         this.isMac = navigator.platform.indexOf('Mac') > -1
         const digits = [...Array(9)]
         const digitsString = digits.map((d, idx) => `command+shift+${idx + 1},ctrl+shift+${idx + 1}`).join(',')
-        this.hotkeys = [
+        this.hotkeysDesc = [
             {
                 keyDesc: this.isMac ? '<kbd>Alt</kbd>+<kbd>Space</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Space</kbd>',
-                desc: 'Play/pause',
+                desc: 'Play/pause'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>↵</kbd>' : '<kbd>Ctrl</kbd>+<kbd>↵</kbd>',
+                desc: 'Play region'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>→</kbd>' : '<kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd>',
+                desc: 'Skip backward / forward'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd>',
+                desc: 'Previous / next region'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd>',
+                desc: 'Previous / next Discrepancy'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Z</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Z</kbd>',
+                desc: 'Undo'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>',
+                desc: 'Select annotation'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Click</kbd> on a word' : '<kbd>Ctrl</kbd>+<kbd>Click</kbd> on a word',
+                desc: 'Jump to word start'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>→</kbd> when word selected' : '<kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd> when word selected',
+                desc: 'Jump to previous / next word'
+            }
+        ]
+        this.hotkeys = [
+            {
                 handler: (e) => this.playPauseHandler(e),
                 keys: this.isMac ? 'alt+space' : 'ctrl+space'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>↵</kbd>' : '<kbd>Ctrl</kbd>+<kbd>↵</kbd>',
-                desc: 'Play region',
                 handler: (e) => this.playRegionHandler(e),
                 keys: 'ctrl+enter,command+enter'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>→</kbd>' : '<kbd>Ctrl</kbd>+<kbd>→</kbd>',
-                desc: 'Skip forward',
                 handler: (e) => this.skipForwardHandler(e),
                 keys: 'ctrl+right,command+right'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd>' : '<kbd>Ctrl</kbd>+<kbd>←</kbd>',
-                desc: 'Skip backward',
                 handler: (e) => this.skipBackwardHandler(e),
                 keys: 'ctrl+left,command+left'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd>',
-                desc: 'Next region',
                 handler: (e) => this.nextRegionHandler(e),
                 keys: 'ctrl+shift+right,command+shift+right'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>←</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>←</kbd>',
-                desc: 'Previous region',
                 handler: (e) => this.previousRegionHandler(e),
                 keys: 'ctrl+shift+left,command+shift+left'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd>',
-                desc: 'Next Discrepancy',
                 handler: (e) => this.jumpNextDiscrepancyHandler(e),
                 keys: 'ctrl+alt+right'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Alt</kbd>+<kbd>←</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>←</kbd>',
-                desc: 'Previous Discrepancy',
                 handler: (e) => this.jumpPreviousDiscrepancyHandler(e),
                 keys: 'ctrl+alt+left'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Z</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Z</kbd>',
-                desc: 'Undo',
                 handler: (e) => this.undoHandler(e),
                 keys: 'ctrl+z,command+z'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>',
-                desc: 'Select annotation',
                 handler: (e) => this.digitHandler(e),
                 keys: digitsString
             }
@@ -73,13 +91,7 @@ class Shortcuts {
     }
 
     getInfo () {
-        return this.hotkeys.map((h) => {
-            const { desc, keyDesc } = h
-            return {
-                desc,
-                key: keyDesc
-            }
-        })
+        return this.hotkeysDesc
     }
 
     bindKeys () {
