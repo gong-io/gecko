@@ -137,6 +137,7 @@ class MainController {
         this.currentGainProc = constants.DEFAULT_GAIN * 100
         this.minGainProc = constants.MIN_GAIN * 100
         this.maxGainProc = constants.MAX_GAIN * 100
+        this.maxZoom = constants.MAX_ZOOM
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
@@ -1822,9 +1823,9 @@ class MainController {
         const isDownCtrl = isMacMeta || isOtherControl
         if (isDownCtrl) {
             this.seek(word.start, 'right');
+            e.preventDefault()
+            e.stopPropagation()
         }
-        e.preventDefault()
-        e.stopPropagation()
     }
 
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
