@@ -162,6 +162,7 @@ class MainController {
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
+        this.maxZoom = constants.MAX_ZOOM
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
@@ -1902,9 +1903,9 @@ class MainController {
         const isDownCtrl = isMacMeta || isOtherControl
         if (isDownCtrl) {
             this.seek(word.start, 'right');
+            e.preventDefault()
+            e.stopPropagation()
         }
-        e.preventDefault()
-        e.stopPropagation()
     }
 
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
