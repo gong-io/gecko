@@ -137,6 +137,25 @@
         </div>
     </div>
 
+    <div id="volume" class="row" style="margin-bottom: 2em;">
+            <div class="col-md-1">
+                <i class="glyphicon glyphicon-volume-down"></i>
+            </div>
+    
+            <div class="col-md-10">
+                <input id="slider" ng-model="ctrl.currentGainProc" type="range" min="{{ ctrl.minGainProc }}"
+                       max="{{ ctrl.maxGainProc }}"
+                       style="width: 100%"/>
+                <!--            <div class="text-center">-->
+                <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
+                <!--            </div>-->
+            </div>
+    
+            <div class="col-md-1">
+                <i class="glyphicon glyphicon-volume-up"></i>
+            </div>
+        </div>
+
     <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram"></div>
 
     <div id="file-data" style="text-align:center">
