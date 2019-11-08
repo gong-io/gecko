@@ -1455,14 +1455,32 @@ class MainController {
                         $scope.draftAvailable = true
                     })
                 } 
-                $scope.runDemo = function () {
-                    self.filesData = [{
+                $scope.runDemo = async () => {
+                    const demoFile = {
                         filename: 'demo.json',
                         data: self.handleTextFormats('demo.json', JSON.stringify(demoJson))
-                    }];
+                    }
+
+                    self.filesData = [
+                        demoFile
+                    ];
+                    await this.dataBase.addFile({
+                        fileName: demoFile.filename,
+                        fileData: demoFile.data
+                    })
                     self.audioFileName = 'demo.mp3';
                     self.init();
-                    self.wavesurfer.load('https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3');
+                    const res = await this.dataManager.loadFileFromServer({
+                        audio: {
+                            url: 'https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3'
+                        },
+                        ctms: []
+                    })
+                    this.dataBase.addMediaFile({
+                        fileName: self.audioFileName,
+                        fileData: res.audioFile
+                    })
+                    self.wavesurfer.loadBlob(res.audioFile);
                     $uibModalInstance.close(false);
                 };
 
