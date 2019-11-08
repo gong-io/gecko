@@ -39,7 +39,11 @@ class Shortcuts {
             },
             {
                 keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Click</kbd> on a word' : '<kbd>Ctrl</kbd>+<kbd>Click</kbd> on a word',
-                desc: 'Move to word start'
+                desc: 'Jump to word start'
+            },
+            {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>→</kbd> when word selected' : '<kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd> when word selected',
+                desc: 'Jump to previous / next word'
             }
         ]
         this.hotkeys = [
