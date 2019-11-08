@@ -104,6 +104,10 @@ speechRecognition.directive("editable", function () {
                 scope.$apply(read);
             });
 
+            element.bind('dblclick', (e) => {
+                document.execCommand('selectAll',false,null)
+            })
+
             element.bind("keydown keypress", function (e) {
                 if (e.which === 13 || e.which === 27) {
                     this.blur();
