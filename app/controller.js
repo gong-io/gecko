@@ -209,9 +209,15 @@ class MainController {
                     minLength: constants.MINIMUM_LENGTH
                 });
 
-            self.$scope.$watch(() => self.zoomLevel, function (newVal) {
+            self.$scope.$watch(() => self.zoomLevel, function (newVal, oldVal) {
                 if (newVal) {
-                    self.wavesurfer.zoom(self.zoomLevel);
+                    if (!self.noUpdateZoom) {
+                        if (Math.round(newVal) !== Math.round(oldVal)) {
+                            self.wavesurfer.zoom(self.zoomLevel);
+                        }
+                    } else {
+                        self.noUpdateZoom = false
+                    }
                 }
             });
 
@@ -431,6 +437,7 @@ class MainController {
             const wavesurferWidth = this.wavesurfer.container.offsetWidth
             const zoomLevel = wavesurferWidth / delta
             this.wavesurfer.zoom(zoomLevel);
+            this.noUpdateZoom = true
             this.zoomLevel = zoomLevel
             this.seek(this.selectedRegion.start)
 
