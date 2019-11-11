@@ -39,7 +39,11 @@ var speakers = {
     '[dialtone]': "#e1c7ff",
     '[music]': "#e1c7ff",
     '[foreign]': "#e1c7ff",
-    '[noise]': "#e1c7ff"
+    '[noise]': "#e1c7ff",
+    '[beep]': "#e1c7ff",
+    '[laughter]': "#e1c7ff",
+    '[bubble]': "#e1c7ff",
+    '[recording]': "#e1c7ff"
 };
 
 export const UNKNOWN_SPEAKER_COLOR = '#808080';
@@ -67,6 +71,7 @@ export const THRESHOLD_MS = 200;
 export const SAVE_THRESHOLD = 60 * 1000
 
 export const ZOOM = 20;
+export const MAX_ZOOM = 1000;
 
 export const PANEL_HEIGHT = 300; //px
 

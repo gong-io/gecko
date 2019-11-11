@@ -6,7 +6,14 @@ var config = {
         // progressColor: 'black',
         pixelRatio: 1,
         autoCenter : false,
-        height: '350'
+        height: '350',
+        useSpectrogram: false,
+        scrollParent: true
+    },
+    parserOptions: {
+        srt: {
+            groupWords: true
+        }
     },
     slider: "#slider",
     isServerMode: false

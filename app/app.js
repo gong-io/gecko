@@ -3,6 +3,8 @@ import '../static/css/app.css'
 
 import '../static/js/bootstrap.min.js'
 
+import 'video.js/dist/video-js.min.css'
+
 import {MainController} from './controller.js'
 import {dataManager} from './dataManager.js'
 import {dataBase} from './dataBase.js'
@@ -101,6 +103,10 @@ speechRecognition.directive("editable", function () {
             element.bind("blur", function () {
                 scope.$apply(read);
             });
+
+            element.bind('dblclick', (e) => {
+                document.execCommand('selectAll',false,null)
+            })
 
             element.bind("keydown keypress", function (e) {
                 if (e.which === 13 || e.which === 27) {

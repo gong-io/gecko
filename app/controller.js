@@ -7,7 +7,13 @@ import './third-party/soundtouch.js'
 import {config} from './config.js'
 import {PUNCTUATION_TYPE} from "./constants";
 
+import videojs from 'video.js'
+
 import Shortcuts from './shortcuts'
+
+import { parse as parseTextFormats, convert as convertTextFormats } from './textFormats'
+
+import { jsonStringify } from './utils'
 
 var Diff = require('diff');
 
@@ -31,16 +37,6 @@ function sortDict(dict, sortBy, sortFunction) {
     });
 
     return sorted;
-}
-
-function jsonStringify(json) {
-    return JSON.stringify(json, function (key, value) {
-        // limit precision of floats
-        if (typeof value === 'number') {
-            return parseFloat(value.toFixed(2));
-        }
-        return value;
-    })
 }
 
 // First, checks if it isn't implemented yet.
@@ -138,10 +134,17 @@ class MainController {
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
+        this.maxZoom = constants.MAX_ZOOM
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
         this.dummyRegion = null
+        this.videoMode = false
+        this.showSpectrogram = false
+        this.showSpectrogramButton = false
+        if (config.wavesurfer.useSpectrogram) {
+            this.showSpectrogramButton = true
+        }
 
         // history variables
         this.undoStack = [];
@@ -332,6 +335,7 @@ class MainController {
 
         this.wavesurfer.on('seek', function (e) {
             self.updateView();
+            self.videoPlayer && self.videoPlayer.currentTime(self.wavesurfer.getCurrentTime())
 
             self.$scope.$evalAsync();
         });
@@ -1173,7 +1177,13 @@ class MainController {
     }
 
     playPause() {
-        this.isPlaying ? this.wavesurfer.pause() : this.wavesurfer.play();
+        if (this.isPlaying) {
+            this.wavesurfer.pause()
+            this.videoPlayer && this.videoPlayer.pause()
+        } else {
+            this.wavesurfer.play()
+            this.videoPlayer && this.videoPlayer.play()
+        }
     }
 
     playRegion() {
@@ -1267,44 +1277,14 @@ class MainController {
             const splName = current.filename.split('.')
             const extension = splName[splName.length - 1]
             const saveFunction = this.isServerMode ? this.saveS3.bind(this) : this.save.bind(this)
-            switch (extension) {
-                case 'rttm':
-                    saveFunction('rttm', this.convertRegionsToRTTM.bind(this))
-                    break;
-                case 'json':
-                    saveFunction('json', this.convertRegionsToJson.bind(this));
-                    break;
-                case 'ctm':
-                    saveFunction('ctm', this.convertRegionsToCtm.bind(this));
-                    break;
-                default:
-                    alert('Unsupported file format')
-            }
+            saveFunction(extension, convertTextFormats(extension, this, config.parserOptions))
         }
     }
 
-    saveRttm() {
-        this.save('rttm', this.convertRegionsToRTTM.bind(this));
-    }
-
-    saveJson() {
-        this.save('json', this.convertRegionsToJson.bind(this));
-    }
-
-    saveCtm() {
-        this.save('ctm', this.convertRegionsToCtm.bind(this));
-    }
-
-    saveRttmS3() {
-        this.saveS3('rttm', this.convertRegionsToRTTM.bind(this));
-    }
-
-    saveJsonS3() {
-        this.saveS3('json', this.convertRegionsToJson.bind(this));
-    }
-
-    saveCtmS3() {
-        this.saveS3('ctm', this.convertRegionsToCtm.bind(this));
+    saveClient(extension) {
+        for (var i = 0; i < this.filesData.length; i++) {
+            this.save(extension, convertTextFormats(extension, this, config.parserOptions))
+        }
     }
 
     checkValidRegions(fileIndex) {
@@ -1354,90 +1334,6 @@ class MainController {
         }
 
         return [text, punct];
-    }
-
-    convertRegionsToJson(fileIndex) {
-        var self = this;
-        var data = {schemaVersion: "2.0", monologues: []};
-        this.iterateRegions(function (region) {
-            let words = region.data.words;
-            let terms = []
-            if (words) {
-                words.forEach(w => {
-                    // copy word to cancel references
-                    let t = JSON.parse(JSON.stringify(w))
-
-                    t.type = constants.WORD_TYPE;
-                    terms.push(t);
-
-                    let textAndPunct = self.splitPunctuation(t.text);
-                    if (textAndPunct[1] !== "") {
-
-                        //trim the punctuation from the original
-                        t.text = textAndPunct[0]
-
-                        terms.push({
-                            start: t.end,
-                            end: t.end,
-                            text: textAndPunct[1],
-                            confidence: t.confidence,
-                            type: constants.PUNCTUATION_TYPE
-                        })
-                    }
-                })
-            }
-            data.monologues.push({
-                speaker: {id: self.formatSpeaker(region.data.speaker), color: region.color},
-                start: region.start,
-                end: region.end,
-                terms: terms
-            });
-
-        }, fileIndex, true);
-
-        return jsonStringify(data);
-    }
-
-    convertRegionsToCtm(fileIndex) {
-        var self = this;
-        var segment_id = 0;
-        const output = []
-
-        this.iterateRegions(function (region) {
-            let speaker = self.formatSpeaker(region.data.speaker);
-
-            region.data.words.forEach((word) => {
-                let confidence = word.confidence || constants.NO_CONFIDENCE;
-
-                output.push('{0}_{1}_audio 1 {2} {3} {4} {5}'.format(
-                    speaker,
-                    segment_id.toString().padStart(5, '0'),
-                    word.start.toFixed(2).padStart(8, '0'),
-                    (word.end - word.start).toFixed(2),
-                    word.text,
-                    confidence.toFixed(2)
-                ));
-            });
-
-            segment_id++;
-        }, fileIndex, true);
-
-        return output.sort().join('\n')
-    }
-
-    convertRegionsToRTTM(fileIndex) {
-        var self = this;
-        var data = [];
-
-        this.iterateRegions(function (region) {
-            data.push('SPEAKER <NA> <NA> {0} {1} <NA> <NA> {2} <NA> <NA>'.format(
-                region.start.toFixed(2),
-                (region.end - region.start).toFixed(2),
-                self.formatSpeaker(region.data.speaker)));
-
-        }, fileIndex, true);
-
-        return data.join('\n');
     }
 
     textareaBlur() {
@@ -1609,7 +1505,7 @@ class MainController {
 
                 $scope.loadDraft = async () => {
                     self.init()
-                    const audio = self.dataBase.getLastAudioFile()
+                    const audio = self.dataBase.getLastMediaFile()
                     const files = self.dataBase.getFiles()
                     const res = await Promise.all([ audio, files ])
                     self.loadFromDB(res)
@@ -1718,38 +1614,46 @@ class MainController {
         });
     }
 
-    parseAndLoadAudio(res) {
+    async parseAndLoadAudio(res) {
         var self = this;
-
         if (res.call_from_url) {
             self.audioFileName = res.call_from_url.id;
             self.wavesurfer.load(res.call_from_url.url);
             self.parseAndLoadText(res);
-
         } else {
-            self.readAudioFile(res.audio, async (data) => {
-                await this.dataBase.clearDB()
-                this.dataBase.addAudioFile({
+            const fileResult = await this.readMediaFile(res.audio)
+            this.parseAndLoadText(res);
+            await this.dataBase.clearDB()
+            if (!this.videoMode) {
+                this.dataBase.addMediaFile({
                     fileName: this.audioFileName,
-                    fileData: data
+                    fileData: fileResult
                 })
-                const uint8buf = new Uint8Array(data);
-                this.wavesurfer.loadBlob(new Blob([uint8buf]));
-                this.parseAndLoadText(res);
-            });
+                this.wavesurfer.loadBlob(fileResult);
+            } else {
+                this.dataBase.addMediaFile({
+                    fileName: this.audioFileName,
+                    fileData: res.audio,
+                    isVideo: true
+                })
+                this.videoPlayer = videojs('video-js')
+                this.videoPlayer.ready(function () {
+                    var fileUrl = URL.createObjectURL(res.audio);
+                    var fileType = res.audio.type;
+                    this.src({ type: fileType, src: fileUrl });
+                    this.load();
+                    this.muted(true)
+                })
+                this.wavesurfer.loadDecodedBuffer(fileResult);
+            }
         }
 
     }
 
-    loadFromDB (res) {
-        const audioFile = res[0]
+    async loadFromDB (res) {
+        const mediaFile = res[0]
         const files = res[1]
-        if (audioFile) {
-            this.audioFileName = audioFile.fileName
-            const uint8buf = new Uint8Array(audioFile.fileData)
-            this.wavesurfer.loadBlob(new Blob([uint8buf]))
-        }
-
+        
         if (files && files.length) {
             this.filesData = files.map((f) => {
                 return {
@@ -1759,6 +1663,24 @@ class MainController {
             })
         } else {
             this.filesData = []
+        }
+
+        if (mediaFile) {
+            this.audioFileName = mediaFile.fileName
+            if (!mediaFile.isVideo) {
+                this.wavesurfer.loadBlob(mediaFile.fileData)
+            } else {
+                const fileResult = await this.readVideoFile(mediaFile.fileData)
+                this.videoPlayer = videojs('video-js')
+                this.videoPlayer.ready(function () {
+                    var fileUrl = URL.createObjectURL(mediaFile.fileData);
+                    var fileType = mediaFile.fileData.type;
+                    this.src({ type: fileType, src: fileUrl });
+                    this.load();
+                    this.muted(true)
+                })
+                this.wavesurfer.loadDecodedBuffer(fileResult)
+            }
         }
     }
 
@@ -1799,203 +1721,43 @@ class MainController {
     }
 
     handleTextFormats(filename, data) {
-        var ext = filename.substr(filename.lastIndexOf('.') + 1);
-
-        switch (ext) {
-            case "rttm":
-                return this.readRTTM(data)
-            case "tsv":
-                return this.readTSV(data);
-            case "json":
-                return this.readGongJson(data);
-            case "ctm":
-                return this.readCTM(data);
-            default:
-                alert("format " + ext + " is not supported");
-                return undefined;
-        }
+        return parseTextFormats(filename, data, this, config.parserOptions)
     }
 
-    readGongJson(data) {
-        if (typeof data === 'string') {
-            data = JSON.parse(data)
-        }
-
-        // this.EDER = data['EDER'];
-        //this.segmentation = data['Segmentation'];
-
-        var monologues = data['monologues'];
-        for (var i = 0; i < monologues.length; i++) {
-            var monologue = monologues[i];
-
-
-            if (!monologue.speaker) {
-                // monologue.speaker = {id: constants.UNKNOWN_SPEAKER};
-                monologue.speaker = "";
-            }
-
-            if (monologue.start === undefined) monologue.start = monologue.terms[0].start;
-            if (monologue.end === undefined) monologue.end = monologue.terms.slice(-1)[0].end;
-
-
-            // if (!monologue.text && monologue.terms) {
-            //     monologue.text = "";
-            //     for (var t = 0; t < monologue.terms.length; t++) {
-            //         var term = monologue.terms[t];
-            //         if (term.text) {
-            //             if (term.type === "WORD") {
-            //                 monologue.text += " ";
-            //             }
-            //
-            //             monologue.text += term.text;
-            //         }
-            //     }
-            // }
-
-
-            if (monologue.terms) {
-                monologue.words = monologue.terms;
-                delete monologue.terms;
-            } else {
-                monologue.words = [];
-            }
-
-
-            // attach punctuation to the previous word
-            for (let j = 1; j < monologue.words.length;) {
-                let current = monologue.words[j];
-
-                if (current.type === constants.PUNCTUATION_TYPE) {
-                    monologue.words[j - 1].text += current.text;
-                    monologue.words.splice(j, 1);
-                } else {
-                    j++;
-                }
-            }
-        }
-        return monologues;
-    }
-
-    readCTM(data) {
-        let monologues = [];
-
-        let lines = data.split(/\r|\n/);
-        let words = lines.filter(function (line) {
-            return line !== "";
-        }).map(function (line) {
-            let cells = line.match(/\S+/g);
-
-            let start = parseFloat(cells[2]);
-            let duration = parseFloat(cells[3]);
-            let end = start + duration;
-            let confidence = parseFloat(cells[5])
-            if (confidence === constants.NO_CONFIDENCE) {
-                confidence = undefined;
-            }
-
-            return {
-                speaker: {id: cells[0].split('_')[0]},
-                segment_id: parseInt(cells[0].split('_')[1]),
-                start: start,
-                end: end,
-                text: cells[4],
-                confidence: confidence
-            }
-        });
-
-
-        let lastMonologue = -1;
-
-        words.sort(function (x, y) {
-            if (x.start >= y.start) {
-                return 1;
-            }
-
-            return -1;
+    readAudioFile (file) {
+        return new Promise((resolve, reject) => {
+            resolve(file)
         })
+    }
 
-        words.forEach(function (word) {
-            if (word.segment_id !== lastMonologue) {
-                lastMonologue = word.segment_id;
-                let speaker = word.speaker;
-
-                monologues.push({
-                    speaker: word.speaker,
-                    start: word.start,
-                    words: [word]
-                });
-            } else {
-                monologues[monologues.length - 1].words.push(word);
+    readVideoFile (file) {
+        const self = this
+        return new Promise(async (resolve, reject) => {
+            this.audioFileName = file.name;
+            var reader = new FileReader();
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+            reader.onload = function () {
+                var videoFileAsBuffer = reader.result
+                audioContext.decodeAudioData(videoFileAsBuffer).then(function (decodedAudioData) {
+                    self.videoMode = true
+                    resolve(decodedAudioData)
+                })
             }
-
-            // this information is now on the segment/monologue
-            delete word.segment_id;
-            delete word.speaker;
-        });
-
-        monologues.forEach(function (m) {
-            let lastWord = m.words[m.words.length - 1];
-            m.end = lastWord.end;
-        });
-
-        this.ctmData.push(words);
-
-        return monologues;
+            reader.readAsArrayBuffer(file)
+        })
     }
 
-    readRTTM(data) {
-        var monologues = [];
-
-        var lines = data.split(/\r|\n/);
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i] === "") continue;
-
-            var cells = lines[i].match(/\S+/g);
-            var speaker = cells[7];
-            var start = parseFloat(cells[3]);
-            var duration = parseFloat(cells[4]);
-            var end = start + duration;
-
-            monologues.push({speaker: {id: speaker}, start: start, end: end});
-        }
-
-        return monologues;
-    }
-
-    readTSV(data) {
-        var monologues = [];
-        var lines = data.split(/\r|\n/);
-        for (var i = 0; i < lines.length; i++) {
-            if (lines[i] === "") continue;
-            var cells = lines[i].split('\t');
-
-            var speaker = cells[2];
-            var start = parseFloat(cells[0]);
-            var end = parseFloat(cells[1]);
-            monologues.push({speaker: {id: speaker}, start: start, end: end});
-
-        }
-
-        return monologues;
-    }
-
-    readAudioFile(file, cb) {
-        this.audioFileName = file.name;
-        var reader = new FileReader();
-        var f = file;
-        if (!f) {
-            return;
-        }
-
-        var self = this;
-
-        reader.onload = (function (theFile) {
-            return function (e) {
-                cb(e.target.result);
-            };
-        })(f);
-
-        reader.readAsArrayBuffer(f);
+    async readMediaFile(file) {
+        return new Promise(async (resolve, reject) => {
+            this.audioFileName = file.name;
+            if (file.type.includes('audio')) {
+                const result = await this.readAudioFile(file)
+                resolve(result)
+            } else if (file.type.includes('video')) {
+                const result = await this.readVideoFile(file)
+                resolve(result)
+            }
+        })
     }
 
     readTextFile(file, cb) {
@@ -2085,9 +1847,9 @@ class MainController {
         const isDownCtrl = isMacMeta || isOtherControl
         if (isDownCtrl) {
             this.seek(word.start, 'right');
+            e.preventDefault()
+            e.stopPropagation()
         }
-        e.preventDefault()
-        e.stopPropagation()
     }
 
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
@@ -2138,6 +1900,10 @@ class MainController {
         } else if (which === 219) {
             this.wavesurfer.skip(-5)
         }
+    }
+
+    toggleSpectrogram () {
+        this.showSpectrogram = !this.showSpectrogram
     }
 }
 

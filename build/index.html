@@ -6,7 +6,7 @@
     <title>Speech Recognition Platform </title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" href="images/favicon.png">
-<link href="bundle.css" rel="stylesheet"></head>
+<link href="gecko.css" rel="stylesheet"></head>
 
 <body ng-app="speechRecognition" ng-controller="MainController as ctrl" ng-init="ctrl.loadApp({mode: 'client'})"
       ng-cloak>
@@ -14,7 +14,7 @@
 <nav class="navbar navbar-inverse" style="margin-bottom: 0">
     <div class="container">
         <div class="navbar-header">
-            <img id="logo" src="b39f101ac0cde22f57db8e075f1dc762.svg" alt="Gecko">
+            <img id="logo" src="cf602c540f0db52121e748c0b95886c2.svg" alt="Gecko">
         </div>
         <div class="navbar-header">
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
@@ -56,14 +56,17 @@
                         <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="#" ng-click="ctrl.saveRttm()">
+                        <li><a href="#" ng-click="ctrl.saveClient('rttm')">
                             RTTM
                         </a></li>
-                        <li><a href="#" ng-click="ctrl.saveJson()">
+                        <li><a href="#" ng-click="ctrl.saveClient('json')">
                             JSON
                         </a></li>
-                        <li><a href="#" ng-click="ctrl.saveCtm()">
+                        <li><a href="#" ng-click="ctrl.saveClient('ctm')">
                             CTM
+                        </a></li>
+                        <li><a href="#" ng-click="ctrl.saveClient('srt')">
+                            SRT
                         </a></li>
                         <li><a href="#" ng-click="ctrl.saveDiscrepancyResults()" ng-if="ctrl.discrepancies">
                             Annotations
@@ -102,20 +105,27 @@
     </div>
 </div>
 
+<div class="row" ng-show="ctrl.videoMode">
+    <div class="col-md-6 col-md-offset-3">
+        <video id="video-js" style="margin: 0 auto;"></video>
+    </div>
+</div>
 <!--<div style="resize:vertical;overflow-y:auto" ng-mousemove="ctrl.resizeWavesurfer($event)">-->
 <div id="waveform"></div>
 <!--<div style="height:10px"></div>-->
 <!--</div>-->
+<div id="timeline">
 
+</div>
 <div class="wrapper" ng-show="ctrl.ready">
-    <div id="zoom" class="row" style="margin-bottom: 2em">
+    <div id="zoom" class="row" style="margin-bottom: 2em;">
         <div class="col-md-1">
             <i class="glyphicon glyphicon-zoom-out"></i>
         </div>
 
         <div class="col-md-10">
             <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
-                   max="100"
+                   max="{{ ctrl.maxZoom }}"
                    style="width: 100%"/>
             <!--            <div class="text-center">-->
             <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
@@ -127,10 +137,12 @@
         </div>
     </div>
 
+    <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram"></div>
+
     <div id="file-data" style="text-align:center">
     </div>
 
-    <div class="row" style="text-align: center; margin-bottom: 2em">
+    <div class="row" style="text-align: center; margin-bottom: 2em; margin-top: 2em">
         <div class="col-md-12">
             <button class="btn btn-primary" ng-show="!ctrl.isPlaying" ng-click="ctrl.playPause()">
                 <i class="glyphicon glyphicon-play"></i>
@@ -186,6 +198,14 @@
                     data-toggle="tooltip" data-placement="top">
                 <i class="glyphicon glyphicon-share-alt" style="transform: scaleX(-1);"></i>
                 Undo
+            </button>
+
+            <button class="btn btn-default" ng-click="ctrl.toggleSpectrogram()"
+                    title="Show/hide Spectrogram"
+                    ng-if="ctrl.showSpectrogramButton"
+                    data-toggle="tooltip" data-placement="top">
+                <i class="glyphicon glyphicon-stats"></i>
+                Toggle Spectrogram
             </button>
         </div>
     </div>
@@ -437,6 +457,6 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
-<script type="text/javascript" src="bundle.js"></script></body>
+<script type="text/javascript" src="gecko.js"></script></body>
 
 </html>

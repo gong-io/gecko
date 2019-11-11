@@ -10,11 +10,10 @@ module.exports = {
   entry: "./app/app.js",
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: "bundle.js"
+    filename: "gecko.js"
   },
   devServer: {
     contentBase: 'build/', // Relative directory for base of server
-    publicPath: '/', // Live-reload
     inline: true,
     port: 4000, // Port Number
     host: 'localhost', // Change to '0.0.0.0' for external facing server
@@ -67,7 +66,7 @@ module.exports = {
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'bundle.css'
+      filename: 'gecko.css'
     }),
     new HtmlWebpackPlugin({
       filename: 'index.html',
