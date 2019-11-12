@@ -192,6 +192,13 @@
                 <i class="glyphicon glyphicon-trash"></i>
             </button>
 
+            <button class="btn btn-default" ng-click="ctrl.insertDummyRegion()" ng-disabled="!ctrl.selectedRegion || !ctrl.selectedRegion.isDummy"
+                    title="Insert dummy region"
+                    data-toggle="tooltip" data-placement="top">
+                <i class="glyphicon glyphicon-pushpin"></i>
+                Insert
+            </button>
+
 
             <button class="btn btn-default" ng-click="ctrl.undo()" ng-disabled="!ctrl.undoStack.length"
                     title="Undo the last operation"
@@ -322,7 +329,7 @@
                                        value="{{speaker}}"
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
-                                       ng-disabled="!ctrl.selectedRegion"
+                                       ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.isDummy"
                                 style="margin-bottom: 0px">
                                 <span editable
                                       changed="ctrl.speakerNameChanged(oldText,newText)"
@@ -425,7 +432,10 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
                 </div>
-                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
+                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;" ng-if="ctrl.currentRegions[$index].isDummy">
+                        <p><b style="word-break: break-all;">Dummy region</b></p>
+                </div>
+                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;" ng-if="!ctrl.currentRegions[$index].isDummy">
                     <p><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
                         }}</b></p>
                     <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
