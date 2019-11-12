@@ -7,7 +7,7 @@ var config = {
         pixelRatio: 1,
         autoCenter : false,
         height: '350',
-        useSpectrogram: false,
+        useSpectrogram: true,
         scrollParent: true
     },
     parserOptions: {
