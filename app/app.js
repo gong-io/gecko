@@ -15,6 +15,8 @@ import collapse from 'angular-ui-bootstrap/src/collapse'
 import './third-party/localStorageDB.js'
 import {playPartDirective} from './playPartDirective'
 
+const editableWordsTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/editableWords.html')
+
 var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse]);
 
 speechRecognition.controller('MainController', MainController);
@@ -58,7 +60,30 @@ speechRecognition.directive("fileread", [function () {
     }
 }]);
 
-speechRecognition.directive("editable", function () {
+speechRecognition.directive('editableWords', function () {
+    return {
+        restrict: 'E',
+        templateUrl: editableWordsTemplate,
+        scope: {
+            words: '=',
+            fileIndex: '='
+        },
+        link: function (scope, element, attrs) {
+            element[0].setAttribute('contenteditable', true)
+
+            const updateWord = (span) => {
+                console.log('upd word', span.textContent, span.getAttribute('data-index'))
+            }
+
+            element[0].addEventListener('keypress', (e) => {
+                const changedSpan = window.getSelection().anchorNode.parentNode
+                updateWord(changedSpan)
+            })
+        }
+    }
+})
+
+speechRecognition.directive("editableSpan", function () {
     return {
         restrict: "A",
         require: "ngModel",
@@ -67,10 +92,9 @@ speechRecognition.directive("editable", function () {
             keysMapping: '&'
         },
         link: function (scope, element, attrs, ngModel) {
-            element[0].setAttribute('contenteditable', true);
-
             function read() {
                 // view -> model
+                console.log('read')
                 let newText = element.text();
                 let oldText = ngModel.$viewValue;
 
@@ -105,12 +129,15 @@ speechRecognition.directive("editable", function () {
             });
 
             element.bind("keydown keypress", function (e) {
+                console.log('keydown')
                 if (e.which === 13 || e.which === 27) {
                     this.blur();
                     e.preventDefault();
                 }
 
                 e.stopPropagation()
+
+                scope.$apply(read)
             });
 
 

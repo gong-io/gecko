@@ -1,0 +1,15 @@
+<div>
+    <span ng-repeat="word in words track by $index"
+        style="color: rgba(0,0,0, {{ word.confidence }})"
+        ng-style="word.wasEdited && {'color':'rgba(129, 42, 193, ' + word.confidence + ')'}"
+        class="segment-text__word-wrapper"
+        ng-class="{'low-confidence': word.confidence < 0.95 && word.confidence >= 0}"
+        title="Confidence: {{ word.confidence }}"
+        changed="ctrl.wordChanged($parent.$index, $index)"
+        keys-mapping="ctrl.editableKeysMapping($parent.$index, $index, keys, which)"
+        ng-click="ctrl.wordClick(word, $event)"
+        data-index="{{ $index }}"
+        id="word_{{fileIndex}}_{{$index}}">
+        {{ word.text }}
+    </span>
+</div>
