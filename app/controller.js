@@ -141,6 +141,7 @@ class MainController {
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
+        this.dummyRegion = null
         this.videoMode = false
         this.showSpectrogram = false
         this.showSpectrogramButton = false
@@ -171,12 +172,26 @@ class MainController {
                 return;
             }
 
+            const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+            const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
+
+            if ((isOtherControl && e.which === 17) || (isMacMeta && e.which === 91)) {
+                this.isDownCtrl = true
+                console.log('down button')
+            }
+
             // this.shortcuts.checkKeys(e)
             this.$scope.$evalAsync()
             /* if (e.key === 'ArrowRight' && isDownCtrl) {
                 self.jumpNextDiscrepancy();
             } */
         };
+
+        document.onkeyup = (e) => {
+            if (e.which === 17 || e.which === 91) {
+                this.isDownCtrl = false
+            }
+        }
 
         this.wavesurferElement.onclick = function (e) {
             if (!self.isRegionClicked) {
@@ -344,6 +359,17 @@ class MainController {
         });
 
         this.wavesurfer.on("region-created", function (region) {
+            if (self.isDownCtrl) {
+                if (self.dummyRegion) {
+                    self.addHistory(self.dummyRegion)
+                    self.undoStack.push([ self.dummyRegion.id ])
+                    self.dummyRegion.remove()
+                }
+                region.isDummy = true
+                self.dummyRegion = region
+                self.addHistory(region);
+                self.undoStack.push([ region.id ])
+            }
             var numOfFiles = self.filesData.length;
 
             // indication when file was created by drag
@@ -393,7 +419,6 @@ class MainController {
 
         this.wavesurfer.on("region-updated", function (region) {
             self.regionPositionUpdated(region);
-
         });
 
         this.wavesurfer.on('region-update-end', function (region) {
@@ -637,32 +662,34 @@ class MainController {
             this.fixRegionsOrder(region);
         }
 
-        var prevRegion = this.getRegion(region.prev);
-        var nextRegion = this.getRegion(region.next);
+        if (!region.isDummy) {
+            var prevRegion = this.getRegion(region.prev);
+            var nextRegion = this.getRegion(region.next);
 
-        if (prevRegion !== null) {
-            if (region.start < prevRegion.start + constants.MINIMUM_LENGTH) {
-                region.start = prevRegion.start + constants.MINIMUM_LENGTH;
-                region.end = Math.max(region.start + constants.MINIMUM_LENGTH, region.end);
+            if (prevRegion !== null) {
+                if (region.start < prevRegion.start + constants.MINIMUM_LENGTH) {
+                    region.start = prevRegion.start + constants.MINIMUM_LENGTH;
+                    region.end = Math.max(region.start + constants.MINIMUM_LENGTH, region.end);
+                }
+
+                if (region.start < prevRegion.end) {
+                    prevRegion.end = region.start;
+                    self.updateOtherRegions.add(prevRegion);
+                    self.regionUpdated(prevRegion);
+                }
             }
 
-            if (region.start < prevRegion.end) {
-                prevRegion.end = region.start;
-                self.updateOtherRegions.add(prevRegion);
-                self.regionUpdated(prevRegion);
-            }
-        }
+            if (nextRegion !== null) {
+                if (region.end > nextRegion.end - constants.MINIMUM_LENGTH) {
+                    region.end = nextRegion.end - constants.MINIMUM_LENGTH;
+                    region.start = Math.min(region.start, region.end - constants.MINIMUM_LENGTH);
+                }
 
-        if (nextRegion !== null) {
-            if (region.end > nextRegion.end - constants.MINIMUM_LENGTH) {
-                region.end = nextRegion.end - constants.MINIMUM_LENGTH;
-                region.start = Math.min(region.start, region.end - constants.MINIMUM_LENGTH);
-            }
-
-            if (region.end > nextRegion.start) {
-                nextRegion.start = region.end;
-                self.updateOtherRegions.add(nextRegion);
-                self.regionUpdated(nextRegion);
+                if (region.end > nextRegion.start) {
+                    nextRegion.start = region.end;
+                    self.updateOtherRegions.add(nextRegion);
+                    self.regionUpdated(nextRegion);
+                }
             }
         }
 
@@ -681,6 +708,10 @@ class MainController {
 
         if (region.data.speaker.length === 0) {
             region.color = constants.UNKNOWN_SPEAKER_COLOR;
+
+            if (region.isDummy) {
+                region.element.style.background = 'repeating-linear-gradient(135deg, rgb(128, 128, 128) 20px, rgb(180, 180, 180) 40px) rgb(128, 128, 128)'
+            }
         } else if (region.data.speaker.length === 1) {
             region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker[0]];
 
@@ -732,6 +763,7 @@ class MainController {
         }
 
         var regionIds = this.undoStack.pop();
+        console.log('undo stack pop', regionIds)
 
         if (regionIds[0] === constants.SPEAKER_NAME_CHANGED_OPERATION_ID) {
             let fileIndex = regionIds[1];
@@ -741,6 +773,11 @@ class MainController {
             self.updateLegend(fileIndex, newSpeaker, oldSpeaker);
 
             regionIds = regionIds[4];
+        } else if (regionIds[0] === constants.DUMMY_REGION_ADDED_OPERATION_ID) {
+            let dummyRegionId = regionIds[1]
+            // this.wavesurfer.regions.list[dummyRegionId].remove()
+            // this.dummyRegion = null
+            regionIds = [ dummyRegionId ];
         }
 
 
@@ -1110,6 +1147,105 @@ class MainController {
             self.currentRegions.push(undefined);
         })
 
+    }
+
+    insertDummyRegion () {
+        const { dummyRegion } = this
+        const truncateRegions = []
+
+        console.log('dummy region', dummyRegion)
+
+        this.iterateRegions(region => {
+            let overlap = false
+            if (region.start >= dummyRegion.start && region.end <= dummyRegion.end
+                || region.start <= dummyRegion.end && region.end >= dummyRegion.end
+                || region.start <= dummyRegion.start && region.end <= dummyRegion.end && region.end >= dummyRegion.start) {
+                overlap = true
+            }
+
+            if (overlap && region !== dummyRegion) {
+                truncateRegions.push(region)
+            }
+        }, this.selectedFileIndex)
+
+        if (truncateRegions.length) {
+            const newRegionWords = []
+            const newRegionSpeakers = []
+            truncateRegions.forEach(r => {
+                const speakers = JSON.parse(JSON.stringify(r.data.speaker))
+                speakers.forEach(s => {
+                    if (!newRegionSpeakers.includes(s)) {
+                        newRegionSpeakers.push(s)
+                    }
+                })
+                const words = JSON.parse(JSON.stringify(r.data.words))
+                words.forEach(w => {
+                    if (w.start >= dummyRegion.start && w.end <= dummyRegion.end) {
+                        newRegionWords.push(w)
+                    }
+                })
+
+                if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) { 
+                    /* region is fully overlaped */
+                    this.__deleteRegion(r)
+                } else if (r.start <= dummyRegion.end && r.end >= dummyRegion.end) {
+                    /* region is overlaped from right side */
+                    console.log('overlap right', r)
+                    let original = this.copyRegion(r)
+
+                    delete original.id
+                    original.start = dummyRegion.end
+
+                    let words = JSON.parse(JSON.stringify(r.data.words))
+                    let i
+                    for (i = 0; i < words.length; i++) {
+                        if (words[i].start > dummyRegion.end) break
+                    }
+
+                    original.data.words = words.slice(i)
+
+                    this.__deleteRegion(r)
+                    original = this.wavesurfer.addRegion(original)
+                } else if (r.start <= dummyRegion.start && r.end <= dummyRegion.end && r.end >= dummyRegion.start) {
+                    /* region is overlaped from left side */
+                    console.log('overlaped left', r)
+                    let original = this.copyRegion(r)
+
+                    delete original.id
+                    original.end = dummyRegion.start
+
+                    let words = JSON.parse(JSON.stringify(r.data.words))
+                    let i
+                    for (i = 0; i < words.length; i++) {
+                        if (words[i].start > dummyRegion.start) break
+                    }
+
+                    original.data.words = words.slice(0, i)
+
+                    this.__deleteRegion(r)
+                    original = this.wavesurfer.addRegion(original)
+                }
+            })
+
+            this.dummyRegion.remove()
+            this.dummyRegion = null
+            
+            this.wavesurfer.addRegion({
+                start: dummyRegion.start,
+                end: dummyRegion.end,
+                data: {
+                    initFinished: true,
+                    fileIndex: this.selectedFileIndex,
+                    speaker: newRegionSpeakers,
+                    words: newRegionWords
+                },
+                drag: false,
+                minLength: constants.MINIMUM_LENGTH
+            })
+        }
+
+        console.log('to truncate', truncateRegions)
+        
     }
 
     splitSegment() {
