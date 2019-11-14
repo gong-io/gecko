@@ -134,6 +134,9 @@ class MainController {
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
+        this.currentGainProc = constants.DEFAULT_GAIN * 100
+        this.minGainProc = constants.MIN_GAIN * 100
+        this.maxGainProc = constants.MAX_GAIN * 100
         this.maxZoom = constants.MAX_ZOOM
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
@@ -215,6 +218,12 @@ class MainController {
                 }
             });
 
+            self.$scope.$watch(() => self.currentGainProc, function (newVal) {
+                if (newVal) {
+                    self.gainNode.gain.value = newVal / 100
+                }
+            });
+
             self.createSpeakerLegends();
 
             self.addRegions();
@@ -283,18 +292,21 @@ class MainController {
 
             self.soundtouchNode = null;
 
+            self.gainNode = self.wavesurfer.backend.ac.createGain()
+            self.gainNode.gain.value = self.currentGainProc / 100
+
+            var filter = new soundtouch.SimpleFilter(source, st);
+            self.soundtouchNode = soundtouch.getWebAudioNode(self.wavesurfer.backend.ac, filter);
+
             self.wavesurfer.on('play', function () {
                 self.seekingPos = ~~(self.wavesurfer.backend.getPlayedPercents() * self.length);
                 st.tempo = self.wavesurfer.getPlaybackRate();
+                self.wavesurfer.backend.disconnectFilters();
 
                 if (st.tempo === 1) {
-                    self.wavesurfer.backend.disconnectFilters();
+                    self.wavesurfer.backend.setFilters([self.gainNode])
                 } else {
-                    if (!self.soundtouchNode) {
-                        var filter = new soundtouch.SimpleFilter(source, st);
-                        self.soundtouchNode = soundtouch.getWebAudioNode(self.wavesurfer.backend.ac, filter);
-                    }
-                    self.wavesurfer.backend.setFilter(self.soundtouchNode);
+                    self.wavesurfer.backend.setFilters([self.soundtouchNode, self.gainNode])
                 }
 
                 self.isPlaying = true;
