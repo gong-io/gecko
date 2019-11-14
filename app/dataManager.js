@@ -71,10 +71,7 @@ class dataManager {
         promises.push(this.$http({
             method: 'GET',
             url: config.audio.url,
-            responseType: 'blob',
-            headers: {
-                'Access-Control-Allow-Origin': true
-            }
+            responseType: 'blob'
         }).then(function successCallback(response) {
 
             res.audioFile = response.data;
