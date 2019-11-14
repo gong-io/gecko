@@ -212,9 +212,15 @@ class MainController {
                     minLength: constants.MINIMUM_LENGTH
                 });
 
-            self.$scope.$watch(() => self.zoomLevel, function (newVal) {
+            self.$scope.$watch(() => self.zoomLevel, function (newVal, oldVal) {
                 if (newVal) {
-                    self.wavesurfer.zoom(self.zoomLevel);
+                    if (!self.noUpdateZoom) {
+                        if (Math.round(newVal) !== Math.round(oldVal)) {
+                            self.wavesurfer.zoom(self.zoomLevel);
+                        }
+                    } else {
+                        self.noUpdateZoom = false
+                    }
                 }
             });
 
@@ -435,6 +441,21 @@ class MainController {
             this.saveToDB()
         }, constants.SAVE_THRESHOLD)
 
+    }
+
+    zoomIntoRegion () {
+        if (this.selectedRegion) {
+            const delta = this.selectedRegion.end - this.selectedRegion.start
+            const wavesurferWidth = this.wavesurfer.container.offsetWidth
+            const zoomLevel = wavesurferWidth / delta
+            this.wavesurfer.zoom(zoomLevel);
+            this.noUpdateZoom = true
+            this.zoomLevel = zoomLevel
+            this.seek(this.selectedRegion.start)
+
+            const startPosition = this.selectedRegion.start * zoomLevel
+            this.wavesurfer.container.children[0].scrollLeft = startPosition
+        }
     }
 
     async saveToDB () {

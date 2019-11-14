@@ -177,6 +177,11 @@
                 Play Segment
             </button>
 
+            <button class="btn btn-primary" ng-click="ctrl.zoomIntoRegion()">
+                <i class="glyphicon glyphicon-zoom-in"></i>
+                Zoom to Segment
+            </button>
+
             <div class="btn-group" uib-dropdown is-open="status.isopen">
                 <button id="playback-speed" type="button" class="btn btn-default" uib-dropdown-toggle>
                     x{{ ctrl.currentPlaybackSpeed }}
