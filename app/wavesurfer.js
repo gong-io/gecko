@@ -31,7 +31,7 @@ export default function (url) {
 	];
 
 	if (opts.useSpectrogram) {
-		opts.plugins.push(SpectrorgamPlugin.create({ container: '#wavespectrogram', colorMap, labels: true }))
+		opts.plugins.push(SpectrorgamPlugin.create({ container: '#wavespectrogram', colorMap, labels: true, deferInit: true }))
 	}
 
     var wavesurfer = WaveSurfer.create(opts);

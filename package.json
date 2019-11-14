@@ -28,6 +28,7 @@
     "hotkeys-js": "^3.7.2",
     "jquery": "^3.4.1",
     "ngstorage": "^0.3.11",
+    "sweetalert2": "^9.3.2",
     "underscore": "^1.9.1",
     "video.js": "^7.6.5",
     "wavesurfer.js": "^3.0.0"
