@@ -14,6 +14,7 @@ import modal from 'angular-ui-bootstrap/src/modal'
 import collapse from 'angular-ui-bootstrap/src/collapse'
 import './third-party/localStorageDB.js'
 import {playPartDirective} from './playPartDirective'
+import { uuid } from './utils'
 
 const editableWordsTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/editableWords.html')
 
@@ -71,19 +72,76 @@ speechRecognition.directive('editableWords', function () {
         link: function (scope, element, attrs) {
             element[0].setAttribute('contenteditable', true)
 
-            const updateWord = (span) => {
-                console.log('upd word', span.textContent, span.getAttribute('data-index'))
+            const updateAll = () => {
+                const spans = element[0].querySelectorAll('span')
+                const toDel = []
+                const toAdd = []
+                spans.forEach(span => {
+                    const wordText = span.textContent.trim()
+                    const wordIndex = parseInt(span.getAttribute('data-index'))
+                    const wordUuid = span.getAttribute('word-uuid')
+                    if (wordText.length) {
+                        const newWordSplited = wordText.split(' ')
+                        if (newWordSplited.length === 1) {
+                            scope.words[wordIndex].text = span.textContent.trim()
+                        } else {
+                            scope.words[wordIndex].text = newWordSplited[0].trim()
+                            for (let i = 1; i < newWordSplited.length; i++) {
+                                newWordSplited[i].trim().length && toAdd.push({
+                                    id: wordUuid,
+                                    text: newWordSplited[i]
+                                })
+                            }
+                        }
+                    } else {
+                        toDel.push(wordUuid)
+                    }
+                })
+
+                toDel.forEach((id) => {
+                    const delIdx = scope.words.findIndex(w => w.uuid === id)
+                    scope.words.splice(delIdx, 1)
+                })
+
+                toAdd.reverse().forEach(({ id, text }) => {
+                    const addIdx = scope.words.findIndex(w => w.uuid === id)
+                    const wordCopy = Object.assign({}, scope.words[addIdx])
+                    wordCopy.text = text
+                    scope.words.splice(addIdx + 1, 0, wordCopy)
+                })
             }
 
-            element[0].addEventListener('keypress', (e) => {
-                const changedSpan = window.getSelection().anchorNode.parentNode
-                updateWord(changedSpan)
+            element.bind('blur', () => {
+                scope.$apply(updateAll)
+            })
+
+            element.bind('keydown keypress', function (e) {
+                if (e.which === 13 || e.which === 27) {
+                    this.blur();
+                    e.preventDefault();
+                }
+
+                e.stopPropagation()
+            })
+
+            scope.$watch('words', (newVal, oldVal) => {
+                if (newVal && newVal.length) {
+                    newVal.forEach((w) => {
+                        w.uuid = uuid()
+                    })
+                }
+
+                if (oldVal && oldVal.length) {
+                    oldVal.forEach((w) => {
+                        delete w.uuid
+                    })
+                }
             })
         }
     }
 })
 
-speechRecognition.directive("editableSpan", function () {
+/* speechRecognition.directive("editableSpan", function () {
     return {
         restrict: "A",
         require: "ngModel",
@@ -171,7 +229,7 @@ speechRecognition.directive("editableSpan", function () {
             })
         }
     };
-});
+}); */
 
 speechRecognition.filter("mulSearch", function () {
     return function (items, searchText) {

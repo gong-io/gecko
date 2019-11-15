@@ -9,6 +9,7 @@
         keys-mapping="ctrl.editableKeysMapping($parent.$index, $index, keys, which)"
         ng-click="ctrl.wordClick(word, $event)"
         data-index="{{ $index }}"
+        word-uuid="{{ word.uuid }}"
         id="word_{{fileIndex}}_{{$index}}">
         {{ word.text }}
     </span>
