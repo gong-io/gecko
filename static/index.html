@@ -430,9 +430,14 @@
                         }}</b></p>
                     <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
                     <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
-                    <editable-words words="ctrl.currentRegions[$index].data.words" file-index="$index">
+                    <editable-words 
+                        region="ctrl.currentRegions[$index]"
+                        words="ctrl.currentRegions[$index].data.words" 
+                        file-index="$index"
+                        word-click="ctrl.wordClick(word, event)"
+                        word-changed="ctrl.wordChanged(regionIndex, wordIndex)"
+                    >
                     </editable-words>
-                    {{ ctrl.currentRegions[$index].data.words }}
                 </div>
             </div>
         </div>

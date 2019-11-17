@@ -13,7 +13,7 @@ import Shortcuts from './shortcuts'
 
 import { parse as parseTextFormats, convert as convertTextFormats } from './textFormats'
 
-import { jsonStringify } from './utils'
+import { jsonStringify, uuid } from './utils'
 
 var Diff = require('diff');
 
@@ -752,6 +752,9 @@ class MainController {
     deselectRegion(region) {
         if (region !== undefined) {
             region.element.classList.remove("selected-region");
+            region.data.words.forEach((w) => {
+                delete w.uuid
+            })
             if (this.selectedRegion === region) {
                 this.selectedRegion = undefined;
             }
@@ -759,6 +762,9 @@ class MainController {
             if (this.selectedRegion.element) {
                 this.selectedRegion.element.classList.remove("selected-region");
             }
+            this.selectedRegion.data.words.forEach((w) => {
+                delete w.uuid
+            })
             this.selectedRegion = undefined;
         }
     }
@@ -794,6 +800,10 @@ class MainController {
         if (!region) return;
 
         region.element.classList.add("selected-region");
+
+        region.data.words.forEach((w) => {
+            w.uuid = uuid()
+        })
 
         this.selectedRegion = region;
     }
@@ -1769,24 +1779,10 @@ class MainController {
         });
     }
 
-    wordChanged(regionIndex, wordIndex) {
-        let currentRegion = this.currentRegions[regionIndex];
-        let newWord = currentRegion.data.words[wordIndex];
-        newWord.wasEdited = true;
-        if (newWord.text.length) {
-            let newWordSplited = newWord.text.split(' ');
-            if (newWordSplited.length > 1) {
-                currentRegion.data.words[wordIndex].text = newWordSplited[0];
-                for (let i = newWordSplited.length - 1; i >= 1; i--) {
-                    let wordCopy = Object.assign({}, currentRegion.data.words[wordIndex]);
-                    wordCopy.text = newWordSplited[i];
-                    currentRegion.data.words.splice(wordIndex + 1, 0, wordCopy);
-                }
-            }
-        } else {
-            currentRegion.data.words.splice(wordIndex, 1);
-        }
-
+    wordChanged(fileIndex, wordIndex) {
+        let currentRegion = this.currentRegions[fileIndex];
+        const word = currentRegion.data.words[wordIndex];
+        word.wasEdited = true
         this.addHistory(currentRegion);
         this.undoStack.push([currentRegion.id]);
     }
@@ -1805,12 +1801,7 @@ class MainController {
     }
 
     wordClick(word, e) {
-        const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
-        const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
-        const isDownCtrl = isMacMeta || isOtherControl
-        if (isDownCtrl) {
-            this.seek(word.start, 'right');
-        }
+        this.seek(word.start, 'right')
         e.preventDefault()
         e.stopPropagation()
     }

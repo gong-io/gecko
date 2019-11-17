@@ -61,13 +61,16 @@ speechRecognition.directive("fileread", [function () {
     }
 }]);
 
-speechRecognition.directive('editableWords', function () {
+speechRecognition.directive('editableWords', ['$timeout', function ($timeout) {
     return {
         restrict: 'E',
         templateUrl: editableWordsTemplate,
         scope: {
             words: '=',
-            fileIndex: '='
+            fileIndex: '=',
+            region: '=',
+            wordClick: '&',
+            wordChanged: '&'
         },
         link: function (scope, element, attrs) {
             element[0].setAttribute('contenteditable', true)
@@ -76,16 +79,32 @@ speechRecognition.directive('editableWords', function () {
                 const spans = element[0].querySelectorAll('span')
                 const toDel = []
                 const toAdd = []
+                const wordUuids = scope.words.map(w => w.uuid)
+                const spanUuids = []
+
+                if (!spans.length) {
+                    console.log('here')
+                    $timeout(() => {
+                        scope.words = [{start: scope.region.start, end: scope.region.end, text: ''}]
+                    })
+                    return
+                }
+
                 spans.forEach(span => {
                     const wordText = span.textContent.trim()
                     const wordIndex = parseInt(span.getAttribute('data-index'))
                     const wordUuid = span.getAttribute('word-uuid')
+                    spanUuids.push(wordUuid)
                     if (wordText.length) {
                         const newWordSplited = wordText.split(' ')
                         if (newWordSplited.length === 1) {
-                            scope.words[wordIndex].text = span.textContent.trim()
+                            if (span.textContent.trim() !== scope.words[wordIndex].text) {
+                                scope.words[wordIndex].text = span.textContent.trim()
+                                scope.wordChanged && scope.wordChanged({ regionIndex: scope.fileIndex, wordIndex })
+                            }
                         } else {
                             scope.words[wordIndex].text = newWordSplited[0].trim()
+                            span.textContent = newWordSplited[0].trim()
                             for (let i = 1; i < newWordSplited.length; i++) {
                                 newWordSplited[i].trim().length && toAdd.push({
                                     id: wordUuid,
@@ -98,21 +117,101 @@ speechRecognition.directive('editableWords', function () {
                     }
                 })
 
-                toDel.forEach((id) => {
-                    const delIdx = scope.words.findIndex(w => w.uuid === id)
-                    scope.words.splice(delIdx, 1)
+                wordUuids.forEach((wu) => {
+                    if (!spanUuids.includes(wu)) {
+                        toDel.push(wu)
+                    }
+                })
+
+                const oldLength = scope.words.length
+                scope.words = scope.words.filter((w) => {
+                    return !toDel.includes(w.uuid)
                 })
 
                 toAdd.reverse().forEach(({ id, text }) => {
                     const addIdx = scope.words.findIndex(w => w.uuid === id)
                     const wordCopy = Object.assign({}, scope.words[addIdx])
                     wordCopy.text = text
+                    wordCopy.uuid = uuid()
                     scope.words.splice(addIdx + 1, 0, wordCopy)
                 })
+                /* Hack for ng-repeat */
+                if (scope.words.length < oldLength) {
+                    const wordsClone = [ ...scope.words ]
+                    scope.words = []
+                    $timeout(() => {
+                        if (wordsClone.length) {
+                            scope.words = wordsClone
+                        } else {
+                            scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuid()}]
+                        }
+                    })
+                }
             }
 
             element.bind('blur', () => {
                 scope.$apply(updateAll)
+            })
+
+            element.bind('click', (e) => {
+                if (scope.words.length === 1) {
+                    const firstSpan = element[0].querySelector('span')
+                    if (firstSpan && !firstSpan.textContent.trim().length) {
+                        const selection = window.getSelection()
+                        selection.removeAllRanges()
+
+                        const range = document.createRange()
+                        range.selectNodeContents(firstSpan)
+
+                        selection.addRange(range)
+                    }
+                }
+                if (e.ctrlKey || e.metaKey) {
+                    const clickedSpan = window.getSelection().anchorNode.parentNode
+                    if (clickedSpan) {
+                        const wordUuid = clickedSpan.getAttribute('word-uuid')
+                        const clickedWord = scope.words.find(w => w.uuid === wordUuid)
+                        scope.wordClick && scope.wordClick({ word: clickedWord, event: e })
+                    }
+                }
+            })
+
+            const checkDeleteAll = () => {
+                const selection = window.getSelection()
+                const selectionStr = selection.toString().trim()
+                const contentStr = element[0].textContent.replace(/\n\n/g, ' ').replace(/\n/g, '')
+                console.log(selectionStr)
+                console.log(contentStr)
+                if (element[0].textContent.trim().length === 1 || element[0].textContent.trim().length === 0) {
+                    scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuid()}]
+                    return true
+                } else if (selectionStr === contentStr) {
+                    scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuid()}]
+                    return true
+                }
+                
+                // console.log(selection)
+                return false
+            }
+
+            element.bind('paste', (e) => {
+                if (e && e.originalEvent) {
+                    const clipboardData = e.originalEvent.clipboardData
+                    if (clipboardData) {
+                        const text = clipboardData.getData('text/plain')
+                        document.execCommand('insertText', false, text)
+                    }
+                }
+                e.preventDefault()
+            })
+
+            element.bind('keydown', function(e) {
+                if (e.which === 8 || e.which === 46) {
+                    const res = checkDeleteAll()
+                    if (res) {
+                        e.preventDefault()
+                    }
+                }
             })
 
             element.bind('keydown keypress', function (e) {
@@ -121,25 +220,21 @@ speechRecognition.directive('editableWords', function () {
                     e.preventDefault();
                 }
 
-                e.stopPropagation()
-            })
+                const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+                const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
+                const isDownCtrl = isMacMeta || isOtherControl
 
-            scope.$watch('words', (newVal, oldVal) => {
-                if (newVal && newVal.length) {
-                    newVal.forEach((w) => {
-                        w.uuid = uuid()
-                    })
+                if (isDownCtrl) {
+                    if (e.which === 65) {
+                        // e.preventDefault()
+                    }
                 }
 
-                if (oldVal && oldVal.length) {
-                    oldVal.forEach((w) => {
-                        delete w.uuid
-                    })
-                }
+                // e.stopPropagation()
             })
         }
     }
-})
+}])
 
 /* speechRecognition.directive("editableSpan", function () {
     return {
