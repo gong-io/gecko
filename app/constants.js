@@ -70,6 +70,7 @@ export const THRESHOLD_MS = 200;
 export const SAVE_THRESHOLD = 60 * 1000
 
 export const ZOOM = 20;
+export const MAX_ZOOM = 1000;
 
 export const PANEL_HEIGHT = 300; //px
 
@@ -80,3 +81,7 @@ export const PUNCTUATION_TYPE = "PUNCTUATION"
 export const WORD_TYPE = "WORD"
 
 export const TOLERANCE = 0.00001;
+
+export const DEFAULT_GAIN = 1
+export const MIN_GAIN = 0
+export const MAX_GAIN = 2

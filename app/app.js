@@ -20,6 +20,11 @@ var speechRecognition = angular.module('speechRecognition', [dropdown, modal, co
 
 speechRecognition.controller('MainController', MainController);
 
+speechRecognition.config(function($httpProvider) {
+    //Enable cross domain calls
+    $httpProvider.defaults.useXDomain = true;
+})
+
 
 speechRecognition.service('dataManager', dataManager);
 speechRecognition.service('dataBase', dataBase);

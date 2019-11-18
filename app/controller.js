@@ -5,6 +5,7 @@ import * as constants from './constants'
 import './third-party/soundtouch.js'
 
 import {config} from './config.js'
+import Swal from 'sweetalert2'
 import {PUNCTUATION_TYPE} from "./constants";
 
 import videojs from 'video.js'
@@ -130,16 +131,38 @@ class MainController {
         }
     }
 
+    reset () {
+        this.wavesurfer && this.wavesurfer.destroy()
+        this.$scope.$evalAsync(() => {
+            this.loader = false
+            this.audioFileName = null
+            this.currentTime = '00:00'
+            this.zoomLevel = constants.ZOOM
+            this.isPlaying = false
+            this.playbackSpeeds = constants.PLAYBACK_SPEED
+            this.currentPlaybackSpeed = 1
+            this.videoMode = false
+            this.showSpectrogram = false
+            this.showSpectrogramButton = false
+            this.spectrogramReady = false
+        })
+    }
+
     init() {
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
+        this.currentGainProc = constants.DEFAULT_GAIN * 100
+        this.minGainProc = constants.MIN_GAIN * 100
+        this.maxGainProc = constants.MAX_GAIN * 100
+        this.maxZoom = constants.MAX_ZOOM
         this.isPlaying = false;
         this.playbackSpeeds = constants.PLAYBACK_SPEED;
         this.currentPlaybackSpeed = 1;
         this.videoMode = false
         this.showSpectrogram = false
         this.showSpectrogramButton = false
+        this.spectrogramReady = false
         if (config.wavesurfer.useSpectrogram) {
             this.showSpectrogramButton = true
         }
@@ -187,10 +210,18 @@ class MainController {
             self.updateView();
         });
 
-        this.wavesurfer.on('error', function (e) {
-            alert('wavesurfer error');
-            console.error("wavesurfer error:");
-            console.log(e);
+        this.wavesurfer.on('error', (e) => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Wavesurfer error',
+                text: e
+            })
+            console.error("wavesurfer error:")
+            console.log(e)
+            this.reset()
+            if (!this.isServerMode) {
+                this.loadClientMode()
+            }
         });
 
         this.wavesurfer.on('loading', function () {
@@ -208,9 +239,21 @@ class MainController {
                     minLength: constants.MINIMUM_LENGTH
                 });
 
-            self.$scope.$watch(() => self.zoomLevel, function (newVal) {
+            self.$scope.$watch(() => self.zoomLevel, function (newVal, oldVal) {
                 if (newVal) {
-                    self.wavesurfer.zoom(self.zoomLevel);
+                    if (!self.noUpdateZoom) {
+                        if (Math.round(newVal) !== Math.round(oldVal)) {
+                            self.wavesurfer.zoom(self.zoomLevel);
+                        }
+                    } else {
+                        self.noUpdateZoom = false
+                    }
+                }
+            });
+
+            self.$scope.$watch(() => self.currentGainProc, function (newVal) {
+                if (newVal) {
+                    self.gainNode.gain.value = newVal / 100
                 }
             });
 
@@ -282,18 +325,21 @@ class MainController {
 
             self.soundtouchNode = null;
 
+            self.gainNode = self.wavesurfer.backend.ac.createGain()
+            self.gainNode.gain.value = self.currentGainProc / 100
+
+            var filter = new soundtouch.SimpleFilter(source, st);
+            self.soundtouchNode = soundtouch.getWebAudioNode(self.wavesurfer.backend.ac, filter);
+
             self.wavesurfer.on('play', function () {
                 self.seekingPos = ~~(self.wavesurfer.backend.getPlayedPercents() * self.length);
                 st.tempo = self.wavesurfer.getPlaybackRate();
+                self.wavesurfer.backend.disconnectFilters();
 
                 if (st.tempo === 1) {
-                    self.wavesurfer.backend.disconnectFilters();
+                    self.wavesurfer.backend.setFilters([self.gainNode])
                 } else {
-                    if (!self.soundtouchNode) {
-                        var filter = new soundtouch.SimpleFilter(source, st);
-                        self.soundtouchNode = soundtouch.getWebAudioNode(self.wavesurfer.backend.ac, filter);
-                    }
-                    self.wavesurfer.backend.setFilter(self.soundtouchNode);
+                    self.wavesurfer.backend.setFilters([self.soundtouchNode, self.gainNode])
                 }
 
                 self.isPlaying = true;
@@ -422,6 +468,21 @@ class MainController {
             this.saveToDB()
         }, constants.SAVE_THRESHOLD)
 
+    }
+
+    zoomIntoRegion () {
+        if (this.selectedRegion) {
+            const delta = this.selectedRegion.end - this.selectedRegion.start
+            const wavesurferWidth = this.wavesurfer.container.offsetWidth
+            const zoomLevel = wavesurferWidth / delta
+            this.wavesurfer.zoom(zoomLevel);
+            this.noUpdateZoom = true
+            this.zoomLevel = zoomLevel
+            this.seek(this.selectedRegion.start)
+
+            const startPosition = this.selectedRegion.start * zoomLevel
+            this.wavesurfer.container.children[0].scrollLeft = startPosition
+        }
     }
 
     async saveToDB () {
@@ -1272,7 +1333,11 @@ class MainController {
                 last_end = region.end;
             }, fileIndex, true)
         } catch (err) {
-            alert(err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Check regions error',
+                text: err
+            })
             return false;
         }
         return true;
@@ -1461,14 +1526,32 @@ class MainController {
                         $scope.draftAvailable = true
                     })
                 } 
-                $scope.runDemo = function () {
-                    self.filesData = [{
+                $scope.runDemo = async () => {
+                    const demoFile = {
                         filename: 'demo.json',
                         data: self.handleTextFormats('demo.json', JSON.stringify(demoJson))
-                    }];
+                    }
+
+                    self.filesData = [
+                        demoFile
+                    ];
+                    await this.dataBase.addFile({
+                        fileName: demoFile.filename,
+                        fileData: demoFile.data
+                    })
                     self.audioFileName = 'demo.mp3';
                     self.init();
-                    self.wavesurfer.load('https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3');
+                    const res = await this.dataManager.loadFileFromServer({
+                        audio: {
+                            url: 'https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3'
+                        },
+                        ctms: []
+                    })
+                    this.dataBase.addMediaFile({
+                        fileName: self.audioFileName,
+                        fileData: res.audioFile
+                    })
+                    self.wavesurfer.loadBlob(res.audioFile);
                     $uibModalInstance.close(false);
                 };
 
@@ -1497,7 +1580,10 @@ class MainController {
                     var call_from_url;
                     if ($scope.chosen_call_id) {
                         if ($scope.chosen_call_id.length !== 1) {
-                            alert("Please choose only one call");
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Please choose only one call'
+                            })
                             return;
                         }
                         call_from_url = $scope.chosen_call_id[0];
@@ -1566,6 +1652,33 @@ class MainController {
                 $scope.cancel = function () {
                     $uibModalInstance.dismiss('cancel');
                 };
+
+                $scope.$watch('newAudioFile', (newVal) => {
+                    if (!newVal) {
+                        return
+                    }
+                    const reader = new FileReader()
+                    reader.onload = function (event) {
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        try {
+                            audioContext.decodeAudioData(event.target.result).then((buffer) => {
+                            }).catch(e => {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Audio decoding error',
+                                    text: e
+                                })
+                            });
+                        } catch (e) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Audio decoding error',
+                                text: e
+                            })
+                        }
+                    };
+                    reader.readAsArrayBuffer(newVal)
+                })
             },
             resolve: {
                 zoom: function () {
@@ -1598,7 +1711,11 @@ class MainController {
                     fileName: this.audioFileName,
                     fileData: fileResult
                 })
-                this.wavesurfer.loadBlob(fileResult);
+                try {
+                    this.wavesurfer.loadBlob(fileResult);
+                } catch (e) {
+                    console.log('error', e)
+                }
             } else {
                 this.dataBase.addMediaFile({
                     fileName: this.audioFileName,
@@ -1754,7 +1871,11 @@ class MainController {
             window.AudioContext = window.AudioContext || window.webkitAudioContext;
             context = new AudioContext();
         } catch (e) {
-            alert('Web Audio API is not supported in this browser');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Web Audio API is not supported in this browser'
+            })
         }
 
         this.audioContext = context;
@@ -1853,6 +1974,10 @@ class MainController {
     }
 
     toggleSpectrogram () {
+        if (!this.spectrogramReady) {
+            this.wavesurfer.initPlugin('spectrogram')
+            this.spectrogramReady = true
+        }
         this.showSpectrogram = !this.showSpectrogram
     }
 }

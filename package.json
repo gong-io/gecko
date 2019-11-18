@@ -28,6 +28,7 @@
     "hotkeys-js": "^3.7.2",
     "jquery": "^3.4.1",
     "ngstorage": "^0.3.11",
+    "sweetalert2": "^9.3.2",
     "underscore": "^1.9.1",
     "video.js": "^7.6.5",
     "wavesurfer.js": "^3.0.0"
@@ -41,15 +42,15 @@
     "file-loader": "^4.1.0",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^3.2.0",
-    "image-webpack-loader": "^5.0.0",
+    "image-webpack-loader": "^5.1.0",
     "imports-loader": "^0.8.0",
     "mem": "^5.1.1",
     "mini-css-extract-plugin": "^0.8.0",
     "ngtemplate-loader": "^2.0.1",
     "style-loader": "^1.0.0",
-    "url-loader": "^2.1.0",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.6",
-    "webpack-dev-server": "^3.8.0"
+    "url-loader": "^2.2.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.9.0"
   }
 }
