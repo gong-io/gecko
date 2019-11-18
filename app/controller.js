@@ -752,9 +752,6 @@ class MainController {
     deselectRegion(region) {
         if (region !== undefined) {
             region.element.classList.remove("selected-region");
-            region.data.words.forEach((w) => {
-                delete w.uuid
-            })
             if (this.selectedRegion === region) {
                 this.selectedRegion = undefined;
             }
@@ -762,9 +759,6 @@ class MainController {
             if (this.selectedRegion.element) {
                 this.selectedRegion.element.classList.remove("selected-region");
             }
-            this.selectedRegion.data.words.forEach((w) => {
-                delete w.uuid
-            })
             this.selectedRegion = undefined;
         }
     }
@@ -802,7 +796,9 @@ class MainController {
         region.element.classList.add("selected-region");
 
         region.data.words.forEach((w) => {
-            w.uuid = uuid()
+            if (!w.uuid) {
+                w.uuid = uuid()
+            }
         })
 
         this.selectedRegion = region;
