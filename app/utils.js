@@ -19,3 +19,20 @@ export const secondsToMinutes = (time) => {
         floatPart = (nindex > -1 ? nstring.substring(nindex + 1) : "000")
     return str_pad_left(Math.floor(time / 60), '0', 2) + ':' + str_pad_left(Math.floor(time % 60), '0', 2) + "." + floatPart
 }
+
+export const sortDict = (dict, sortBy, sortFunction) => {
+    var sorted = {};
+
+    if (sortBy !== undefined) {
+        sortFunction = function (a, b) {
+            return (dict[a][sortBy] < dict[b][sortBy]) ? -1 : ((dict[a][sortBy] > dict[b][sortBy]) ? 1 : 0)
+        };
+    }
+
+    // sort by keys if sortFunction is undefined
+    Object.keys(dict).sort(sortFunction).forEach(function (key) {
+        sorted[key] = dict[key];
+    });
+
+    return sorted;
+}

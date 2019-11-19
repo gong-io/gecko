@@ -2,11 +2,8 @@ import initWaveSurfer from './wavesurfer.js'
 
 import * as constants from './constants'
 
-import './third-party/soundtouch.js'
-
 import {config} from './config.js'
 import Swal from 'sweetalert2'
-import {PUNCTUATION_TYPE} from "./constants";
 
 import videojs from 'video.js'
 
@@ -15,7 +12,7 @@ import WaveSurferEvents from './waveSurferEvents'
 
 import { parse as parseTextFormats, convert as convertTextFormats } from './textFormats'
 
-import { jsonStringify, secondsToMinutes } from './utils'
+import { jsonStringify, secondsToMinutes, sortDict } from './utils'
 
 var Diff = require('diff');
 
@@ -23,23 +20,6 @@ var demoJson = require('../samples/demo');
 
 const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
 const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
-
-function sortDict(dict, sortBy, sortFunction) {
-    var sorted = {};
-
-    if (sortBy !== undefined) {
-        sortFunction = function (a, b) {
-            return (dict[a][sortBy] < dict[b][sortBy]) ? -1 : ((dict[a][sortBy] > dict[b][sortBy]) ? 1 : 0)
-        };
-    }
-
-    // sort by keys if sortFunction is undefined
-    Object.keys(dict).sort(sortFunction).forEach(function (key) {
-        sorted[key] = dict[key];
-    });
-
-    return sorted;
-}
 
 // First, checks if it isn't implemented yet.
 if (!String.prototype.format) {
@@ -65,7 +45,6 @@ class MainController {
         this.isServerMode = false
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
-        this.wavesurferEvents = new WaveSurferEvents(this)
     }
 
     loadApp(config) {
@@ -122,49 +101,50 @@ class MainController {
         }
     }
 
-    reset () {
-        this.wavesurfer && this.wavesurfer.destroy()
-        this.$scope.$evalAsync(() => {
-            this.loader = false
-            this.audioFileName = null
-            this.currentTime = '00:00'
-            this.zoomLevel = constants.ZOOM
-            this.isPlaying = false
-            this.playbackSpeeds = constants.PLAYBACK_SPEED
-            this.currentPlaybackSpeed = 1
-            this.videoMode = false
-            this.showSpectrogram = false
-            this.showSpectrogramButton = false
-            this.spectrogramReady = false
-        })
-    }
-
-    init() {
-        this.currentTime = "00:00";
-        // this.currentTimeSeconds = 0;
-        this.zoomLevel = constants.ZOOM;
-        this.currentGainProc = constants.DEFAULT_GAIN * 100
-        this.minGainProc = constants.MIN_GAIN * 100
-        this.maxGainProc = constants.MAX_GAIN * 100
-        this.maxZoom = constants.MAX_ZOOM
-        this.isPlaying = false;
-        this.playbackSpeeds = constants.PLAYBACK_SPEED;
-        this.currentPlaybackSpeed = 1;
+    setInitialValues () {
+        this.loader = false
+        this.audioFileName = null
+        this.currentTime = '00:00'
+        this.currentTimeSeconds = 0
+        this.zoomLevel = constants.ZOOM
+        this.isPlaying = false
+        this.playbackSpeeds = constants.PLAYBACK_SPEED
+        this.currentPlaybackSpeed = 1
         this.videoMode = false
         this.showSpectrogram = false
         this.showSpectrogramButton = false
         this.spectrogramReady = false
-        if (config.wavesurfer.useSpectrogram) {
-            this.showSpectrogramButton = true
-        }
 
         // history variables
-        this.undoStack = [];
-        this.regionsHistory = {};
-        this.updateOtherRegions = new Set();
+        this.undoStack = []
+        this.regionsHistory = {}
+        this.updateOtherRegions = new Set()
 
         this.isRegionClicked = false;
         this.isTextChanged = false;
+    }
+
+    setConstants () {
+        this.minGainProc = constants.MIN_GAIN * 100
+        this.maxGainProc = constants.MAX_GAIN * 100
+        this.maxZoom = constants.MAX_ZOOM
+        this.playbackSpeeds = constants.PLAYBACK_SPEED
+        if (config.wavesurfer.useSpectrogram) {
+            this.showSpectrogramButton = true
+        }
+    }
+
+    reset () {
+        this.wavesurfer && this.wavesurfer.destroy()
+        this.$scope.$evalAsync(() => {
+            this.setInitialValues()
+        })
+    }
+
+    init() {
+        this.setConstants()
+        this.setInitialValues()
+        
         this.wavesurfer = initWaveSurfer();
         this.wavesurferElement = this.wavesurfer.drawer.container;
 
@@ -181,12 +161,25 @@ class MainController {
                 return;
             }
 
+            const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+            const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
+
+            if ((isOtherControl && e.which === 17) || (isMacMeta && e.which === 91)) {
+                this.isDownCtrl = true
+            }
+
             // this.shortcuts.checkKeys(e)
             this.$scope.$evalAsync()
             /* if (e.key === 'ArrowRight' && isDownCtrl) {
                 self.jumpNextDiscrepancy();
             } */
         };
+
+        document.onkeyup = (e) => {
+            if (e.which === 17 || e.which === 91) {
+                this.isDownCtrl = false
+            }
+        }
 
         this.wavesurferElement.onclick = function (e) {
             if (!self.isRegionClicked) {
@@ -197,38 +190,27 @@ class MainController {
             self.isRegionClicked = false;
         };
 
-        this.wavesurfer.on('audioprocess', function (e) {
-            self.updateView();
-        });
+        this.bindWaveSurferEvents()
 
-        this.wavesurfer.on('error', (e) => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Wavesurfer error',
-                text: e
-            })
-            console.error("wavesurfer error:")
-            console.log(e)
-            this.reset()
-            if (!this.isServerMode) {
-                this.loadClientMode()
-            }
-        });
+        this.$interval(() => {
+            this.saveToDB()
+        }, constants.SAVE_THRESHOLD)
+    }
 
-        this.wavesurfer.on('loading', () => this.wavesurferEvents.loading());
+    bindWaveSurferEvents () {
+        this.wavesurferEvents = new WaveSurferEvents(this)
+        this.wavesurfer.on('audioprocess', () => this.wavesurferEvents.audioProcess())
+        this.wavesurfer.on('error', (e) => this.wavesurferEvents.error(e))
+        this.wavesurfer.on('loading', () => this.wavesurferEvents.loading())
         this.wavesurfer.on('ready', (e) => this.wavesurferEvents.ready(e))
         this.wavesurfer.on('seek', (e) => this.wavesurferEvents.seek(e));
-        this.wavesurfer.on('region-created', (region) => this.wavesurferEvents.regionCreated(region));
+        this.wavesurfer.on('region-created', (region, e) => this.wavesurferEvents.regionCreated(region));
         this.wavesurfer.on('region-updated', (region) => this.wavesurferEvents.regionUpdated(region))
         this.wavesurfer.on('region-update-end', (region) => this.wavesurferEvents.regionUpdateEnd(region))
         // this.wavesurfer.on('region-in', (region) => this.wavesurferEvents.regionIn(region))
         // this.wavesurfer.on('region-out', (region) => this.wavesurferEvents.regionOut(region))
         this.wavesurfer.on('region-click', (region) => this.wavesurferEvents.regionClick(region))
-
-        this.$interval(() => {
-            this.saveToDB()
-        }, constants.SAVE_THRESHOLD)
-
+        this.wavesurfer.on('pause', () => this.wavesurferEvents.pause())
     }
 
     zoomIntoRegion () {
