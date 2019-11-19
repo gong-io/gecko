@@ -3,14 +3,10 @@ export default (wavesurferEvents, region) => {
 
     if (self.isDownCtrl) {
         if (self.dummyRegion) {
-            self.addHistory(self.dummyRegion)
-            self.undoStack.push([ self.dummyRegion.id ])
-            self.dummyRegion.remove()
+            self.deleteRegionAction(self.dummyRegion)
         }
         region.isDummy = true
         self.dummyRegion = region
-        self.addHistory(region);
-        self.undoStack.push([ region.id ])
     }
     var numOfFiles = self.filesData.length;
 

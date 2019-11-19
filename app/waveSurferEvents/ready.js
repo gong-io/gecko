@@ -18,13 +18,13 @@ export default (wavesurferEvents) => {
         if (newVal) {
             self.wavesurfer.zoom(self.zoomLevel)
         }
-    });
+    })
 
     self.$scope.$watch(() => self.currentGainProc, function (newVal) {
         if (newVal) {
             self.gainNode.gain.value = newVal / 100
         }
-    });
+    })
 
     self.createSpeakerLegends()
 
@@ -90,7 +90,6 @@ export default (wavesurferEvents) => {
             return Math.min(numFrames, self.length - position)
         }
     }
-
 
     self.soundtouchNode = null
 

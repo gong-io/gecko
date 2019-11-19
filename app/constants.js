@@ -54,6 +54,7 @@ export const defaultSpeakers = speakers;
 export const MINIMUM_LENGTH = 0.1;
 
 export const SPEAKER_NAME_CHANGED_OPERATION_ID = '1';
+export const DUMMY_REGION_ADDED_OPERATION_ID = '2'
 
 export const NO_SPEAKER_COLOR = 'hsla(0, 0%, 30%, 0.1)';
 

@@ -216,6 +216,13 @@
                 <i class="glyphicon glyphicon-trash"></i>
             </button>
 
+            <button class="btn btn-default" ng-click="ctrl.insertDummyRegion()" ng-disabled="!ctrl.selectedRegion || !ctrl.selectedRegion.isDummy"
+                    title="Insert dummy region"
+                    data-toggle="tooltip" data-placement="top">
+                <i class="glyphicon glyphicon-pushpin"></i>
+                Insert
+            </button>
+
 
             <button class="btn btn-default" ng-click="ctrl.undo()" ng-disabled="!ctrl.undoStack.length"
                     title="Undo the last operation"

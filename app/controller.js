@@ -192,6 +192,10 @@ class MainController {
 
         this.bindWaveSurferEvents()
 
+        this.$scope.$watch(() => this.undoStack, (newVal) => {
+            console.log('undo stack changed', newVal)
+        })
+
         this.$interval(() => {
             this.saveToDB()
         }, constants.SAVE_THRESHOLD)
@@ -407,32 +411,36 @@ class MainController {
             this.fixRegionsOrder(region);
         }
 
-        var prevRegion = this.getRegion(region.prev);
-        var nextRegion = this.getRegion(region.next);
+        console.log('upd reg position', region.isDummy)
 
-        if (prevRegion !== null) {
-            if (region.start < prevRegion.start + constants.MINIMUM_LENGTH) {
-                region.start = prevRegion.start + constants.MINIMUM_LENGTH;
-                region.end = Math.max(region.start + constants.MINIMUM_LENGTH, region.end);
+        if (!region.isDummy) {
+            var prevRegion = this.getRegion(region.prev);
+            var nextRegion = this.getRegion(region.next);
+
+            if (prevRegion !== null) {
+                if (region.start < prevRegion.start + constants.MINIMUM_LENGTH) {
+                    region.start = prevRegion.start + constants.MINIMUM_LENGTH;
+                    region.end = Math.max(region.start + constants.MINIMUM_LENGTH, region.end);
+                }
+
+                if (region.start < prevRegion.end) {
+                    prevRegion.end = region.start;
+                    self.updateOtherRegions.add(prevRegion);
+                    self.regionUpdated(prevRegion);
+                }
             }
 
-            if (region.start < prevRegion.end) {
-                prevRegion.end = region.start;
-                self.updateOtherRegions.add(prevRegion);
-                self.regionUpdated(prevRegion);
-            }
-        }
+            if (nextRegion !== null) {
+                if (region.end > nextRegion.end - constants.MINIMUM_LENGTH) {
+                    region.end = nextRegion.end - constants.MINIMUM_LENGTH;
+                    region.start = Math.min(region.start, region.end - constants.MINIMUM_LENGTH);
+                }
 
-        if (nextRegion !== null) {
-            if (region.end > nextRegion.end - constants.MINIMUM_LENGTH) {
-                region.end = nextRegion.end - constants.MINIMUM_LENGTH;
-                region.start = Math.min(region.start, region.end - constants.MINIMUM_LENGTH);
-            }
-
-            if (region.end > nextRegion.start) {
-                nextRegion.start = region.end;
-                self.updateOtherRegions.add(nextRegion);
-                self.regionUpdated(nextRegion);
+                if (region.end > nextRegion.start) {
+                    nextRegion.start = region.end;
+                    self.updateOtherRegions.add(nextRegion);
+                    self.regionUpdated(nextRegion);
+                }
             }
         }
 
@@ -451,6 +459,10 @@ class MainController {
 
         if (region.data.speaker.length === 0) {
             region.color = constants.UNKNOWN_SPEAKER_COLOR;
+
+            if (region.isDummy) {
+                region.element.style.background = 'repeating-linear-gradient(135deg, rgb(128, 128, 128) 20px, rgb(180, 180, 180) 40px) rgb(128, 128, 128)'
+            }
         } else if (region.data.speaker.length === 1) {
             region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker[0]];
 
@@ -494,12 +506,112 @@ class MainController {
         }
     }
 
+    insertDummyRegion () {
+        const { dummyRegion } = this
+        const truncateRegions = []
+
+        this.iterateRegions(region => {
+            let overlap = false
+            if (region.start >= dummyRegion.start && region.end <= dummyRegion.end
+                || region.start <= dummyRegion.end && region.end >= dummyRegion.end
+                || region.start <= dummyRegion.start && region.end <= dummyRegion.end && region.end >= dummyRegion.start) {
+                overlap = true
+            }
+
+            if (overlap && region !== dummyRegion) {
+                truncateRegions.push(region)
+            }
+        }, this.selectedFileIndex)
+
+        if (truncateRegions.length) {
+            const newRegionWords = []
+            const newRegionSpeakers = []
+            truncateRegions.forEach(r => {
+                const speakers = JSON.parse(JSON.stringify(r.data.speaker))
+                speakers.forEach(s => {
+                    if (!newRegionSpeakers.includes(s)) {
+                        newRegionSpeakers.push(s)
+                    }
+                })
+                const words = JSON.parse(JSON.stringify(r.data.words))
+                words.forEach(w => {
+                    if (w.start >= dummyRegion.start && w.end <= dummyRegion.end) {
+                        newRegionWords.push(w)
+                    }
+                })
+
+                if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) { 
+                    /* region is fully overlaped */
+                    this.__deleteRegion(r)
+                } else if (r.start <= dummyRegion.end && r.end >= dummyRegion.end) {
+                    /* region is overlaped from right side */
+                    console.log('overlap right', r)
+                    let original = this.copyRegion(r)
+
+                    delete original.id
+                    original.start = dummyRegion.end
+
+                    let words = JSON.parse(JSON.stringify(r.data.words))
+                    let i
+                    for (i = 0; i < words.length; i++) {
+                        if (words[i].start > dummyRegion.end) break
+                    }
+
+                    original.data.words = words.slice(i)
+
+                    this.__deleteRegion(r)
+                    original = this.wavesurfer.addRegion(original)
+                } else if (r.start <= dummyRegion.start && r.end <= dummyRegion.end && r.end >= dummyRegion.start) {
+                    /* region is overlaped from left side */
+                    console.log('overlaped left', r)
+                    let original = this.copyRegion(r)
+
+                    delete original.id
+                    original.end = dummyRegion.start
+
+                    let words = JSON.parse(JSON.stringify(r.data.words))
+                    let i
+                    for (i = 0; i < words.length; i++) {
+                        if (words[i].start > dummyRegion.start) break
+                    }
+
+                    original.data.words = words.slice(0, i)
+
+                    this.__deleteRegion(r)
+                    original = this.wavesurfer.addRegion(original)
+                }
+            })
+            
+            const newRegion = this.wavesurfer.addRegion({
+                start: dummyRegion.start,
+                end: dummyRegion.end,
+                data: {
+                    initFinished: true,
+                    fileIndex: this.selectedFileIndex,
+                    speaker: newRegionSpeakers,
+                    words: newRegionWords
+                },
+                drag: false,
+                minLength: constants.MINIMUM_LENGTH
+            })
+
+            const truncatedIds = [ newRegion.id, ...truncateRegions.map((r) => r.id), dummyRegion.id ]
+            this.undoStack.push(truncatedIds)
+            truncatedIds.forEach((id, idx) => idx && this.regionsHistory[id].push(null))
+            
+            this.dummyRegion.remove()
+            this.dummyRegion = null
+        }
+        console.log('to truncate', truncateRegions)
+    }
 
     undo() {
         let self = this;
         if (!this.undoStack.length) {
             return;
         }
+
+        console.log('before undo action', JSON.stringify(this.undoStack))
 
         var regionIds = this.undoStack.pop();
 
@@ -511,8 +623,7 @@ class MainController {
             self.updateLegend(fileIndex, newSpeaker, oldSpeaker);
 
             regionIds = regionIds[4];
-        }
-
+        } 
 
         for (let regionId of regionIds) {
 
@@ -925,7 +1036,12 @@ class MainController {
     }
 
     __deleteRegion(region) {
+        console.log('delete region', region)
         if (!region) return;
+
+        if (region.isDummy) {
+            this.dummyRegion = null
+        }
 
         var prev = this.getRegion(region.prev);
         if (prev) prev.next = region.next;
