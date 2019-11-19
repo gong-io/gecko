@@ -137,6 +137,25 @@
         </div>
     </div>
 
+    <div id="volume" class="row" style="margin-bottom: 2em;">
+            <div class="col-md-1">
+                <i class="glyphicon glyphicon-volume-down"></i>
+            </div>
+    
+            <div class="col-md-10">
+                <input id="slider" ng-model="ctrl.currentGainProc" type="range" min="{{ ctrl.minGainProc }}"
+                       max="{{ ctrl.maxGainProc }}"
+                       style="width: 100%"/>
+                <!--            <div class="text-center">-->
+                <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
+                <!--            </div>-->
+            </div>
+    
+            <div class="col-md-1">
+                <i class="glyphicon glyphicon-volume-up"></i>
+            </div>
+        </div>
+
     <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram"></div>
 
     <div id="file-data" style="text-align:center">
@@ -156,6 +175,11 @@
             <button class="btn btn-primary" ng-click="ctrl.playRegion()">
                 <i class="glyphicon glyphicon-play"></i>
                 Play Segment
+            </button>
+
+            <button class="btn btn-primary" ng-click="ctrl.zoomIntoRegion()">
+                <i class="glyphicon glyphicon-zoom-in"></i>
+                Zoom to Segment
             </button>
 
             <div class="btn-group" uib-dropdown is-open="status.isopen">
@@ -190,13 +214,6 @@
                     title="Delete Segment"
                     ng-disabled="!ctrl.selectedRegion">
                 <i class="glyphicon glyphicon-trash"></i>
-            </button>
-
-            <button class="btn btn-default" ng-click="ctrl.insertDummyRegion()" ng-disabled="!ctrl.selectedRegion || !ctrl.selectedRegion.isDummy"
-                    title="Insert dummy region"
-                    data-toggle="tooltip" data-placement="top">
-                <i class="glyphicon glyphicon-pushpin"></i>
-                Insert
             </button>
 
 
@@ -329,7 +346,7 @@
                                        value="{{speaker}}"
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
-                                       ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.isDummy"
+                                       ng-disabled="!ctrl.selectedRegion"
                                 style="margin-bottom: 0px">
                                 <span editable
                                       changed="ctrl.speakerNameChanged(oldText,newText)"
@@ -432,10 +449,7 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
                 </div>
-                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;" ng-if="ctrl.currentRegions[$index].isDummy">
-                        <p><b style="word-break: break-all;">Dummy region</b></p>
-                </div>
-                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;" ng-if="!ctrl.currentRegions[$index].isDummy">
+                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
                     <p><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
                         }}</b></p>
                     <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->

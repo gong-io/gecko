@@ -19,6 +19,11 @@ var speechRecognition = angular.module('speechRecognition', [dropdown, modal, co
 
 speechRecognition.controller('MainController', MainController);
 
+speechRecognition.config(function($httpProvider) {
+    //Enable cross domain calls
+    $httpProvider.defaults.useXDomain = true;
+})
+
 
 speechRecognition.service('dataManager', dataManager);
 speechRecognition.service('dataBase', dataBase);
@@ -117,6 +122,17 @@ speechRecognition.directive("editable", function () {
                 e.stopPropagation()
             });
 
+            element.bind('paste', (e) => {
+                if (e && e.originalEvent) {
+                    const clipboardData = e.originalEvent.clipboardData
+                    if (clipboardData) {
+                        const text = clipboardData.getData('text/plain')
+                        document.execCommand('insertText', false, text)
+                    }
+                }
+                e.preventDefault()
+            })
+
 
             element.bind("keydown", function (e) {
                 const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
@@ -134,7 +150,7 @@ speechRecognition.directive("editable", function () {
                     }
                 }
 
-                if (isDownCtrl && e.which !== 91) { // not a only ctrl button
+                if (isDownCtrl && e.which !== 91 && e.which !== 17) { // not a only ctrl button
                     if (systemKeys.includes(e.which)) {
                         return
                     }

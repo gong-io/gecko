@@ -8,11 +8,11 @@
 <div class="modal-body" id="modal-body">
     <div class="row" style="align-items:center; margin-bottom:2em">
         <div class="col-md-12">
-            <input type="file" id="inputAudio" style="display:none" fileread="newAudioFile" afterread="loadUrls()"/>
+            <input type="file" id="inputAudio" style="display:none" fileread="newAudioFile" afterread="loadUrls()"  accept="audio/*, video/*, application/json, text/json"/>
             <label for="newAudioFile">Audio/video file or json of urls</label>
             <label for="call_from_url" ng-show="call_urls">Choose one audio file:</label>
             <div class="input-group">
-                <input class="form-control" id="newAudioFile" ng-model="newAudioFile.name" disabled type="text">
+                <input class="form-control" id="newAudioFile" ng-model="newAudioFile.name" disabled type="text"">
                 <select multiple class="form-control" id="call_from_url" ng-model="chosen_call_id"
                         ng-show="call_urls">
                     <option ng-value="call_data" ng-repeat="call_data in call_urls"> {{ call_data.id }}</option>
