@@ -1,17 +1,15 @@
 
-export default (wavesurferEvents) => {
-    const self = wavesurferEvents.parent
+export default (parent) => {
+    parent.seekingPos = ~~(parent.wavesurfer.backend.getPlayedPercents() * parent.length)
+    parent.st.tempo = parent.wavesurfer.getPlaybackRate()
+    parent.wavesurfer.backend.disconnectFilters()
 
-    self.seekingPos = ~~(self.wavesurfer.backend.getPlayedPercents() * self.length)
-    self.st.tempo = self.wavesurfer.getPlaybackRate()
-    self.wavesurfer.backend.disconnectFilters()
-
-    if (self.st.tempo === 1) {
-        self.wavesurfer.backend.setFilters([self.gainNode])
+    if (parent.st.tempo === 1) {
+        parent.wavesurfer.backend.setFilters([parent.gainNode])
     } else {
-        self.wavesurfer.backend.setFilters([self.soundtouchNode, self.gainNode])
+        parent.wavesurfer.backend.setFilters([parent.soundtouchNode, parent.gainNode])
     }
 
-    self.isPlaying = true
-    self.$scope.$evalAsync()
+    parent.isPlaying = true
+    parent.$scope.$evalAsync()
 }

@@ -36,3 +36,57 @@ export const sortDict = (dict, sortBy, sortFunction) => {
 
     return sorted;
 }
+
+// for debugging
+export const _printRegionsInfo = (parent, fileIndex) => {
+    let i = 0;
+    var formatted = {};
+    parent.iterateRegions((region) => {
+        var r = parent.copyRegion(region);
+        r.i = i;
+        r.fileIndex = r.data.fileIndex;
+        r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
+        r.initFinished = r.data.initFinished;
+        r.isDummy = r.data.isDummy;
+        delete r.data;
+        delete r.drag;
+        delete r.minLength;
+        var id = r.id;
+        delete r.id;
+        formatted[id] = r;
+        i++;
+    }, fileIndex, true);
+
+    console.table(formatted);
+}
+
+export const _printHistoryInfo = (parent, onlyAvailableHistory) => {
+    Object.keys(parent.regionsHistory).forEach((key) => {
+        var history = parent.regionsHistory[key];
+        var formatted = [];
+
+        if (onlyAvailableHistory && history.length < 2) {
+            return;
+        }
+
+        for (let i = 0; i < history.length; i++) {
+            var region = history[i];
+            if (region) {
+                var r = parent.copyRegion(region);
+                r.fileIndex = r.data.fileIndex;
+                r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
+                r.initFinished = r.data.initFinished;
+                delete r.data;
+                delete r.drag;
+                delete r.minLength;
+
+                formatted.push(r);
+            } else {
+                formatted.push(region);
+            }
+        }
+
+        console.log(key);
+        console.table(formatted);
+    });
+}

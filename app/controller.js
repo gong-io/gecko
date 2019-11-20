@@ -8,18 +8,16 @@ import Swal from 'sweetalert2'
 import videojs from 'video.js'
 
 import Shortcuts from './shortcuts'
-import WaveSurferEvents from './waveSurferEvents'
+import wavesurferEvents from './waveSurferEvents'
 
 import { parse as parseTextFormats, convert as convertTextFormats } from './textFormats'
 
 import { jsonStringify, secondsToMinutes, sortDict } from './utils'
 
+import loadingModal from './loadingModal'
+import shortcutsModal from './shortcutsModal'
+
 var Diff = require('diff');
-
-var demoJson = require('../samples/demo');
-
-const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
-const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
 
 // First, checks if it isn't implemented yet.
 if (!String.prototype.format) {
@@ -151,21 +149,12 @@ class MainController {
         this.ctmData = [];
         this.ready = false;
 
-        var self = this;
-
         document.onkeydown = (e) => {
             if (e.key === 'Escape') {
                 if (document.activeElement) {
                     document.activeElement.blur();
                 }
                 return;
-            }
-
-            const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
-            const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
-
-            if ((isOtherControl && e.which === 17) || (isMacMeta && e.which === 91)) {
-                this.isDownCtrl = true
             }
 
             // this.shortcuts.checkKeys(e)
@@ -175,26 +164,7 @@ class MainController {
             } */
         };
 
-        document.onkeyup = (e) => {
-            if (e.which === 17 || e.which === 91) {
-                this.isDownCtrl = false
-            }
-        }
-
-        this.wavesurferElement.onclick = function (e) {
-            if (!self.isRegionClicked) {
-                self.calcCurrentFileIndex(e);
-                // self.deselectRegion();
-            }
-
-            self.isRegionClicked = false;
-        };
-
         this.bindWaveSurferEvents()
-
-        this.$scope.$watch(() => this.undoStack, (newVal) => {
-            console.log('undo stack changed', newVal)
-        })
 
         this.$interval(() => {
             this.saveToDB()
@@ -202,19 +172,37 @@ class MainController {
     }
 
     bindWaveSurferEvents () {
-        this.wavesurferEvents = new WaveSurferEvents(this)
-        this.wavesurfer.on('audioprocess', () => this.wavesurferEvents.audioProcess())
-        this.wavesurfer.on('error', (e) => this.wavesurferEvents.error(e))
-        this.wavesurfer.on('loading', () => this.wavesurferEvents.loading())
-        this.wavesurfer.on('ready', (e) => this.wavesurferEvents.ready(e))
-        this.wavesurfer.on('seek', (e) => this.wavesurferEvents.seek(e));
-        this.wavesurfer.on('region-created', (region, e) => this.wavesurferEvents.regionCreated(region));
-        this.wavesurfer.on('region-updated', (region) => this.wavesurferEvents.regionUpdated(region))
-        this.wavesurfer.on('region-update-end', (region) => this.wavesurferEvents.regionUpdateEnd(region))
-        // this.wavesurfer.on('region-in', (region) => this.wavesurferEvents.regionIn(region))
-        // this.wavesurfer.on('region-out', (region) => this.wavesurferEvents.regionOut(region))
-        this.wavesurfer.on('region-click', (region) => this.wavesurferEvents.regionClick(region))
-        this.wavesurfer.on('pause', () => this.wavesurferEvents.pause())
+        this.wavesurferElement.onclick = (e) => {
+            if (!this.isRegionClicked) {
+                this.calcCurrentFileIndex(e);
+                // self.deselectRegion();
+            }
+
+            this.isRegionClicked = false;
+        };
+
+        this.wavesurferElement.addEventListener('mousedown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                this.isDownCtrl = true
+            }
+        })
+
+        this.wavesurferElement.addEventListener('mouseup', () => {
+            this.isDownCtrl = false
+        })
+
+        this.wavesurfer.on('audioprocess', () => wavesurferEvents.audioProcess(this))
+        this.wavesurfer.on('error', (e) => wavesurferEvents.error(this, e))
+        this.wavesurfer.on('loading', () => wavesurferEvents.loading(this))
+        this.wavesurfer.on('ready', () => wavesurferEvents.ready(this))
+        this.wavesurfer.on('seek', () => wavesurferEvents.seek(this));
+        this.wavesurfer.on('region-created', (region) => wavesurferEvents.regionCreated(this, region));
+        this.wavesurfer.on('region-updated', (region) => wavesurferEvents.regionUpdated(this, region))
+        this.wavesurfer.on('region-update-end', (region) => wavesurferEvents.regionUpdateEnd(this, region))
+        // this.wavesurfer.on('region-in', (region) => wavesurferEvents.regionIn(this, region))
+        // this.wavesurfer.on('region-out', (region) => wavesurferEvents.regionOut(this, region))
+        this.wavesurfer.on('region-click', (region) => wavesurferEvents.regionClick(this, region))
+        this.wavesurfer.on('pause', () => wavesurferEvents.pause(this))
     }
 
     zoomIntoRegion () {
@@ -236,63 +224,6 @@ class MainController {
         await this.dataBase.clearFiles()
         await this.dataBase.saveFiles(this.filesData)
     }
-
-    // for debugging
-    _printRegionsInfo(fileIndex) {
-        var self = this;
-        let i = 0;
-        var formatted = {};
-        this.iterateRegions(function (region) {
-            var r = self.copyRegion(region);
-            r.i = i;
-            r.fileIndex = r.data.fileIndex;
-            r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
-            r.initFinished = r.data.initFinished;
-            delete r.data;
-            delete r.drag;
-            delete r.minLength;
-            var id = r.id;
-            delete r.id;
-            formatted[id] = r;
-            i++;
-        }, fileIndex, true);
-
-        console.table(formatted);
-    }
-
-    _printHistoryInfo(onlyAvailableHistory) {
-        var self = this;
-
-        Object.keys(this.regionsHistory).forEach(function (key) {
-            var history = self.regionsHistory[key];
-            var formatted = [];
-
-            if (onlyAvailableHistory && history.length < 2) {
-                return;
-            }
-
-            for (let i = 0; i < history.length; i++) {
-                var region = history[i];
-                if (region) {
-                    var r = self.copyRegion(region);
-                    r.fileIndex = r.data.fileIndex;
-                    r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
-                    r.initFinished = r.data.initFinished;
-                    delete r.data;
-                    delete r.drag;
-                    delete r.minLength;
-
-                    formatted.push(r);
-                } else {
-                    formatted.push(region);
-                }
-            }
-
-            console.log(key);
-            console.table(formatted);
-        });
-    }
-
 
     handleCtm() {
         if (this.ctmData.length !== 2 || this.filesData.length !== 2) return;
@@ -374,6 +305,10 @@ class MainController {
     }
 
     fixRegionsOrder(region) {
+        if (region.data.isDummy) {
+            return
+        }
+
         var prevRegion = this.findClosestRegionToTime(region.data.fileIndex, region.start, true);
 
         if (prevRegion) {
@@ -411,9 +346,7 @@ class MainController {
             this.fixRegionsOrder(region);
         }
 
-        console.log('upd reg position', region.isDummy)
-
-        if (!region.isDummy) {
+        if (!region.data.isDummy) {
             var prevRegion = this.getRegion(region.prev);
             var nextRegion = this.getRegion(region.next);
 
@@ -449,7 +382,6 @@ class MainController {
 
     // change region visually
     regionUpdated(region) {
-
         // fix first and last words
         let words = region.data.words;
         words[0].start = region.start;
@@ -460,7 +392,7 @@ class MainController {
         if (region.data.speaker.length === 0) {
             region.color = constants.UNKNOWN_SPEAKER_COLOR;
 
-            if (region.isDummy) {
+            if (region.data && region.data.isDummy) {
                 region.element.style.background = 'repeating-linear-gradient(135deg, rgb(128, 128, 128) 20px, rgb(180, 180, 180) 40px) rgb(128, 128, 128)'
             }
         } else if (region.data.speaker.length === 1) {
@@ -487,10 +419,9 @@ class MainController {
     }
 
     copyRegion(region) {
-
         //TODO: change the copy of data to deep copy by "JSON.parse(JSON.stringify(object))"
         // and then handle "words" correctly
-        return {
+        const ret = {
             id: region.id,
             // data: {
             //     initFinished: region.data.initFinished,
@@ -504,6 +435,8 @@ class MainController {
             drag: region.drag,
             minLength: constants.MINIMUM_LENGTH
         }
+
+        return ret
     }
 
     insertDummyRegion () {
@@ -526,6 +459,8 @@ class MainController {
         if (truncateRegions.length) {
             const newRegionWords = []
             const newRegionSpeakers = []
+            let regionsToDel = []
+            let regionsToAdd = []
             truncateRegions.forEach(r => {
                 const speakers = JSON.parse(JSON.stringify(r.data.speaker))
                 speakers.forEach(s => {
@@ -542,11 +477,12 @@ class MainController {
 
                 if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) { 
                     /* region is fully overlaped */
+                    regionsToDel.push(r.id)
                     this.__deleteRegion(r)
                 } else if (r.start <= dummyRegion.end && r.end >= dummyRegion.end) {
                     /* region is overlaped from right side */
-                    console.log('overlap right', r)
                     let original = this.copyRegion(r)
+                    regionsToDel.push(original.id)
 
                     delete original.id
                     original.start = dummyRegion.end
@@ -561,10 +497,11 @@ class MainController {
 
                     this.__deleteRegion(r)
                     original = this.wavesurfer.addRegion(original)
+                    regionsToAdd.push(original.id)
                 } else if (r.start <= dummyRegion.start && r.end <= dummyRegion.end && r.end >= dummyRegion.start) {
                     /* region is overlaped from left side */
-                    console.log('overlaped left', r)
                     let original = this.copyRegion(r)
+                    regionsToDel.push(original.id)
 
                     delete original.id
                     original.end = dummyRegion.start
@@ -579,6 +516,7 @@ class MainController {
 
                     this.__deleteRegion(r)
                     original = this.wavesurfer.addRegion(original)
+                    regionsToAdd.push(original.id)
                 }
             })
             
@@ -595,14 +533,15 @@ class MainController {
                 minLength: constants.MINIMUM_LENGTH
             })
 
-            const truncatedIds = [ newRegion.id, ...truncateRegions.map((r) => r.id), dummyRegion.id ]
-            this.undoStack.push(truncatedIds)
-            truncatedIds.forEach((id, idx) => idx && this.regionsHistory[id].push(null))
-            
+            regionsToDel.push(dummyRegion.id)
+            const changedIds = [ newRegion.id, ...regionsToAdd, ...regionsToDel ]
+
+            this.undoStack.push(changedIds)
+            regionsToDel.forEach((id) => this.regionsHistory[id].push(null))
+
             this.dummyRegion.remove()
             this.dummyRegion = null
         }
-        console.log('to truncate', truncateRegions)
     }
 
     undo() {
@@ -610,8 +549,6 @@ class MainController {
         if (!this.undoStack.length) {
             return;
         }
-
-        console.log('before undo action', JSON.stringify(this.undoStack))
 
         var regionIds = this.undoStack.pop();
 
@@ -633,7 +570,8 @@ class MainController {
 
             if (lastState === null) {
                 // pop again because "region-created" will insert another to history
-                var newRegion = this.wavesurfer.addRegion(history.pop());
+                const addRegion = history.pop()
+                var newRegion = this.wavesurfer.addRegion(addRegion);
                 this.regionPositionUpdated(newRegion);
             } else if (history.length === 0) {
                 this.__deleteRegion(this.getRegion(regionId));
@@ -852,11 +790,11 @@ class MainController {
         var closest = null;
         this.iterateRegions(function (region) {
             if (before) {
-                if (region.start < time - 0.01 && (closest === null || region.start > closest.start)) {
+                if (region.start < time - 0.01 && (closest === null || region.start > closest.start) && !region.data.isDummy) {
                     closest = region;
                 }
             } else {
-                if (region.end > time && (closest === null || region.end < closest.end)) {
+                if (region.end > time && (closest === null || region.end < closest.end) && !region.data.isDummy) {
                     closest = region;
                 }
             }
@@ -1036,10 +974,9 @@ class MainController {
     }
 
     __deleteRegion(region) {
-        console.log('delete region', region)
         if (!region) return;
 
-        if (region.isDummy) {
+        if (region.data && region.data.isDummy) {
             this.dummyRegion = null
         }
 
@@ -1365,180 +1302,9 @@ class MainController {
         })
     }
 
-    //TODO: move all that to a different file
     loadClientMode() {
         var self = this;
-        var modalInstance = this.$uibModal.open({
-            templateUrl: audioModalTemplate,
-            backdrop: 'static',
-            controller: async ($scope, $uibModalInstance, $timeout, zoom) => {
-                $scope.draftAvailable = false
-                const draftCounts = await this.dataBase.getCounts()
-                if (draftCounts) {
-                    self.$timeout(() => {
-                        $scope.draftAvailable = true
-                    })
-                } 
-                $scope.runDemo = async () => {
-                    const demoFile = {
-                        filename: 'demo.json',
-                        data: self.handleTextFormats('demo.json', JSON.stringify(demoJson))
-                    }
-
-                    self.filesData = [
-                        demoFile
-                    ];
-                    await this.dataBase.addFile({
-                        fileName: demoFile.filename,
-                        fileData: demoFile.data
-                    })
-                    self.audioFileName = 'demo.mp3';
-                    self.init();
-                    const res = await this.dataManager.loadFileFromServer({
-                        audio: {
-                            url: 'https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3'
-                        },
-                        ctms: []
-                    })
-                    this.dataBase.addMediaFile({
-                        fileName: self.audioFileName,
-                        fileData: res.audioFile
-                    })
-                    self.wavesurfer.loadBlob(res.audioFile);
-                    $uibModalInstance.close(false);
-                };
-
-                $scope.loadDraft = async () => {
-                    self.init()
-                    const audio = self.dataBase.getLastMediaFile()
-                    const files = self.dataBase.getFiles()
-                    const res = await Promise.all([ audio, files ])
-                    self.loadFromDB(res)
-
-                    $uibModalInstance.close(false);
-                };
-
-                $scope.newSegmentFiles = [undefined];
-
-                $scope.ok = function () {
-                    // Take only selected files
-                    var segmentsFiles = [];
-                    for (var i = 0; i < $scope.newSegmentFiles.length; i++) {
-                        var current = $scope.newSegmentFiles[i];
-                        if (current && current.name && current.name !== "") {
-                            segmentsFiles.push(current);
-                        }
-                    }
-
-                    var call_from_url;
-                    if ($scope.chosen_call_id) {
-                        if ($scope.chosen_call_id.length !== 1) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Please choose only one call'
-                            })
-                            return;
-                        }
-                        call_from_url = $scope.chosen_call_id[0];
-                    }
-
-                    $uibModalInstance.close({
-                        audio: $scope.newAudioFile,
-                        call_from_url: call_from_url,
-                        segmentsFiles: segmentsFiles,
-                        zoom: $scope.zoom
-                    });
-                };
-
-                $scope.zoom = zoom;
-
-                $scope.selectAudio = function () {
-                    inputAudio.value = "";
-                    inputAudio.click();
-                };
-
-                $scope.loadUrls = function () {
-                    var filename = $scope.newAudioFile.name;
-                    var ext = filename.substr(filename.lastIndexOf('.') + 1);
-                    if (ext === 'json') {
-                        var reader = new FileReader();
-
-                        var self = this;
-                        reader.onload = function (e) {
-                            $scope.$evalAsync(function () {
-                                $scope.call_urls = JSON.parse(e.target.result)
-                                    .map(function (x) {
-                                        var k = Object.keys(x)[0];
-                                        return {'id': k, 'url': x[k]}
-                                    });
-                            });
-                        };
-
-                        reader.readAsText($scope.newAudioFile);
-                    } else {
-                        $scope.$evalAsync(function () {
-                            $scope.call_urls = undefined;
-                            $scope.chosen_call_id = undefined;
-                        });
-                    }
-                };
-
-
-                $scope.selectTextFile = function (id) {
-                    var inputElement = document.getElementById(id);
-                    inputElement.value = "";
-                    inputElement.click();
-                }
-
-                $scope.addFileSlot = function () {
-                    $timeout(function () {
-                        if ($scope.newSegmentFiles[$scope.newSegmentFiles.length - 1] !== undefined) {
-                            $scope.newSegmentFiles.push(undefined);
-                        }
-                    });
-                }
-
-                $scope.handleMultiple = function (extra_files) {
-                    $scope.newSegmentFiles = $scope.newSegmentFiles.concat(extra_files);
-                }
-
-                $scope.cancel = function () {
-                    $uibModalInstance.dismiss('cancel');
-                };
-
-                $scope.$watch('newAudioFile', (newVal) => {
-                    if (!newVal) {
-                        return
-                    }
-                    const reader = new FileReader()
-                    reader.onload = function (event) {
-                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        try {
-                            audioContext.decodeAudioData(event.target.result).then((buffer) => {
-                            }).catch(e => {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Audio decoding error',
-                                    text: e
-                                })
-                            });
-                        } catch (e) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Audio decoding error',
-                                text: e
-                            })
-                        }
-                    };
-                    reader.readAsArrayBuffer(newVal)
-                })
-            },
-            resolve: {
-                zoom: function () {
-                    return constants.ZOOM;
-                }
-            }
-        });
+        var modalInstance = this.$uibModal.open(loadingModal(this));
 
         modalInstance.result.then(function (res) {
             if (res) {
@@ -1737,16 +1503,7 @@ class MainController {
     }
 
     openShortcutsInfo() {
-        var self = this;
-        var modalInstance = this.$uibModal.open({
-            templateUrl: shortcutsInfoTemplate,
-            controller: function ($scope, $uibModalInstance) {
-                $scope.ok = function () {
-                    $uibModalInstance.close();
-                };
-                $scope.shortcuts = self.shortcuts.getInfo()
-            }
-        });
+        this.$uibModal.open(shortcutsModal(this));
     }
 
     wordChanged(regionIndex, wordIndex) {

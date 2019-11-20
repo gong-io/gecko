@@ -1,33 +1,36 @@
-export default (wavesurferEvents, region) => {
-    const self = wavesurferEvents.parent
-
-    if (self.isDownCtrl) {
-        if (self.dummyRegion) {
-            self.deleteRegionAction(self.dummyRegion)
+export default (parent, region) => {
+    if (parent.isDownCtrl) {
+        if (parent.dummyRegion) {
+            parent.deleteRegionAction(parent.dummyRegion)
         }
-        region.isDummy = true
-        self.dummyRegion = region
+        region.data.isDummy = true
+        parent.dummyRegion = region
+    } else if (region.data.isDummy) {
+        if (parent.dummyRegion) {
+            parent.deleteRegionAction(parent.dummyRegion)
+        }
+        parent.dummyRegion = region
     }
-    var numOfFiles = self.filesData.length;
+    var numOfFiles = parent.filesData.length;
 
     // indication when file was created by drag
     if (region.data.fileIndex === undefined) {
         // to notify "region-update" for the first update
         // (to get the start value which for some reason we don't get on "region-created")
 
-        self.calcCurrentFileIndex(event);
+        parent.calcCurrentFileIndex(event);
 
-        region.data.fileIndex = self.selectedFileIndex;
+        region.data.fileIndex = parent.selectedFileIndex;
         // region.data.speaker = constants.UNKNOWN_SPEAKER;
         region.data.speaker = [];
 
         region.data.initFinished = false;
     } else {
         // fix regions if not added through drag (on drag there is no 'start')
-        self.fixRegionsOrder(region);
+        parent.fixRegionsOrder(region);
 
         // when file is added by dragging, update-end will take care of history
-        self.addHistory(region);
+        parent.addHistory(region);
     }
     //TODO: creating a new word is bad if we want to keep the segment clear.
     if (!region.data.words || region.data.words.length === 0) {
@@ -46,11 +49,11 @@ export default (wavesurferEvents, region) => {
     elem.children[0].removeAttribute('style');
     elem.children[1].removeAttribute('style');
 
-    // region.color = self.filesData[region.data.fileIndex].legend[region.data.speaker];
+    // region.color = parent.filesData[region.data.fileIndex].legend[region.data.speaker];
     // if (region.data.speaker !== 'EDER') {
-    // region.color = self.speakersColors[region.data.speaker];
+    // region.color = parent.speakersColors[region.data.speaker];
     // }
 
-    self.regionUpdated(region);
-    self.updateView();
+    parent.regionUpdated(region);
+    parent.updateView();
 }

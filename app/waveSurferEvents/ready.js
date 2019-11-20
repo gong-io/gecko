@@ -3,53 +3,53 @@ import '../third-party/soundtouch.js'
 import { secondsToMinutes } from '../utils'
 import * as constants from '../constants'
 
-export default (wavesurferEvents) => {
-    const self = wavesurferEvents.parent
+import play from './play'
 
-    self.previousHeight = parseInt(self.wavesurfer.getHeight())
-    self.totalTime = secondsToMinutes(self.wavesurfer.getDuration())
-    self.wavesurfer.enableDragSelection(
+export default (parent) => {
+    parent.previousHeight = parseInt(parent.wavesurfer.getHeight())
+    parent.totalTime = secondsToMinutes(parent.wavesurfer.getDuration())
+    parent.wavesurfer.enableDragSelection(
         {
             drag: false,
             minLength: constants.MINIMUM_LENGTH
         });
 
-    self.$scope.$watch(() => self.zoomLevel, function (newVal) {
+    parent.$scope.$watch(() => parent.zoomLevel, function (newVal) {
         if (newVal) {
-            self.wavesurfer.zoom(self.zoomLevel)
+            parent.wavesurfer.zoom(parent.zoomLevel)
         }
     })
 
-    self.$scope.$watch(() => self.currentGainProc, function (newVal) {
+    parent.$scope.$watch(() => parent.currentGainProc, function (newVal) {
         if (newVal) {
-            self.gainNode.gain.value = newVal / 100
+            parent.gainNode.gain.value = newVal / 100
         }
     })
 
-    self.createSpeakerLegends()
+    parent.createSpeakerLegends()
 
-    self.addRegions()
+    parent.addRegions()
 
 
     // // map between speakers according to EDER mapping
-    // if (self.EDER) {
-    //     var mapping = self.EDER.map;
-    //     for (let s in self.speakersColors) {
+    // if (parent.EDER) {
+    //     var mapping = parent.EDER.map;
+    //     for (let s in parent.speakersColors) {
     //         var mapped = mapping[s];
     //         if (mapped) {
-    //             self.speakersColors[mapped] = self.speakersColors[s];
+    //             parent.speakersColors[mapped] = parent.speakersColors[s];
     //         }
     //     }
     // }
 
-    self.transcriptPanelSize = parseInt(9 / self.filesData.length)
+    parent.transcriptPanelSize = parseInt(9 / parent.filesData.length)
 
     // select the first region
-    self.selectedFileIndex = 0
-    self.selectRegion()
+    parent.selectedFileIndex = 0
+    parent.selectRegion()
 
     // var interval = setInterval(function () {
-    //     self.iterateRegions(function (region) {
+    //     parent.iterateRegions(function (region) {
     //         if (region.end <= region.start) {
     //             alert("STOP! CALL GOLAN.");
     //             console.log("start: {0} End: {1}".format(region.start, region.end));
@@ -60,24 +60,24 @@ export default (wavesurferEvents) => {
     //     });
     // }, 100)
 
-    self.initAudioContext()
+    parent.initAudioContext()
 
-    self.handleCtm()
+    parent.handleCtm()
 
-    self.st = new soundtouch.SoundTouch(self.wavesurfer.backend.ac.sampleRate)
-    var buffer = self.wavesurfer.backend.buffer
+    parent.st = new soundtouch.SoundTouch(parent.wavesurfer.backend.ac.sampleRate)
+    var buffer = parent.wavesurfer.backend.buffer
     var channels = buffer.numberOfChannels
     var l = buffer.getChannelData(0)
     var r = channels > 1 ? buffer.getChannelData(1) : l
-    self.length = buffer.length
-    self.seekingPos = null
+    parent.length = buffer.length
+    parent.seekingPos = null
     var seekingDiff = 0
 
     var source = {
         extract: function (target, numFrames, position) {
-            if (self.seekingPos != null) {
-                seekingDiff = self.seekingPos - position;
-                self.seekingPos = null
+            if (parent.seekingPos != null) {
+                seekingDiff = parent.seekingPos - position;
+                parent.seekingPos = null
             }
 
             position += seekingDiff;
@@ -87,26 +87,26 @@ export default (wavesurferEvents) => {
                 target[i * 2 + 1] = r[i + position]
             }
 
-            return Math.min(numFrames, self.length - position)
+            return Math.min(numFrames, parent.length - position)
         }
     }
 
-    self.soundtouchNode = null
+    parent.soundtouchNode = null
 
-    self.gainNode = self.wavesurfer.backend.ac.createGain()
-    self.gainNode.gain.value = self.currentGainProc / 100
+    parent.gainNode = parent.wavesurfer.backend.ac.createGain()
+    parent.gainNode.gain.value = parent.currentGainProc / 100
 
-    var filter = new soundtouch.SimpleFilter(source, self.st)
-    self.soundtouchNode = soundtouch.getWebAudioNode(self.wavesurfer.backend.ac, filter)
+    var filter = new soundtouch.SimpleFilter(source, parent.st)
+    parent.soundtouchNode = soundtouch.getWebAudioNode(parent.wavesurfer.backend.ac, filter)
 
-    self.wavesurfer.on('play', () => wavesurferEvents.play())
+    parent.wavesurfer.on('play', () => play(parent))
 
-    self.loader = false
-    self.ready = true
+    parent.loader = false
+    parent.ready = true
 
     window.onbeforeunload = function (event) {
         return confirm('Confirm refresh')
     };
 
-    self.$scope.$evalAsync();
+    parent.$scope.$evalAsync();
 }
