@@ -113,6 +113,8 @@ class MainController {
         this.showSpectrogramButton = false
         this.spectrogramReady = false
 
+        this.lastDraft = null
+
         // history variables
         this.undoStack = []
         this.regionsHistory = {}
@@ -221,6 +223,10 @@ class MainController {
     }
 
     async saveToDB () {
+        const currentDate = new Date()
+        const timeStamp = `${currentDate.getHours()}:${currentDate.getMinutes()}`
+        this.lastDraft = timeStamp
+        console.log('last draft', this.lastDraft)
         await this.dataBase.clearFiles()
         await this.dataBase.saveFiles(this.filesData)
     }
@@ -1286,6 +1292,14 @@ class MainController {
         }, fileIndex);
     }
 
+    async loadDraft () {
+        this.init()
+        const audio = this.dataBase.getLastMediaFile()
+        const files = this.dataBase.getFiles()
+        const res = await Promise.all([ audio, files ])
+        this.loadFromDB(res)
+    }
+
     loadServerMode(config) {
         var self = this;
 
@@ -1303,14 +1317,14 @@ class MainController {
     }
 
     loadClientMode() {
-        var self = this;
-        var modalInstance = this.$uibModal.open(loadingModal(this));
+        var modalInstance = this.$uibModal.open(loadingModal(this))
 
-        modalInstance.result.then(function (res) {
+        modalInstance.result.then(async (res) => {
             if (res) {
-                if (self.wavesurfer) self.wavesurfer.destroy();
-                self.init();
-                self.parseAndLoadAudio(res);
+                if (this.wavesurfer) this.wavesurfer.destroy()
+                this.init()
+                await this.dataBase.clearDB()
+                this.parseAndLoadAudio(res)
             }
         });
     }
@@ -1328,7 +1342,8 @@ class MainController {
             if (!this.videoMode) {
                 this.dataBase.addMediaFile({
                     fileName: this.audioFileName,
-                    fileData: fileResult
+                    fileData: fileResult,
+                    fileUrl: null
                 })
                 try {
                     this.wavesurfer.loadBlob(fileResult);
@@ -1339,7 +1354,8 @@ class MainController {
                 this.dataBase.addMediaFile({
                     fileName: this.audioFileName,
                     fileData: res.audio,
-                    isVideo: true
+                    isVideo: true,
+                    fileUrl: null
                 })
                 this.videoPlayer = videojs('video-js')
                 this.videoPlayer.ready(function () {

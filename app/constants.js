@@ -67,7 +67,7 @@ export const ANNOTATIONS = [
 
 export const THRESHOLD_MS = 200;
 
-export const SAVE_THRESHOLD = 60 * 1000
+export const SAVE_THRESHOLD = 5 * 1000
 
 export const ZOOM = 20;
 export const MAX_ZOOM = 1000;

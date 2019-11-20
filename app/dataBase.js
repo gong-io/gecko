@@ -5,9 +5,10 @@ class dataBase {
         this.db = new Dexie('GeckoDatabase')
         this.db.version(1).stores(
             { 
-                mediaFiles: '++id,fileName,fileData,isVideo',
-                files: '++id,fileName,fileData'
-            })
+                mediaFiles: '++id,fileName,fileData,isVideo,fileUrl',
+                files: '++id,fileName,fileData,fileUrl'
+            }
+        )
     }
 
     async getCounts () {
@@ -19,6 +20,10 @@ class dataBase {
             return 0
         }
     }
+
+    recreateDB(db) {
+        return ;
+    } 
 
     async clearDB () {
         const deleteFiles = this.db.mediaFiles.clear()

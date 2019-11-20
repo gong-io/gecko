@@ -41,6 +41,12 @@
                         {{ ctrl.currentTime }} / {{ ctrl.totalTime }}
                     </a>
                 </li>
+                <li class="" ng-if="ctrl.lastDraft">
+                    <a>
+                        <b>Saved on: </b>
+                        {{ ctrl.lastDraft }}
+                    </a>
+                </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li class="active">

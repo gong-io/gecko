@@ -56,13 +56,8 @@ export default (parent) => {
             };
 
             $scope.loadDraft = async () => {
-                parent.init()
-                const audio = parent.dataBase.getLastMediaFile()
-                const files = parent.dataBase.getFiles()
-                const res = await Promise.all([ audio, files ])
-                parent.loadFromDB(res)
-
-                $uibModalInstance.close(false);
+                $uibModalInstance.close(false)
+                parent.loadDraft()                
             };
 
             $scope.ok = function () {
