@@ -2,8 +2,11 @@ import '../static/css/bootstrap.min.theme_paper.css'
 import '../static/css/app.css'
 
 import '../static/js/bootstrap.min.js'
-
+import 'angularjs-toaster/toaster.min.css'
 import 'video.js/dist/video-js.min.css'
+
+import angular from 'angular'
+import toaster from 'angularjs-toaster/index'
 
 import {MainController} from './controller.js'
 import {dataManager} from './dataManager.js'
@@ -13,9 +16,10 @@ import dropdown from 'angular-ui-bootstrap/src/dropdown'
 import modal from 'angular-ui-bootstrap/src/modal'
 import collapse from 'angular-ui-bootstrap/src/collapse'
 import './third-party/localStorageDB.js'
+
 import {playPartDirective} from './playPartDirective'
 
-var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse]);
+var speechRecognition = angular.module('speechRecognition', [toaster, dropdown, modal, collapse]);
 
 speechRecognition.controller('MainController', MainController);
 

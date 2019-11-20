@@ -16,6 +16,7 @@ import { jsonStringify, secondsToMinutes, sortDict } from './utils'
 
 import loadingModal from './loadingModal'
 import shortcutsModal from './shortcutsModal'
+import { throws } from 'assert'
 
 var Diff = require('diff');
 
@@ -33,7 +34,7 @@ if (!String.prototype.format) {
 }
 
 class MainController {
-    constructor($scope, $uibModal, dataManager, dataBase, $timeout, $interval) {
+    constructor($scope, $uibModal, dataManager, dataBase, $timeout, $interval, toaster) {
         this.dataManager = dataManager;
         this.dataBase = dataBase;
         this.$uibModal = $uibModal;
@@ -43,6 +44,7 @@ class MainController {
         this.isServerMode = false
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
+        this.toaster = toaster
     }
 
     loadApp(config) {
@@ -224,9 +226,10 @@ class MainController {
 
     async saveToDB () {
         const currentDate = new Date()
-        const timeStamp = `${currentDate.getHours()}:${currentDate.getMinutes()}`
+        const timeStamp = `${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()}`
         this.lastDraft = timeStamp
         console.log('last draft', this.lastDraft)
+        this.toaster.pop('success', 'Draft saved')
         await this.dataBase.clearFiles()
         await this.dataBase.saveFiles(this.filesData)
     }
@@ -1628,7 +1631,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', '$timeout','$interval'];
+    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', '$timeout','$interval', 'toaster'];
 export {
     MainController
 }
