@@ -1,4 +1,5 @@
 import initWaveSurfer from './wavesurfer.js'
+import uuidv4 from 'uuid/v4'
 
 import * as constants from './constants'
 
@@ -14,7 +15,7 @@ import Shortcuts from './shortcuts'
 
 import { parse as parseTextFormats, convert as convertTextFormats } from './textFormats'
 
-import { jsonStringify, uuid } from './utils'
+import { jsonStringify } from './utils'
 
 var Diff = require('diff');
 
@@ -858,7 +859,7 @@ class MainController {
 
         region.data.words.forEach((w) => {
             if (!w.uuid) {
-                w.uuid = uuid()
+                w.uuid = uuidv4()
             }
         })
 

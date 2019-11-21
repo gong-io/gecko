@@ -1,4 +1,4 @@
-import { uuid } from './utils'
+import uuidv4 from 'uuid/v4'
 
 export function editableWordsDirective ($timeout) {
     return {
@@ -78,7 +78,7 @@ export function editableWordsDirective ($timeout) {
                     const addIdx = scope.words.findIndex(w => w.uuid === id)
                     const wordCopy = Object.assign({}, scope.words[addIdx])
                     wordCopy.text = text.replace('&#8203;', '')
-                    wordCopy.uuid = uuid()
+                    wordCopy.uuid = uuidv4()
                     scope.words.splice(addIdx + 1, 0, wordCopy)
                     wasAdded = true
                 })
@@ -88,7 +88,7 @@ export function editableWordsDirective ($timeout) {
                 }
 
                 if (!scope.words.length) {
-                    scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuid()}]
+                    scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuidv4()}]
                 }
             }
 
@@ -219,7 +219,7 @@ export function editableWordsDirective ($timeout) {
                                     start: scope.region.start,
                                     end: scope.region.end, 
                                     text: w, 
-                                    uuid: uuid()
+                                    uuid: uuidv4()
                                 }
                             })
                             setWordsAndCaret(words)
@@ -234,7 +234,7 @@ export function editableWordsDirective ($timeout) {
             element.bind('keydown', function(e) {
                 if (e.which === 8 || e.which === 46) {
                     if (isAllSelected() || checkLastSymbol()) {
-                        scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuid()}]
+                        scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuidv4()}]
                         e.preventDefault()
                         return
                     }
@@ -242,7 +242,7 @@ export function editableWordsDirective ($timeout) {
 
                 if (/^[a-z0-9]$/i.test(e.key) && !isDownCtrl(e)) {
                     if (isAllSelected()) {
-                        setWordsAndCaret([{start: scope.region.start, end: scope.region.end, text: e.key, uuid: uuid()}])
+                        setWordsAndCaret([{start: scope.region.start, end: scope.region.end, text: e.key, uuid: uuidv4()}])
                         e.preventDefault()
                         return
                     }
