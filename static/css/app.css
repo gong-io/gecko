@@ -189,6 +189,14 @@ a:hover, a:focus {
     color: #812AC1;
 }
 
+.segment-text__word-wrapper:focus {
+    outline: none;
+}
+
+.editable-words:focus {
+    outline: none;
+}
+
 .segment-text__word-wrapper.low-confidence {
     font-style: italic;
 }
