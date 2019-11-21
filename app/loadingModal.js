@@ -1,5 +1,7 @@
 
 import { ZOOM } from './constants'
+import loadDraftModal from './loadDraftModal'
+import { formatTime } from './utils'
 
 var demoJson = require('../samples/demo');
 
@@ -14,7 +16,7 @@ export default (parent) => {
             $scope.isLoading = false
             $scope.newSegmentFiles = [undefined]
 
-            const draftCounts = await parent.dataBase.getCounts()
+            const draftCounts = await parent.dataBase.getCounts(0)
             if (draftCounts) {
                 parent.$timeout(() => {
                     $scope.draftAvailable = true
@@ -34,10 +36,6 @@ export default (parent) => {
                 parent.filesData = [
                     demoFile
                 ];
-                await parent.dataBase.addFile({
-                    fileName: demoFile.filename,
-                    fileData: demoFile.data
-                })
                 parent.audioFileName = 'demo.mp3';
                 parent.init();
                 const res = await parent.dataManager.loadFileFromServer({
@@ -46,18 +44,33 @@ export default (parent) => {
                     },
                     ctms: []
                 })
-                parent.dataBase.addMediaFile({
-                    fileName: parent.audioFileName,
-                    fileData: res.audioFile
+                const demoDraft = await parent.dataBase.createDraft({
+                    mediaFile: {
+                        name: 'demo.mp3',
+                        data: res.audioFile
+                    },
+                    files: parent.filesData,
+                    draftType: 0
                 })
+                parent.currentDraftId = demoDraft
+                parent.lastDraft = formatTime(new Date())
+
                 parent.wavesurfer.loadBlob(res.audioFile);
                 $scope.isLoading = false
                 $uibModalInstance.close(false);
             };
 
             $scope.loadDraft = async () => {
-                $uibModalInstance.close(false)
-                parent.loadDraft()                
+                // $uibModalInstance.close(false)
+                // parent.loadDraft()
+                const drafts = await parent.dataBase.getDrafts(0)
+                const modalInstance = parent.$uibModal.open(loadDraftModal(parent, drafts))
+                modalInstance.result.then(async (res) => {
+                    if (res) {
+                        $uibModalInstance.close(false)
+                        parent.loadDraft(res)
+                    }
+                });           
             };
 
             $scope.ok = function () {

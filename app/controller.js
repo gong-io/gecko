@@ -12,9 +12,10 @@ import wavesurferEvents from './waveSurferEvents'
 
 import { parse as parseTextFormats, convert as convertTextFormats } from './textFormats'
 
-import { jsonStringify, secondsToMinutes, sortDict } from './utils'
+import { jsonStringify, secondsToMinutes, sortDict, formatTime, getCurrentTimeStamp } from './utils'
 
 import loadingModal from './loadingModal'
+import loadDraftModal from './loadDraftModal'
 import shortcutsModal from './shortcutsModal'
 import { throws } from 'assert'
 
@@ -47,7 +48,7 @@ class MainController {
         this.toaster = toaster
     }
 
-    loadApp(config) {
+    async loadApp(config) {
         const urlParams = new URLSearchParams(window.location.search)
         const saveMode = urlParams.get('save_mode')
         if (saveMode) {
@@ -116,6 +117,7 @@ class MainController {
         this.spectrogramReady = false
 
         this.lastDraft = null
+        this.currentDraftId = 0
 
         // history variables
         this.undoStack = []
@@ -224,14 +226,13 @@ class MainController {
         }
     }
 
-    async saveToDB () {
-        const currentDate = new Date()
-        const timeStamp = `${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()}`
-        this.lastDraft = timeStamp
-        console.log('last draft', this.lastDraft)
+    async saveToDB (e) {
+        if (e) {
+            e.preventDefault()
+        }
+        this.lastDraft = formatTime(new Date())
         this.toaster.pop('success', 'Draft saved')
-        await this.dataBase.clearFiles()
-        await this.dataBase.saveFiles(this.filesData)
+        this.dataBase.updateDraft(this.currentDraftId, this.filesData)
     }
 
     handleCtm() {
@@ -1060,10 +1061,6 @@ class MainController {
 
 
     async save(extension, converter) {
-        try {
-            await this.dataBase.clearDB()
-        } catch (e) {
-        }
         for (var i = 0; i < this.filesData.length; i++) {
             var current = this.filesData[i];
             if (current.data) {
@@ -1075,13 +1072,10 @@ class MainController {
                 this.dataManager.downloadFileToClient(converter(i), filename);
             }
         }
+        this.saveToDB()
     }
 
     async saveS3(extension, converter) {
-        try {
-            await this.dataBase.clearDB()
-        } catch (e) {
-        }
         for (var i = 0; i < this.filesData.length; i++) {
             var current = this.filesData[i];
             if (current.data) {
@@ -1093,6 +1087,7 @@ class MainController {
                 this.dataManager.saveDataToServer(converter(i), filename);
             }
         }
+        this.saveToDB()
     }
 
     saveDiscrepancyResults() {
@@ -1295,38 +1290,85 @@ class MainController {
         }, fileIndex);
     }
 
-    async loadDraft () {
+    async loadDraft (draft) {
         this.init()
-        const audio = this.dataBase.getLastMediaFile()
-        const files = this.dataBase.getFiles()
-        const res = await Promise.all([ audio, files ])
-        this.loadFromDB(res)
+        const dbDraft = await this.dataBase.getDraft(draft)
+        this.currentDraftId = dbDraft.id
+        this.lastDraft = formatTime(new Date(dbDraft.mtime))
+
+        this.loadFromDB(dbDraft)
     }
 
-    loadServerMode(config) {
+    async loadServer (config) {
         var self = this;
-
         if (self.wavesurfer) self.wavesurfer.destroy();
-        self.init();
-
-        this.dataManager.loadFileFromServer(config).then(function (res) {
+        self.init()
+        this.dataManager.loadFileFromServer(config).then(async function (res) {
             // var uint8buf = new Uint8Array(res.audioFile);
             // self.wavesurfer.loadBlob(new Blob([uint8buf]));
             self.wavesurfer.loadBlob(res.audioFile);
-            self.audioFileName = res.audioFileName;
+
+            const urlArr = config.audio.url.split('/')
+            const audioFileName = urlArr[urlArr.length - 1]
+            self.audioFileName = audioFileName
             res.segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
             self.filesData = res.segmentFiles;
+
+            const serverDraft = await self.dataBase.createDraft({
+                mediaFile: {
+                    name: audioFileName,
+                    data: res.audioFile,
+                    url: config.audio.url
+                },
+                files: self.filesData,
+                draftType: 1
+            })
+            self.currentDraftId = serverDraft
+            self.lastDraft = formatTime(new Date())
         })
     }
 
+    async loadServerMode(config) {
+        if (config.audio && config.audio.url) {
+            const fileDrafts = await this.dataBase.checkDraftUrl(config.audio.url)
+            if (fileDrafts && fileDrafts.length) {
+                Swal.fire({
+                    title: 'Select draft',
+                    text: "Looks like you has a draft for this file.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Select draft'
+                  }).then(async (result) => {
+                    if (result.value) {
+                        const drafts = await this.dataBase.getDrafts(1)
+                        const modalInstance = this.$uibModal.open(loadDraftModal(this, drafts))
+                        modalInstance.result.then(async (res) => {
+                            if (res) {
+                                if (this.wavesurfer) this.wavesurfer.destroy();
+                                this.loadDraft(res)
+                            } else {
+                                this.loadServer(config)
+                            }
+                        });
+                    } else {
+                        this.loadServer(config)
+                    }
+                  })
+            } else {
+                this.loadServer(config)
+            }
+        }
+    }
+
     loadClientMode() {
-        var modalInstance = this.$uibModal.open(loadingModal(this))
+        const modalInstance = this.$uibModal.open(loadingModal(this))
 
         modalInstance.result.then(async (res) => {
             if (res) {
                 if (this.wavesurfer) this.wavesurfer.destroy()
                 this.init()
-                await this.dataBase.clearDB()
                 this.parseAndLoadAudio(res)
             }
         });
@@ -1340,26 +1382,26 @@ class MainController {
             self.parseAndLoadText(res);
         } else {
             const fileResult = await this.readMediaFile(res.audio)
-            this.parseAndLoadText(res);
-            await this.dataBase.clearDB()
+            this.parseAndLoadText(res)
+            let mediaFile
             if (!this.videoMode) {
-                this.dataBase.addMediaFile({
-                    fileName: this.audioFileName,
-                    fileData: fileResult,
-                    fileUrl: null
-                })
+                mediaFile = {
+                    name: this.audioFileName,
+                    data: fileResult,
+                    url: null
+                }
                 try {
                     this.wavesurfer.loadBlob(fileResult);
                 } catch (e) {
                     console.log('error', e)
                 }
             } else {
-                this.dataBase.addMediaFile({
-                    fileName: this.audioFileName,
-                    fileData: res.audio,
+                mediaFile = {
+                    name: this.audioFileName,
+                    data: res.audio,
                     isVideo: true,
-                    fileUrl: null
-                })
+                    url: null
+                }
                 this.videoPlayer = videojs('video-js')
                 this.videoPlayer.ready(function () {
                     var fileUrl = URL.createObjectURL(res.audio);
@@ -1370,19 +1412,27 @@ class MainController {
                 })
                 this.wavesurfer.loadDecodedBuffer(fileResult);
             }
+            const draft = await this.dataBase.createDraft({
+                mediaFile,
+                files: this.filesData,
+                timeStamp: getCurrentTimeStamp(),
+                draftType: 0
+            })
+            this.currentDraftId = draft
+            this.lastDraft = formatTime(new Date())
         }
 
     }
 
     async loadFromDB (res) {
-        const mediaFile = res[0]
-        const files = res[1]
+        const mediaFile = res.mediaFile
+        const files = res.files
         
         if (files && files.length) {
             this.filesData = files.map((f) => {
                 return {
-                    filename: f.fileName,
-                    data: f.fileData
+                    filename: f.filename,
+                    data: f.data
                 }
             })
         } else {
@@ -1390,15 +1440,15 @@ class MainController {
         }
 
         if (mediaFile) {
-            this.audioFileName = mediaFile.fileName
+            this.audioFileName = mediaFile.name
             if (!mediaFile.isVideo) {
-                this.wavesurfer.loadBlob(mediaFile.fileData)
+                this.wavesurfer.loadBlob(mediaFile.data)
             } else {
-                const fileResult = await this.readVideoFile(mediaFile.fileData)
+                const fileResult = await this.readVideoFile(mediaFile.data)
                 this.videoPlayer = videojs('video-js')
                 this.videoPlayer.ready(function () {
-                    var fileUrl = URL.createObjectURL(mediaFile.fileData);
-                    var fileType = mediaFile.fileData.type;
+                    var fileUrl = URL.createObjectURL(mediaFile.data);
+                    var fileType = mediaFile.data.type;
                     this.src({ type: fileType, src: fileUrl });
                     this.load();
                     this.muted(true)
@@ -1418,10 +1468,6 @@ class MainController {
         const cb = async (data) => {
             const file = {filename: res.segmentsFiles[i].name, data}
             self.filesData.push(file);
-            await this.dataBase.addFile({
-                fileName: file.filename,
-                fileData: file.data
-            })
             i++;
             if (i < res.segmentsFiles.length) {
                 self.readTextFile(res.segmentsFiles[i], cb);
@@ -1517,8 +1563,6 @@ class MainController {
         }
 
         this.audioContext = context;
-
-
     }
 
     openShortcutsInfo() {

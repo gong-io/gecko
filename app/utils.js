@@ -90,3 +90,16 @@ export const _printHistoryInfo = (parent, onlyAvailableHistory) => {
         console.table(formatted);
     });
 }
+
+export const pad = (n) => n < 10 ? '0' + n : n
+
+export const formatTime = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+
+export const getCurrentTimeStamp = () => formatTime(new Date())
+
+export const formatDate = (date) => {
+    const hours = date.getHours()
+    const minutes = date.getMinutes()
+    const strTime = pad(hours) + ':' + pad(minutes)
+    return date.getMonth()+1 + "/" + date.getDate() + "/" + date.getFullYear() + "  " + strTime;
+}
