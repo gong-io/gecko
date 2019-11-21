@@ -216,3 +216,7 @@ kbd {
     background-color: #f7f7f7;
     color: black;
 }
+
+.glyphicon-large {
+    font-size: 20px;
+}

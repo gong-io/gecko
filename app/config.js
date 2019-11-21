@@ -6,6 +6,7 @@ var config = {
         // progressColor: 'black',
         pixelRatio: 1,
         autoCenter : false,
+        autoCenterImmediately: true,
         height: '350',
         useSpectrogram: true,
         scrollParent: true
