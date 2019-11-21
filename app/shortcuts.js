@@ -18,6 +18,10 @@ class Shortcuts {
                 desc: 'Play region'
             },
             {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Backspace</kbd> / <kbd>⌘</kbd>+<kbd>Del</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Backspace</kbd> / <kbd>Ctrl</kbd>+<kbd>Del</kbd>',
+                desc: 'Delete region'
+            },
+            {
                 keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>→</kbd>' : '<kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd>',
                 desc: 'Skip backward / forward'
             },
@@ -39,10 +43,10 @@ class Shortcuts {
             },
             {
                 keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Click</kbd> on a word' : '<kbd>Ctrl</kbd>+<kbd>Click</kbd> on a word',
-                desc: 'Jump to word start'
+                desc: `Jump to the word's start`
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>→</kbd> when word selected' : '<kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd> when word selected',
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>→</kbd> when word is selected' : '<kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd> when word is selected',
                 desc: 'Jump to previous / next word'
             }
         ]
@@ -82,6 +86,10 @@ class Shortcuts {
             {
                 handler: (e) => this.undoHandler(e),
                 keys: 'ctrl+z,command+z'
+            },
+            {
+                handler: (e) => this.deleteRegionHandler(e),
+                keys: 'ctrl+backspace,ctrl+delete,command+backspace,command+delete'
             },
             {
                 handler: (e) => this.digitHandler(e),
