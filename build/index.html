@@ -118,28 +118,27 @@
 
 </div>
 <div class="wrapper" ng-show="ctrl.ready">
-    <div id="zoom" class="row" style="margin-bottom: 2em;">
+    <div id="zoom" class="row" style="margin-bottom: 2em; margin-top: 1em;">
         <div class="col-md-1">
-            <i class="glyphicon glyphicon-zoom-out"></i>
+            <i class="glyphicon glyphicon-zoom-out glyphicon-large pull-right"></i>
         </div>
 
         <div class="col-md-10">
             <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
                    max="{{ ctrl.maxZoom }}"
-                   style="width: 100%"/>
-            <!--            <div class="text-center">-->
-            <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
-            <!--            </div>-->
+                   style="width: 100%" 
+                   tooltip-placement="top"
+                    uib-tooltip="Zoom level: {{ ctrl.zoomLevel }}"/>
         </div>
 
         <div class="col-md-1">
-            <i class="glyphicon glyphicon-zoom-in"></i>
+            <i class="glyphicon glyphicon-zoom-in glyphicon-large"></i>
         </div>
     </div>
 
     <div id="volume" class="row" style="margin-bottom: 2em;">
             <div class="col-md-1">
-                <i class="glyphicon glyphicon-volume-down"></i>
+                <i class="glyphicon glyphicon-volume-down glyphicon-large pull-right"></i>
             </div>
     
             <div class="col-md-10">
@@ -152,7 +151,7 @@
             </div>
     
             <div class="col-md-1">
-                <i class="glyphicon glyphicon-volume-up"></i>
+                <i class="glyphicon glyphicon-volume-up glyphicon-large"></i>
             </div>
         </div>
 
