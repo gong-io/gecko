@@ -474,14 +474,22 @@ class MainController {
         if (this.selectedRegion) {
             const delta = this.selectedRegion.end - this.selectedRegion.start
             const wavesurferWidth = this.wavesurfer.container.offsetWidth
-            const zoomLevel = wavesurferWidth / delta
+
+            let zoomLevel = wavesurferWidth / delta
+
+            if (zoomLevel > constants.MAX_ZOOM){
+                zoomLevel = constants.MAX_ZOOM
+            }
+
             this.wavesurfer.zoom(zoomLevel);
             this.noUpdateZoom = true
             this.zoomLevel = zoomLevel
             this.seek(this.selectedRegion.start)
 
-            const startPosition = this.selectedRegion.start * zoomLevel
-            this.wavesurfer.container.children[0].scrollLeft = startPosition
+            const midPosition = (this.selectedRegion.start + this.selectedRegion.end) / 2 * zoomLevel
+            this.wavesurfer.container.children[0].scrollLeft = midPosition - (wavesurferWidth / 2)
+            // const startPosition = this.selectedRegion.start * zoomLevel
+            // this.wavesurfer.container.children[0].scrollLeft = startPosition
         }
     }
 
