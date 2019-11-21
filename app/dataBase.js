@@ -43,28 +43,6 @@ class dataBase {
         }
     }
 
-    async saveFiles (files) {
-        try {
-            const promises = files.map((f) => {
-                const fileName = f.filename
-                const fileData = f.data
-                return this.db.files.add({ fileName, fileData })
-            })
-           const result = await Promise.all(promises)
-           return result
-        } catch (e) {
-            console.error('Error savig to DB: ' + (e.stack || e));
-        }
-    }
-
-    async clearFiles () {
-        try {
-            await this.db.files.clear()
-        } catch (e) {
-            console.error('Error clear DB: ' + (e.stack || e))
-        }
-    }
-
     async checkDraftUrl (url) {
         try {
             const result = await this.db.drafts.where({ 'mediaFile.url' : url }).toArray()
@@ -87,43 +65,6 @@ class dataBase {
             return res
         } catch (e) {
             console.error('Error creating draft: ' + (e.stack || e));
-        }
-    }
-
-    async addMediaFile ({ fileName, fileData, isVideo }) {
-        try {
-           const res = await this.db.mediaFiles.add({ fileName, fileData, isVideo })
-           return res
-        } catch (e) {
-            console.error('Error savig to DB: ' + (e.stack || e));
-        }
-    }
-
-    async addFile ({ fileName, fileData }) {
-        try {
-           await this.db.files.add({ fileName, fileData })
-        } catch (e) {
-            console.error('Error savig to DB: ' + (e.stack || e));
-        }
-    }
-
-    async getLastMediaFile () {
-        try {
-            const result = await this.db.mediaFiles.orderBy('id').last()
-            return result      
-        } catch (e) {
-            return {}
-        }
-        
-    }
-
-    async getFiles () {
-        try {
-            const result = await this.db.files.toArray()
-            return result
-        } catch (e) {
-            console.error('get error', e)
-            return []
         }
     }
 
