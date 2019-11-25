@@ -8,17 +8,35 @@ export function editableWordsDirective ($timeout) {
             fileIndex: '=',
             region: '=',
             wordClick: '&',
-            wordChanged: '&'
+            wordChanged: '&',
+            control: '='
         },
         link: function (scope, element, attrs) {
             element[0].setAttribute('contenteditable', true)
 
+            const spaceSpanHTML = '<span class="segment-text__space"> </span>'
+
+            scope.appControl = scope.control || {}
+            scope.originalWords = []
+            scope.appControl.resetEditableWords = () => {
+                scope.originalWords = []
+                cleanDOM()
+                $timeout(() => {
+                    if (scope.words) {
+                        scope.originalWords = JSON.parse(JSON.stringify(scope.words))
+                        formDOM(scope.words)
+                    }
+                })
+            }
+            scope.appControl.cleanEditableDOM = () => {
+                scope.originalWords = []
+                cleanDOM()
+            }
+
+            scope.blockWatcher = false
+
             const updateAll = () => {
                 const spans = element[0].querySelectorAll('span.segment-text__word-wrapper')
-                const toDel = []
-                const toAdd = []
-                const wordUuids = scope.words.map(w => w.uuid)
-                const spanUuids = []
 
                 if (!spans.length) {
                     $timeout(() => {
@@ -26,69 +44,66 @@ export function editableWordsDirective ($timeout) {
                     })
                     return
                 }
-
+                const updatedWords = []
                 spans.forEach(span => {
                     const wordText = span.textContent.trim()
-                    const wordIndex = parseInt(span.getAttribute('data-index'))
                     const wordUuid = span.getAttribute('word-uuid')
-                    spanUuids.push(wordUuid)
                     if (wordText.length) {
                         const newWordSplited = wordText.split(' ')
+                        const originalWord = scope.originalWords.find((w) => w.uuid === wordUuid)
+                        const word = scope.words.find((w) => w.uuid === wordUuid)
                         if (newWordSplited.length === 1) {
-                            if (span.textContent.trim() !== scope.words[wordIndex].text) {
-                                let wasEdited = false
-                                if (scope.words[wordIndex].text.length) {
-                                    wasEdited = true
+                            if (word) {
+                                if (span.textContent.trim() !== originalWord.text) {
+                                    let wasEdited = false
+                                    if (word.text.length) {
+                                        wasEdited = true
+                                    }
+                                    word.text = span.textContent.trim().replace('&#8203;', '')
+                                    if (wasEdited) {
+                                        scope.wordChanged && scope.wordChanged({ regionIndex: scope.fileIndex, wordUuid })
+                                        span.style.color = 'rgb(129, 42, 193)'
+                                    } 
+                                } else {
+                                    span.style.color = 'rgb(0, 0, 0)'
                                 }
-                                scope.words[wordIndex].text = span.textContent.trim().replace('&#8203;', '')
-                                if (wasEdited) {
-                                    scope.wordChanged && scope.wordChanged({ regionIndex: scope.fileIndex, wordIndex })
-                                    span.style.color = 'rgb(129, 42, 193)'
-                                }
-                            }
-                        } else {
-                            scope.words[wordIndex].text = newWordSplited[0].trim()
-                            span.textContent = newWordSplited[0].trim().replace('&#8203;', '')
-                            for (let i = 1; i < newWordSplited.length; i++) {
-                                newWordSplited[i].trim().length && toAdd.push({
-                                    id: wordUuid,
-                                    text: newWordSplited[i]
+                                updatedWords.push(Object.assign({}, word))
+                            } else {
+                                updatedWords.push({
+                                    text: wordText,
+                                    uuid: uuidv4(),
+                                    start: scope.region.start,
+                                    end: scope.region.end
                                 })
                             }
+                        } else {
+                            if (word) {
+                                word.text = newWordSplited[0].trim()
+                                updatedWords.push(Object.assign({}, word))
+                                for (let i = 1; i < newWordSplited.length; i++) {
+                                    const wordCopy = Object.assign({}, word)
+                                    wordCopy.text = newWordSplited[i].replace('&#8203;', '')
+                                    wordCopy.uuid = uuidv4()
+                                    updatedWords.push(wordCopy)
+                                }
+                            } else {
+                                for (let i = 0; i < newWordSplited.length; i++) {
+                                    updatedWords.push({
+                                        text: newWordSplited[i].replace('&#8203;', ''),
+                                        uuid: uuidv4(),
+                                        start: scope.region.start,
+                                        end: scope.region.end
+                                    })
+                                }
+                            }
                         }
-                    } else {
-                        toDel.push(wordUuid)
                     }
                 })
 
-                wordUuids.forEach((wu) => {
-                    if (!spanUuids.includes(wu)) {
-                        toDel.push(wu)
-                    }
-                })
-
-                toDel.forEach((id) => {
-                    const delIdx = scope.words.findIndex(w => w.uuid === id)
-                    scope.words.splice(delIdx, 1)
-                })
-
-                let wasAdded = false
-
-                toAdd.reverse().forEach(({ id, text }) => {
-                    const addIdx = scope.words.findIndex(w => w.uuid === id)
-                    const wordCopy = Object.assign({}, scope.words[addIdx])
-                    wordCopy.text = text.replace('&#8203;', '')
-                    wordCopy.uuid = uuidv4()
-                    scope.words.splice(addIdx + 1, 0, wordCopy)
-                    wasAdded = true
-                })
-
-                if (wasAdded) {
-                    formDOM(scope.words)
-                }
-
-                if (!scope.words.length) {
+                if (!updatedWords.length) {
                     scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuidv4()}]
+                } else {
+                    scope.words = updatedWords
                 }
             }
 
@@ -99,7 +114,7 @@ export function editableWordsDirective ($timeout) {
             element.bind('click', (e) => {
                 if (e.ctrlKey || e.metaKey) {
                     const clickedSpan = window.getSelection().anchorNode.parentNode
-                    if (clickedSpan) {
+                    if (clickedSpan && clickedSpan.classList.contains('segment-text__word-wrapper')) {
                         const wordUuid = clickedSpan.getAttribute('word-uuid')
                         const clickedWord = scope.words.find(w => w.uuid === wordUuid)
                         scope.wordClick && scope.wordClick({ word: clickedWord, event: e })
@@ -158,6 +173,10 @@ export function editableWordsDirective ($timeout) {
                 }
             }
 
+            const spanHTML = ({ uuid, index, confidence, color, text }) => {
+                return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" id="word_${scope.fileIndex}_${index}" style="color: ${ color ? color : 'rgb(0, 0, 0)' };">${text}</span>`
+            }
+
             const createSpan = (w, index) => {
                 const span = document.createElement('span')
                 if (w.text.length) {
@@ -180,7 +199,8 @@ export function editableWordsDirective ($timeout) {
                 }
 
                 span.setAttribute('title', `Confidence: ${w.confidence ? w.confidence : ''}`)
-                span.setAttribute('data-index', index)
+                span.setAttribute('data-start', w.start)
+                span.setAttribute('data-end', w.end)
                 span.setAttribute('word-uuid', w.uuid)
                 span.setAttribute('id', `word_${scope.fileIndex}_${index}`)
 
@@ -196,7 +216,7 @@ export function editableWordsDirective ($timeout) {
 
             const formDOM = (words) => {
                 cleanDOM()
-                words.forEach((w, index) => {
+                words && words.forEach((w, index) => {
                     const span = createSpan(w, index)
                     element[0].appendChild(span)
 
@@ -214,15 +234,8 @@ export function editableWordsDirective ($timeout) {
                         const text = clipboardData.getData('text/plain')
                         if (isAllSelected()) {
                             const pastedWords = text.split(' ')
-                            const words = pastedWords.map((w) => {
-                                return {
-                                    start: scope.region.start,
-                                    end: scope.region.end, 
-                                    text: w, 
-                                    uuid: uuidv4()
-                                }
-                            })
-                            setWordsAndCaret(words)
+                            const words = pastedWords.map((w, i) => spanHTML({ uuid: uuidv4(), start: scope.region.start, end: scope.region.end, text: w, index: i}))
+                            document.execCommand('insertHTML', false, words.join(spaceSpanHTML))
                         } else {
                             document.execCommand('insertText', false, text)
                         }
@@ -232,9 +245,10 @@ export function editableWordsDirective ($timeout) {
             })
 
             element.bind('keydown', function(e) {
-                if (e.which === 8 || e.which === 46) {
+                if (e.which === 8 || e.which === 46 || e.which === 32) {
                     if (isAllSelected() || checkLastSymbol()) {
-                        scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuidv4()}]
+                        const html = spanHTML({ uuid: uuidv4(), index: 0, text: '&#8203;'})
+                        document.execCommand('insertHTML', false, html)
                         e.preventDefault()
                         return
                     }
@@ -242,7 +256,8 @@ export function editableWordsDirective ($timeout) {
 
                 if (/^[a-z0-9]$/i.test(e.key) && !isDownCtrl(e)) {
                     if (isAllSelected()) {
-                        setWordsAndCaret([{start: scope.region.start, end: scope.region.end, text: e.key, uuid: uuidv4()}])
+                        const html = spanHTML({ uuid: uuidv4(), index: 0, text: e.key})
+                        document.execCommand('insertHTML', false, html)
                         e.preventDefault()
                         return
                     }
@@ -253,14 +268,6 @@ export function editableWordsDirective ($timeout) {
                 if (e.which === 13 || e.which === 27) {
                     this.blur();
                     e.preventDefault();
-                }
-            })
-
-            scope.$watch('words', (newVal) => {
-                if (newVal) {
-                    formDOM(newVal)
-                } else {
-                    cleanDOM()
                 }
             })
         }

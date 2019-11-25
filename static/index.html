@@ -459,7 +459,8 @@
                         words="ctrl.currentRegions[$index].data.words" 
                         file-index="$index"
                         word-click="ctrl.wordClick(word, event)"
-                        word-changed="ctrl.wordChanged(regionIndex, wordIndex)"
+                        word-changed="ctrl.wordChanged(regionIndex, wordUuid)"
+                        control="ctrl"
                         class="editable-words"
                     >
                     </editable-words>

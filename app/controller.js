@@ -847,13 +847,22 @@ class MainController {
     }
 
     selectRegion(region) {
-        this.deselectRegion();
+        let needUpdateEditable = false
 
         if (!region) {
             region = this.getCurrentRegion(this.selectedFileIndex);
         }
 
-        if (!region) return;
+        if (region !== this.selectedRegion) {
+            needUpdateEditable = true
+        }
+
+        this.deselectRegion();
+
+        if (!region) { 
+            this.cleanEditableDOM()
+            return
+        }
 
         region.element.classList.add("selected-region");
 
@@ -864,6 +873,10 @@ class MainController {
         })
 
         this.selectedRegion = region;
+
+        if (needUpdateEditable) {
+            this.$timeout(() => this.resetEditableWords())
+        }
     }
 
     jumpRegion(next) {
@@ -1897,9 +1910,9 @@ class MainController {
         });
     }
 
-    wordChanged(fileIndex, wordIndex) {
+    wordChanged(fileIndex, wordUuid) {
         let currentRegion = this.currentRegions[fileIndex];
-        const word = currentRegion.data.words[wordIndex];
+        const word = currentRegion.data.words.find(w => w.uuid === wordUuid);
         word.wasEdited = true
         this.addHistory(currentRegion);
         this.undoStack.push([currentRegion.id]);
