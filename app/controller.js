@@ -1285,7 +1285,7 @@ class MainController {
 
                 if (!this.checkValidRegions(i)) return;
 
-                this.dataManager.saveDataToServer(converter(i), filename);
+                this.dataManager.saveDataToServer(converter(i), { filename, s3Subfolder: current.s3Subfolder });
             }
         }
     }
