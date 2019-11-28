@@ -74,6 +74,7 @@ class MainController {
         this.$timeout = $timeout
         this.$interval = $interval
         this.isServerMode = false
+        this.proofReadingView = true
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
     }
@@ -791,7 +792,7 @@ class MainController {
             } else {
                 this.wavesurfer.regions.list[regionId].update(this.copyRegion(history[history.length - 1]));
                 if (needUpdateEditable && this.selectedRegion && this.selectedRegion.id === regionId) {
-                    this.$timeout(() => this.resetEditableWords())
+                    this.$timeout(() => this.resetEditableWords && this.resetEditableWords())
                 }
             }
         }
@@ -867,7 +868,7 @@ class MainController {
         this.deselectRegion();
 
         if (!region) { 
-            this.cleanEditableDOM()
+            this.cleanEditableDOM && this.cleanEditableDOM()
             return
         }
 
@@ -882,7 +883,7 @@ class MainController {
         this.selectedRegion = region;
 
         if (needUpdateEditable) {
-            this.$timeout(() => this.resetEditableWords())
+            this.$timeout(() => this.resetEditableWords && this.resetEditableWords())
         }
     }
 
@@ -1142,7 +1143,7 @@ class MainController {
                 last_end = end;
 
                 //region.element.innerText = speaker;
-                var region = this.wavesurfer.addRegion({
+                const region = this.wavesurfer.addRegion({
                     start: start,
                     end: end,
                     data: {
@@ -2007,6 +2008,10 @@ class MainController {
             this.spectrogramReady = true
         }
         this.showSpectrogram = !this.showSpectrogram
+    }
+
+    toggleProofReadingView () {
+        this.proofReadingView = !this.proofReadingView
     }
 }
 

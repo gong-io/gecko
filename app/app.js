@@ -15,6 +15,7 @@ import collapse from 'angular-ui-bootstrap/src/collapse'
 import './third-party/localStorageDB.js'
 import {playPartDirective} from './playPartDirective'
 import {editableWordsDirective} from './editableWordsDirective'
+import {proofReadingViewDirective} from './proofReadingViewDirective'
 
 var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse]);
 
@@ -65,6 +66,7 @@ speechRecognition.directive("fileread", [function () {
 }]);
 
 speechRecognition.directive('editableWords', ['$timeout', editableWordsDirective])
+speechRecognition.directive('proofReadingView', ['$timeout', proofReadingViewDirective])
 
 speechRecognition.directive("editable", function () {
     return {
