@@ -1,4 +1,5 @@
 import uuidv4 from 'uuid/v4'
+import angular from 'angular'
 
 export function editableWordsDirective ($timeout) {
     return {
@@ -9,6 +10,7 @@ export function editableWordsDirective ($timeout) {
             region: '=',
             wordClick: '&',
             wordChanged: '&',
+            regionTextChanged: '&',
             control: '='
         },
         link: function (scope, element, attrs) {
@@ -105,6 +107,10 @@ export function editableWordsDirective ($timeout) {
                 } else {
                     scope.words = updatedWords
                 }
+
+                if(!angular.equals(scope.words, scope.originalWords)) {
+                    scope.regionTextChanged({ regionIndex: scope.fileIndex, words: scope.words })
+                }
             }
 
             element.bind('blur', () => {
@@ -167,6 +173,15 @@ export function editableWordsDirective ($timeout) {
                 })
             }
 
+            const findNodeAncestor = (node) => {
+                let ret = node
+                while (ret.nodeType !== Node.ELEMENT_NODE) {
+                    ret = ret.parentNode
+                }
+
+                return ret
+            }
+
             const cleanDOM = () => {
                 while (element[0].firstChild) {
                     element[0].removeChild(element[0].firstChild);
@@ -209,7 +224,7 @@ export function editableWordsDirective ($timeout) {
 
             const createSpace = () => {
                 const span = document.createElement('span')
-                span.textContent = ' '
+                span.innerHTML = ' '
                 span.classList.add('segment-text__space')
                 return span
             }
@@ -260,6 +275,41 @@ export function editableWordsDirective ($timeout) {
                         document.execCommand('insertHTML', false, html)
                         e.preventDefault()
                         return
+                    } else {
+                        /* prevent input into space spans */
+                        const selection = document.getSelection()
+                        const ancestorNode = findNodeAncestor(selection.focusNode)
+                        if (ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
+                            const nodeTo = ancestorNode.nextSibling
+                            const range = document.createRange()
+
+                            const nodeToText = nodeTo.textContent
+
+                            range.setStart(nodeTo.firstChild, 0)
+                            range.setEnd(nodeTo.firstChild, 1)
+
+                            selection.removeAllRanges()
+                            selection.addRange(range)
+                            
+                            /* hack for webkit browsers - without it, text will be inserted into previous space span */
+                            document.execCommand('insertText', false, `${e.key}${nodeToText.substring(0, 1)}`)
+
+                            const newRange = document.createRange()
+                            selection.removeAllRanges()
+                            newRange.setStart(nodeTo.firstChild, 1)
+                            newRange.setStart(nodeTo.firstChild, 1)
+                            selection.addRange(newRange)
+
+                            e.preventDefault()
+                        }
+                    }
+                }
+            })
+
+            element.bind('input', (e) => {
+                if (e.originalEvent) {
+                    if (e.originalEvent.inputType === 'historyUndo') {
+                        document.execCommand('redo')
                     }
                 }
             })

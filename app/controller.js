@@ -760,6 +760,7 @@ class MainController {
         }
 
         var regionIds = this.undoStack.pop();
+        let needUpdateEditable = false
 
         if (regionIds[0] === constants.SPEAKER_NAME_CHANGED_OPERATION_ID) {
             let fileIndex = regionIds[1];
@@ -769,6 +770,9 @@ class MainController {
             self.updateLegend(fileIndex, newSpeaker, oldSpeaker);
 
             regionIds = regionIds[4];
+        } else if (regionIds[0] === constants.REGION_TEXT_CHANGED_OPERATION_ID) {
+            needUpdateEditable = true
+            regionIds = [regionIds[1]]
         }
 
 
@@ -786,6 +790,9 @@ class MainController {
                 this.__deleteRegion(this.getRegion(regionId));
             } else {
                 this.wavesurfer.regions.list[regionId].update(this.copyRegion(history[history.length - 1]));
+                if (needUpdateEditable && this.selectedRegion && this.selectedRegion.id === regionId) {
+                    this.$timeout(() => this.resetEditableWords())
+                }
             }
         }
 
@@ -1914,8 +1921,15 @@ class MainController {
         let currentRegion = this.currentRegions[fileIndex];
         const word = currentRegion.data.words.find(w => w.uuid === wordUuid);
         word.wasEdited = true
+        // this.addHistory(currentRegion);
+        // this.undoStack.push([currentRegion.id]);
+    }
+
+    regionTextChanged(fileIndex, words, contenteditable) {
+        let currentRegion = this.currentRegions[fileIndex]
+        currentRegion.data.words = words
         this.addHistory(currentRegion);
-        this.undoStack.push([currentRegion.id]);
+        this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, currentRegion.id]);
     }
 
     seek(time, leanTo) {
