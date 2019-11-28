@@ -1,1 +1,9 @@
-<p>{{ regions }}</p>
+<editable-words
+    ng-repeat="r in regions track by r.id"
+    region="r"
+    words="r.data.words"
+    file-index="fileIndex"
+    automatic-mode="automaticMode"
+    class="editable-words"
+>
+</editable-words>

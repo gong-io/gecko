@@ -193,6 +193,11 @@ a:hover, a:focus {
     outline: none;
 }
 
+.editable-words {
+    display: block;
+    margin-bottom: 2rem;
+}
+
 .editable-words:focus {
     outline: none;
 }

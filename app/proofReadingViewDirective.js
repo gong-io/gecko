@@ -1,21 +1,18 @@
 const templateUrl = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/proofReadingView.html')
 
-export function proofReadingViewDirective ($timeout) {
+export function proofReadingViewDirective ($timeout, eventBus) {
     return {
         restrict: 'E',
         templateUrl,
         scope: {
             fileIndex: '=',
-            wordClick: '&',
-            wordChanged: '&',
             regionTextChanged: '&',
-            control: '='
+            control: '=',
+            regions: '='
         },
         link: function (scope, element, attrs) {
-            scope.regions = []
-            scope.control.iterateRegions((r) => {
-                scope.regions.push(r)
-            }, scope.fileIndex)
+            scope.appControl = scope.control || {}
+            scope.automaticMode = true
         }
     }
 }

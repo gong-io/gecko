@@ -16,6 +16,7 @@ import './third-party/localStorageDB.js'
 import {playPartDirective} from './playPartDirective'
 import {editableWordsDirective} from './editableWordsDirective'
 import {proofReadingViewDirective} from './proofReadingViewDirective'
+import EventBus from './eventBusService'
 
 var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse]);
 
@@ -29,6 +30,7 @@ speechRecognition.config(function($httpProvider) {
 
 speechRecognition.service('dataManager', dataManager);
 speechRecognition.service('dataBase', dataBase);
+speechRecognition.service('eventBus', EventBus)
 speechRecognition.directive('playPart', playPartDirective);
 speechRecognition.directive('checklistModel', Checklist);
 speechRecognition.directive("fileread", [function () {
@@ -65,8 +67,8 @@ speechRecognition.directive("fileread", [function () {
     }
 }]);
 
-speechRecognition.directive('editableWords', ['$timeout', editableWordsDirective])
-speechRecognition.directive('proofReadingView', ['$timeout', proofReadingViewDirective])
+speechRecognition.directive('editableWords', ['$timeout', 'eventBus', editableWordsDirective])
+speechRecognition.directive('proofReadingView', ['$timeout', 'eventBus', proofReadingViewDirective])
 
 speechRecognition.directive("editable", function () {
     return {

@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4'
 import angular from 'angular'
 
-export function editableWordsDirective ($timeout) {
+export function editableWordsDirective ($timeout, eventBus) {
     return {
         restrict: 'E',
         scope: {
@@ -11,7 +11,8 @@ export function editableWordsDirective ($timeout) {
             wordClick: '&',
             wordChanged: '&',
             regionTextChanged: '&',
-            control: '='
+            control: '=',
+            automaticMode: '='
         },
         link: function (scope, element, attrs) {
             element[0].setAttribute('contenteditable', true)
@@ -121,7 +122,7 @@ export function editableWordsDirective ($timeout) {
                     if (clickedSpan && clickedSpan.classList.contains('segment-text__word-wrapper')) {
                         const wordUuid = clickedSpan.getAttribute('word-uuid')
                         const clickedWord = scope.words.find(w => w.uuid === wordUuid)
-                        scope.wordClick && scope.wordClick({ word: clickedWord, event: e })
+                        eventBus.callEvent('wordClick', clickedWord, e)
                     }
                 }
             })
@@ -308,6 +309,17 @@ export function editableWordsDirective ($timeout) {
                     e.preventDefault();
                 }
             })
+
+            if (scope.automaticMode) {
+                scope.originalWords = []
+                cleanDOM()
+                $timeout(() => {
+                    if (scope.words) {
+                        scope.originalWords = JSON.parse(JSON.stringify(scope.words))
+                        formDOM(scope.words)
+                    }
+                })
+            }
         }
     }
 }

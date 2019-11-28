@@ -66,9 +66,10 @@ function secondsToMinutes(time) {
 }
 
 class MainController {
-    constructor($scope, $uibModal, dataManager, dataBase, $timeout, $interval) {
+    constructor($scope, $uibModal, dataManager, dataBase, eventBus, $timeout, $interval) {
         this.dataManager = dataManager;
         this.dataBase = dataBase;
+        this.eventBus = eventBus
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
@@ -174,6 +175,8 @@ class MainController {
         this.regionsHistory = {};
         this.updateOtherRegions = new Set();
 
+        this.allRegions = []
+
         this.isRegionClicked = false;
         this.isTextChanged = false;
         this.wavesurfer = initWaveSurfer();
@@ -183,6 +186,8 @@ class MainController {
         this.ready = false;
 
         var self = this;
+
+        this.eventBus.setEvent('wordClick', (word, e) => this.wordClick(word, e))
 
         document.onkeydown = (e) => {
             if (e.key === 'Escape') {
@@ -396,7 +401,7 @@ class MainController {
             }
             //TODO: creating a new word is bad if we want to keep the segment clear.
             if (!region.data.words || region.data.words.length === 0) {
-                region.data.words = [{start: region.start, end: region.end, text: ""}];
+                region.data.words = [{start: region.start, end: region.end, text: "", uuid: uuidv4()}];
             }
 
             var elem = region.element;
@@ -807,6 +812,17 @@ class MainController {
         this.setCurrentTime();
         this.calcCurrentRegions();
         this.updateSelectedDiscrepancy();
+        this.setAllRegions()
+    }
+
+    setAllRegions() {
+        for (let i = 0; i < this.filesData.length; i++) {
+            const ret = []
+            this.iterateRegions((r) => {
+                ret.push(r)
+            }, i)
+            this.allRegions[i] = ret
+        }        
     }
 
     calcCurrentFileIndex(e) {
@@ -873,12 +889,6 @@ class MainController {
         }
 
         region.element.classList.add("selected-region");
-
-        region.data.words.forEach((w) => {
-            if (!w.uuid) {
-                w.uuid = uuidv4()
-            }
-        })
 
         this.selectedRegion = region;
 
@@ -1150,7 +1160,7 @@ class MainController {
                         initFinished: true,
                         fileIndex: fileIndex,
                         speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x => x), //removing empty speaker
-                        words: monologue.words
+                        words: monologue.words.map((w) => Object.assign(w, { uuid: uuidv4()}))
                     },
                     drag: false,
                     minLength: constants.MINIMUM_LENGTH
@@ -2016,7 +2026,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', '$timeout','$interval'];
+    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', 'eventBus', '$timeout','$interval'];
 export {
     MainController
 }
