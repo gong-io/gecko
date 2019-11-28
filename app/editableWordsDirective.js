@@ -35,8 +35,6 @@ export function editableWordsDirective ($timeout) {
                 cleanDOM()
             }
 
-            scope.blockWatcher = false
-
             const updateAll = () => {
                 const spans = element[0].querySelectorAll('span.segment-text__word-wrapper')
 
@@ -161,16 +159,6 @@ export function editableWordsDirective ($timeout) {
                 range.selectNodeContents(span)
                 range.collapse()
                 selection.addRange(range)
-            }
-
-            const setWordsAndCaret = (words) => {
-                /* wait 2 digest cycle to new DOM */
-                $timeout(() => {
-                    scope.words = words
-                    $timeout(() => {
-                        setCaretPosition()
-                    })
-                })
             }
 
             const findNodeAncestor = (node) => {
