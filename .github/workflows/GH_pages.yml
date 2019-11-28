@@ -1,0 +1,33 @@
+name: Deploy to GH pages
+
+on: 
+  push:
+    branches:    
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js 10.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 10.x
+    - name: DEPLOY
+      env:
+        GITHUB_TOKEN: ${{ secrets.github_token }}
+      run: |
+        git config user.email "action@github.com"
+        git config user.name "GitHub Action"
+        git checkout master
+        git remote -v
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git remote -v
+        npm install
+        webpack
+        git commit -am "GitHub Action's build"
+        git push
+        git subtree push --prefix build origin gh-pages
