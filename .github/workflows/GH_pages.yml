@@ -30,4 +30,4 @@ jobs:
         webpack
         git commit -am "GitHub Action's build"
         git push
-        git subtree push --prefix build origin ghpages
+        git subtree push --prefix build origin gh-pages
