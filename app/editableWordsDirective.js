@@ -20,12 +20,14 @@ export function editableWordsDirective ($timeout) {
 
             scope.appControl = scope.control || {}
             scope.originalWords = []
+            scope.previousState = []
             scope.appControl.resetEditableWords = () => {
                 scope.originalWords = []
                 cleanDOM()
                 $timeout(() => {
                     if (scope.words) {
                         scope.originalWords = JSON.parse(JSON.stringify(scope.words))
+                        scope.previousState = JSON.parse(JSON.stringify(scope.words))
                         formDOM(scope.words)
                     }
                 })
@@ -65,7 +67,9 @@ export function editableWordsDirective ($timeout) {
                                         span.style.color = 'rgb(129, 42, 193)'
                                     } 
                                 } else {
-                                    span.style.color = 'rgb(0, 0, 0)'
+                                    if (!word.wasEdited) {
+                                        span.style.color = 'rgb(0, 0, 0)'
+                                    }
                                 }
                                 updatedWords.push(Object.assign({}, word))
                             } else {
@@ -106,9 +110,11 @@ export function editableWordsDirective ($timeout) {
                     scope.words = updatedWords
                 }
 
-                if(!angular.equals(scope.words, scope.originalWords)) {
+                if(!angular.equals(scope.words, scope.previousState)) {
                     scope.regionTextChanged({ regionIndex: scope.fileIndex, words: scope.words })
                 }
+
+                scope.previousState = JSON.parse(JSON.stringify(scope.words))
             }
 
             element.bind('blur', () => {
@@ -211,10 +217,10 @@ export function editableWordsDirective ($timeout) {
             }
 
             const createSpace = () => {
-                const span = document.createElement('span')
-                span.innerHTML = ' '
-                span.classList.add('segment-text__space')
-                return span
+                // const span = document.createElement('span')
+                // span.innerHTML = ' '
+                // span.classList.add('segment-text__space')
+                return document.createTextNode(' ')
             }
 
             const formDOM = (words) => {
@@ -266,9 +272,11 @@ export function editableWordsDirective ($timeout) {
                     } else {
                         /* prevent input into space spans */
                         const selection = document.getSelection()
+                        console.log(selection.focusNode, selection.focusNode.parentElement)
                         const ancestorNode = findNodeAncestor(selection.focusNode)
-                        if (ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
-                            const nodeTo = ancestorNode.nextSibling
+                        if (selection.focusNode.nodeType === Node.TEXT_NODE && selection.focusNode.parentElement === element[0]) {
+                            console.log('here')
+                            const nodeTo = selection.focusNode.nextSibling
                             const range = document.createRange()
 
                             const nodeToText = nodeTo.textContent

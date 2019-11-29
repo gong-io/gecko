@@ -193,6 +193,19 @@ a:hover, a:focus {
     outline: none;
 }
 
+.segment-text__word-wrapper {
+    display: inline-block;
+}
+
+.segment-text__space {
+    
+}
+
+.editable-words {
+    display: block;
+    width: 100%;
+}
+
 .editable-words:focus {
     outline: none;
 }
