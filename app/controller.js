@@ -652,7 +652,8 @@ class MainController {
             this.regionsHistory[region.id] = [];
         }
 
-        this.regionsHistory[region.id].push(this.copyRegion(region));
+        const regionCopy = this.copyRegion(region)
+        this.regionsHistory[region.id].push(regionCopy);
     }
 
     regionPositionUpdated(region) {
@@ -972,7 +973,7 @@ class MainController {
 
         words.forEach(function (word, i) {
             if (word.start <= time && word.end >= time) {
-                let newSelectedWord = document.getElementById('word_{0}_{1}'.format(fileIndex, (i).toString()));
+                let newSelectedWord = document.querySelector(`[word-uuid="${word.uuid}"]`)
 
                 if (newSelectedWord) {
                     newSelectedWord.classList.add('selected-word');
@@ -1917,11 +1918,11 @@ class MainController {
         });
     }
 
-    wordChanged(fileIndex, wordUuid) {
+    /* wordChanged(fileIndex, wordUuid) {
         let currentRegion = this.currentRegions[fileIndex];
         const word = currentRegion.data.words.find(w => w.uuid === wordUuid)
         word.wasEdited = true
-    }
+    } */
 
     regionTextChanged(fileIndex, contenteditable) {
         let currentRegion = this.currentRegions[fileIndex]
