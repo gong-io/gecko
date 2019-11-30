@@ -1919,15 +1919,12 @@ class MainController {
 
     wordChanged(fileIndex, wordUuid) {
         let currentRegion = this.currentRegions[fileIndex];
-        const word = currentRegion.data.words.find(w => w.uuid === wordUuid);
+        const word = currentRegion.data.words.find(w => w.uuid === wordUuid)
         word.wasEdited = true
-        // this.addHistory(currentRegion);
-        // this.undoStack.push([currentRegion.id]);
     }
 
-    regionTextChanged(fileIndex, words, contenteditable) {
+    regionTextChanged(fileIndex, contenteditable) {
         let currentRegion = this.currentRegions[fileIndex]
-        currentRegion.data.words = words
         this.addHistory(currentRegion);
         this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, currentRegion.id]);
     }

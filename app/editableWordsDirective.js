@@ -1,6 +1,10 @@
 import uuidv4 from 'uuid/v4'
 import angular from 'angular'
 
+import GeckoEditor from './geckoEditor'
+
+const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1
+
 export function editableWordsDirective ($timeout) {
     return {
         restrict: 'E',
@@ -14,116 +18,58 @@ export function editableWordsDirective ($timeout) {
             control: '='
         },
         link: function (scope, element, attrs) {
-            element[0].setAttribute('contenteditable', true)
-
-            const spaceSpanHTML = '<span class="segment-text__space"> </span>'
+            scope.editor = new GeckoEditor(element[0], scope.fileIndex)
 
             scope.appControl = scope.control || {}
             scope.originalWords = []
             scope.previousState = []
+
             scope.appControl.resetEditableWords = () => {
-                scope.originalWords = []
-                cleanDOM()
                 $timeout(() => {
-                    if (scope.words) {
-                        scope.originalWords = JSON.parse(JSON.stringify(scope.words))
-                        scope.previousState = JSON.parse(JSON.stringify(scope.words))
-                        formDOM(scope.words)
-                    }
+                    scope.editor.setRegion(scope.region)
                 })
             }
+
             scope.appControl.cleanEditableDOM = () => {
-                scope.originalWords = []
-                cleanDOM()
+                scope.editor.reset()
             }
 
-            const updateAll = () => {
-                const spans = element[0].querySelectorAll('span.segment-text__word-wrapper')
-
-                if (!spans.length) {
-                    $timeout(() => {
-                        scope.words = [{start: scope.region.start, end: scope.region.end, text: ''}]
-                    })
-                    return
-                }
-                const updatedWords = []
-                spans.forEach(span => {
-                    const wordText = span.textContent.trim()
-                    const wordUuid = span.getAttribute('word-uuid')
-                    if (wordText.length) {
-                        const newWordSplited = wordText.split(' ')
-                        const originalWord = scope.originalWords.find((w) => w.uuid === wordUuid)
-                        const word = scope.words.find((w) => w.uuid === wordUuid)
-                        if (newWordSplited.length === 1) {
-                            if (word) {
-                                if (span.textContent.trim() !== originalWord.text) {
-                                    let wasEdited = false
-                                    if (word.text.length) {
-                                        wasEdited = true
-                                    }
-                                    word.text = span.textContent.trim().replace('&#8203;', '')
-                                    if (wasEdited) {
-                                        scope.wordChanged && scope.wordChanged({ regionIndex: scope.fileIndex, wordUuid })
-                                        span.style.color = 'rgb(129, 42, 193)'
-                                    } 
-                                } else {
-                                    if (!word.wasEdited) {
-                                        span.style.color = 'rgb(0, 0, 0)'
-                                    }
-                                }
-                                updatedWords.push(Object.assign({}, word))
-                            } else {
-                                updatedWords.push({
-                                    text: wordText,
-                                    uuid: uuidv4(),
-                                    start: scope.region.start,
-                                    end: scope.region.end
-                                })
-                            }
-                        } else {
-                            if (word) {
-                                word.text = newWordSplited[0].trim()
-                                updatedWords.push(Object.assign({}, word))
-                                for (let i = 1; i < newWordSplited.length; i++) {
-                                    const wordCopy = Object.assign({}, word)
-                                    wordCopy.text = newWordSplited[i].replace('&#8203;', '')
-                                    wordCopy.uuid = uuidv4()
-                                    updatedWords.push(wordCopy)
-                                }
-                            } else {
-                                for (let i = 0; i < newWordSplited.length; i++) {
-                                    updatedWords.push({
-                                        text: newWordSplited[i].replace('&#8203;', ''),
-                                        uuid: uuidv4(),
-                                        start: scope.region.start,
-                                        end: scope.region.end
-                                    })
-                                }
-                            }
-                        }
-                    }
+            scope.editor.on('wordsUpdated', (newWords) => {
+                $timeout(() => {
+                    scope.words = newWords
                 })
-
-                if (!updatedWords.length) {
-                    scope.words = [{start: scope.region.start, end: scope.region.end, text: '', uuid: uuidv4()}]
-                } else {
-                    scope.words = updatedWords
-                }
-
-                if(!angular.equals(scope.words, scope.previousState)) {
-                    scope.regionTextChanged({ regionIndex: scope.fileIndex, words: scope.words })
-                }
-
-                scope.previousState = JSON.parse(JSON.stringify(scope.words))
-            }
-
-            element.bind('blur', () => {
-                scope.$apply(updateAll)
             })
 
+            scope.editor.on('wordChanged', (wordUuid) => {
+                $timeout(() => {
+                    scope.wordChanged && scope.wordChanged({ regionIndex: scope.fileIndex, wordUuid })
+                })
+            })
+
+            scope.editor.on('checkRegionUpdated', (words, previousState) => {
+                if(!angular.equals(words, previousState)) {
+                    $timeout(() => {
+                        scope.regionTextChanged({ regionIndex: scope.fileIndex })
+                    })
+                } 
+            })
+
+            scope.editor.on('wordClick', ({ word, event }) => {
+                console.log('catch')
+                $timeout(() => {
+                    scope.wordClick && scope.wordClick({ word, event })
+                })
+            })
+
+            
+            /* element[0].setAttribute('contenteditable', true)
+
+            const spaceSpanHTML = '<span class="segment-text__space"> </span>'
+
             element.bind('click', (e) => {
+                const clickedSpan = window.getSelection().anchorNode.parentNode
+                console.log('clicked', clickedSpan)
                 if (e.ctrlKey || e.metaKey) {
-                    const clickedSpan = window.getSelection().anchorNode.parentNode
                     if (clickedSpan && clickedSpan.classList.contains('segment-text__word-wrapper')) {
                         const wordUuid = clickedSpan.getAttribute('word-uuid')
                         const clickedWord = scope.words.find(w => w.uuid === wordUuid)
@@ -176,64 +122,8 @@ export function editableWordsDirective ($timeout) {
                 return ret
             }
 
-            const cleanDOM = () => {
-                while (element[0].firstChild) {
-                    element[0].removeChild(element[0].firstChild);
-                }
-            }
-
             const spanHTML = ({ uuid, index, confidence, color, text }) => {
                 return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" id="word_${scope.fileIndex}_${index}" style="color: ${ color ? color : 'rgb(0, 0, 0)' };">${text}</span>`
-            }
-
-            const createSpan = (w, index) => {
-                const span = document.createElement('span')
-                if (w.text.length) {
-                    span.textContent = w.text
-                } else {
-                    span.innerHTML = '&#8203;'
-                }
-                
-                span.classList.add('segment-text__word-wrapper')
-                span.style.color = 'rgb(0,0,0)'
-                if (w.wasEdited) {
-                    span.style.color = 'rgb(129, 42, 193)'
-                }
-
-                if (w.confidence) {
-                    span.style.opacity = w.confidence
-                    if (w.confidence < 0.95 && w.confidence >= 0) {
-                        span.classList.add('low-confidence')
-                    }
-                }
-
-                span.setAttribute('title', `Confidence: ${w.confidence ? w.confidence : ''}`)
-                span.setAttribute('data-start', w.start)
-                span.setAttribute('data-end', w.end)
-                span.setAttribute('word-uuid', w.uuid)
-                span.setAttribute('id', `word_${scope.fileIndex}_${index}`)
-
-                return span
-            }
-
-            const createSpace = () => {
-                // const span = document.createElement('span')
-                // span.innerHTML = ' '
-                // span.classList.add('segment-text__space')
-                return document.createTextNode(' ')
-            }
-
-            const formDOM = (words) => {
-                cleanDOM()
-                words && words.forEach((w, index) => {
-                    const span = createSpan(w, index)
-                    element[0].appendChild(span)
-
-                    if (index < words.length - 1) {
-                        const spaceSpan = createSpace()
-                        element[0].appendChild(spaceSpan)
-                    }
-                })
             }
 
             element.bind('paste', (e) => {
@@ -260,6 +150,47 @@ export function editableWordsDirective ($timeout) {
                         document.execCommand('insertHTML', false, html)
                         e.preventDefault()
                         return
+                    } else {
+                        const selection = document.getSelection()
+                        const ancestorNode = findNodeAncestor(selection.focusNode)
+                        if (isFirefox) {
+                            console.log('firefox', ancestorNode, selection.focusNode)
+                            if (ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
+                                const previousWord = ancestorNode.previousSibling
+                                const nextWord = ancestorNode.nextSibling
+                                const previousWordText = previousWord.textContent
+                                previousWord.textContent = `${previousWordText}${nextWord.textContent}`
+                                ancestorNode.remove()
+                                nextWord.remove()
+    
+                                const selection = document.getSelection()
+                                const range = document.createRange()
+                                selection.removeAllRanges()
+                                range.setStart(previousWord.firstChild, previousWordText.length)
+                                range.setStart(previousWord.firstChild, previousWordText.length)
+                                selection.addRange(range)
+    
+                                e.preventDefault()
+                            }
+                        } else {
+                            if (ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
+                                const previousWord = ancestorNode.previousSibling
+                                const nextWord = ancestorNode.nextSibling
+                                const previousWordText = previousWord.textContent
+                                previousWord.textContent = `${previousWordText}${nextWord.textContent}`
+                                ancestorNode.remove()
+                                nextWord.remove()
+    
+                                const selection = document.getSelection()
+                                const range = document.createRange()
+                                selection.removeAllRanges()
+                                range.setStart(previousWord.firstChild, previousWordText.length)
+                                range.setStart(previousWord.firstChild, previousWordText.length)
+                                selection.addRange(range)
+    
+                                e.preventDefault()
+                            }
+                        }
                     }
                 }
 
@@ -270,31 +201,17 @@ export function editableWordsDirective ($timeout) {
                         e.preventDefault()
                         return
                     } else {
-                        /* prevent input into space spans */
                         const selection = document.getSelection()
-                        console.log(selection.focusNode, selection.focusNode.parentElement)
                         const ancestorNode = findNodeAncestor(selection.focusNode)
-                        if (selection.focusNode.nodeType === Node.TEXT_NODE && selection.focusNode.parentElement === element[0]) {
-                            console.log('here')
-                            const nodeTo = selection.focusNode.nextSibling
-                            const range = document.createRange()
-
+                        if (ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
+                            const nodeTo = ancestorNode.nextSibling
                             const nodeToText = nodeTo.textContent
-
-                            range.setStart(nodeTo.firstChild, 0)
-                            range.setEnd(nodeTo.firstChild, 1)
-
+                            nodeTo.textContent = `${e.key}${nodeToText}`
+                            const range = document.createRange()
                             selection.removeAllRanges()
+                            range.setStart(nodeTo.firstChild, 1)
+                            range.setStart(nodeTo.firstChild, 1)
                             selection.addRange(range)
-                            
-                            /* hack for webkit browsers - without it, text will be inserted into previous space span */
-                            document.execCommand('insertText', false, `${e.key}${nodeToText.substring(0, 1)}`)
-
-                            const newRange = document.createRange()
-                            selection.removeAllRanges()
-                            newRange.setStart(nodeTo.firstChild, 1)
-                            newRange.setStart(nodeTo.firstChild, 1)
-                            selection.addRange(newRange)
 
                             e.preventDefault()
                         }
@@ -315,7 +232,7 @@ export function editableWordsDirective ($timeout) {
                     this.blur();
                     e.preventDefault();
                 }
-            })
-        }
+            }) */
+        } 
     }
 }
