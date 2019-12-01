@@ -259,22 +259,31 @@ class GeckoEdtior {
                             text: wordText,
                             uuid: uuidv4(),
                             start: this.region.start,
-                            end: this.region.end
+                            end: this.region.end,
+                            wasEdited: true
                         })
                     }
                 } else {
                     if (word) {
-                        updatedWords.push(Object.assign({}, {
-                            ...word,
-                            wasEdited: true,
-                            text: newWordSplited[0].trim()
-                        }))
+                        if (originalWord && newWordSplited[0].trim() !== originalWord.text.trim()) {
+                            updatedWords.push(Object.assign({}, {
+                                ...word,
+                                text: newWordSplited[0].trim(),
+                                wasEdited: true
+                            }))
+                        } else {
+                            updatedWords.push(Object.assign({}, {
+                                ...word,
+                                text: newWordSplited[0].trim()
+                            }))
+                        }
                         for (let i = 1; i < newWordSplited.length; i++) {
                             if (newWordSplited[i].trim().length) {
                                 const wordCopy = Object.assign({}, {
                                     ...word,
                                     text: newWordSplited[i].replace('&#8203;', ''),
-                                    uuid: uuidv4()
+                                    uuid: uuidv4(),
+                                    wasEdited: true
                                 })
                                 updatedWords.push(wordCopy)
                             }
@@ -286,7 +295,8 @@ class GeckoEdtior {
                                     text: newWordSplited[i].replace('&#8203;', ''),
                                     uuid: uuidv4(),
                                     start: this.region.start,
-                                    end: this.region.end
+                                    end: this.region.end,
+                                    wasEdited: true
                                 })
                             }
                         }

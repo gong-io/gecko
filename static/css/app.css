@@ -193,9 +193,9 @@ a:hover, a:focus {
     outline: none;
 }
 
-.segment-text__word-wrapper {
+/* .segment-text__word-wrapper {
     display: inline-block;
-}
+} */
 
 .segment-text__space {
     
