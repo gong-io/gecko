@@ -17,8 +17,8 @@ class GeckoEdtior {
         this.bindEvents()
     }
 
-    spanHTML ({ uuid, index, confidence, color, text }) {
-        return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" id="word_${scope.fileIndex}_${index}" style="color: ${ color ? color : 'rgb(0, 0, 0)' };">${text}</span>`
+    spanHTML ({ uuid, confidence, color, text }) {
+        return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" style="color: ${ color ? color : 'rgb(0, 0, 0)' };">${text}</span>`
     }
 
     isDownCtrl (e) {
@@ -27,46 +27,62 @@ class GeckoEdtior {
         return isMacMeta || isOtherControl
     }
 
-    bindEvents () {
-        this.element.addEventListener('blur', () => {
-            this.updateAll()
-        })
-
-        this.element.addEventListener('click', (e) => {
-            const clickedSpan = window.getSelection().anchorNode.parentNode
-            if (e.ctrlKey || e.metaKey) {
-                if (clickedSpan && clickedSpan.classList.contains('segment-text__word-wrapper')) {
-                    const wordUuid = clickedSpan.getAttribute('word-uuid')
-                    const clickedWord = this.words.find(w => w.uuid === wordUuid)
-                    this.trigger('wordClick', { word: clickedWord, event: e })
-                }
+    clickEvent (e) {
+        const clickedSpan = window.getSelection().anchorNode.parentNode
+        if (e.ctrlKey || e.metaKey) {
+            if (clickedSpan && clickedSpan.classList.contains('segment-text__word-wrapper')) {
+                const wordUuid = clickedSpan.getAttribute('word-uuid')
+                const clickedWord = this.words.find(w => w.uuid === wordUuid)
+                this.trigger('wordClick', { word: clickedWord, event: e })
             }
-        })
+        }
+    }
 
-        this.element.addEventListener('keydown', (e) => {
-            if (e.which === 13 || e.which === 27) {
-                this.element.blur()
+    keydownEvent (e) {
+        if (e.which === 13 || e.which === 27) {
+            this.element.blur()
+            e.preventDefault()
+        }
+
+        if (e.which === 8 || e.which === 46 || e.which === 32) {
+            if (this.isAllSelected() || this.checkLastSymbol()) {
+                const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: '&#8203;'})
+                document.execCommand('insertHTML', false, html)
                 e.preventDefault()
-            }
+                return
+            } else {
+                const selection = document.getSelection()
+                const ancestorNode = this.findNodeAncestor(selection.focusNode)
+                if (e.which === 8 && ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
+                    /* deleting a space, cursor is in word start position */
+                    const previousWord = ancestorNode.previousSibling
+                    const nextWord = ancestorNode.nextSibling
+                    const previousWordText = previousWord.textContent
+                    previousWord.textContent = `${previousWordText}${nextWord.textContent}`
+                    previousWord.setAttribute('data-end', nextWord.getAttribute('data-end'))
+                    ancestorNode.remove()
+                    nextWord.remove()
 
-            if (e.which === 8 || e.which === 46 || e.which === 32) {
-                if (this.isAllSelected() || this.checkLastSymbol()) {
-                    const html = spanHTML({ uuid: uuidv4(), index: 0, text: '&#8203;'})
-                    document.execCommand('insertHTML', false, html)
+                    const selection = document.getSelection()
+                    const range = document.createRange()
+                    selection.removeAllRanges()
+                    range.setStart(previousWord.firstChild, previousWordText.length)
+                    range.setStart(previousWord.firstChild, previousWordText.length)
+                    selection.addRange(range)
+
                     e.preventDefault()
                     return
-                } else {
-                    const selection = document.getSelection()
-                    const ancestorNode = this.findNodeAncestor(selection.focusNode)
-                    /* deleting a space */
-                    if (ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
-                        const previousWord = ancestorNode.previousSibling
-                        const nextWord = ancestorNode.nextSibling
+                } else if (e.which === 46 && ancestorNode && ancestorNode.classList.contains('segment-text__word-wrapper')) {
+                    /* deleting a space, cursor is in word end position */
+                    if (selection.focusOffset === ancestorNode.textContent.length) {
+                        const previousWord = ancestorNode
+                        const nextSpace = ancestorNode.nextSibling
+                        const nextWord = nextSpace.nextSibling
                         const previousWordText = previousWord.textContent
                         previousWord.textContent = `${previousWordText}${nextWord.textContent}`
                         previousWord.setAttribute('data-end', nextWord.getAttribute('data-end'))
-                        ancestorNode.remove()
                         nextWord.remove()
+                        nextSpace.remove()
 
                         const selection = document.getSelection()
                         const range = document.createRange()
@@ -78,71 +94,108 @@ class GeckoEdtior {
                         e.preventDefault()
                         return
                     }
-
-                    /* selection between two text nodes */
-                    let endNode = this.findNodeAncestor(selection.focusNode)
-                    let startNode = this.findNodeAncestor(selection.anchorNode)
-                    if (startNode !== endNode) {
-                        /* checking if selection is backwards */
-                        let selectionBackwards = false
-                        const startIndex = Array.from(startNode.parentNode.children).indexOf(startNode)
-                        const endIndex = Array.from(endNode.parentNode.children).indexOf(endNode)
-                        if (endIndex < startIndex) {
-                            selectionBackwards = true
-                        }
-
-                        const newNode = selectionBackwards ? endNode : startNode
-                        const delNode = selectionBackwards ? startNode : endNode
-                        const range = selection.getRangeAt(0)
-                        const rangeOffset = range.startOffset
-
-                        const newText =`${newNode.textContent.substring(0, range.startOffset)}${delNode.textContent.substring(range.endOffset, delNode.textContent.length)}`
-                        newNode.textContent = newText
-                        newNode.setAttribute('data-end', delNode.getAttribute('data-end'))
-                        delNode.remove()
-
-                        const newRange = document.createRange()
-
-                        newRange.setStart(newNode.firstChild, rangeOffset)
-                        newRange.setStart(newNode.firstChild, rangeOffset)
-                        
-                        selection.removeAllRanges()
-                        selection.addRange(newRange)
-
-                        e.preventDefault()
-                    }
                 }
-            }
 
-            if (/^[a-z0-9]$/i.test(e.key) && !this.isDownCtrl(e)) {
-                if (this.isAllSelected()) {
-                    const html = spanHTML({ uuid: uuidv4(), index: 0, text: e.key})
-                    document.execCommand('insertHTML', false, html)
+                /* selection between two text nodes */
+                let endNode = this.findNodeAncestor(selection.focusNode)
+                let startNode = this.findNodeAncestor(selection.anchorNode)
+                if (startNode !== endNode) {
+                    /* checking if selection is backwards */
+                    let selectionBackwards = false
+                    const startIndex = Array.from(startNode.parentNode.children).indexOf(startNode)
+                    const endIndex = Array.from(endNode.parentNode.children).indexOf(endNode)
+                    if (endIndex < startIndex) {
+                        selectionBackwards = true
+                    }
+
+                    const newNode = selectionBackwards ? endNode : startNode
+                    const delNode = selectionBackwards ? startNode : endNode
+                    const range = selection.getRangeAt(0)
+                    const rangeOffset = range.startOffset
+
+                    document.execCommand('delete')
+
+                    const newText =`${newNode.textContent.substring(0, range.startOffset)}${delNode.textContent.substring(range.endOffset, delNode.textContent.length)}`
+                    newNode.textContent = newText
+                    newNode.setAttribute('data-end', delNode.getAttribute('data-end'))
+                    delNode.remove()
+
+                    const newRange = document.createRange()
+
+                    newRange.setStart(newNode.firstChild, rangeOffset)
+                    newRange.setStart(newNode.firstChild, rangeOffset)
+                    
+                    selection.removeAllRanges()
+                    selection.addRange(newRange)
+
                     e.preventDefault()
-                    return
-                } else {
-                    const selection = document.getSelection()
-                    const ancestorNode = this.findNodeAncestor(selection.focusNode)
-                    if (ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
-                        const nodeTo = ancestorNode.nextSibling
-                        const nodeToText = nodeTo.textContent
-                        nodeTo.textContent = `${e.key}${nodeToText}`
-                        const range = document.createRange()
-                        selection.removeAllRanges()
-                        range.setStart(nodeTo.firstChild, 1)
-                        range.setStart(nodeTo.firstChild, 1)
-                        selection.addRange(range)
-
-                        e.preventDefault()
-                    }
                 }
             }
+        }
+
+        if (/^[a-z0-9]$/i.test(e.key) && !this.isDownCtrl(e)) {
+            if (this.isAllSelected()) {
+                const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: e.key})
+                document.execCommand('insertHTML', false, html)
+                e.preventDefault()
+                return
+            } else {
+                const selection = document.getSelection()
+                const ancestorNode = this.findNodeAncestor(selection.focusNode)
+                if (ancestorNode && ancestorNode.classList.contains('segment-text__space')) {
+                    const nodeTo = ancestorNode.nextSibling
+                    const nodeToText = nodeTo.textContent
+                    nodeTo.textContent = `${e.key}${nodeToText}`
+                    const range = document.createRange()
+                    selection.removeAllRanges()
+                    range.setStart(nodeTo.firstChild, 1)
+                    range.setStart(nodeTo.firstChild, 1)
+                    selection.addRange(range)
+
+                    e.preventDefault()
+                }
+            }
+        }
+    }
+
+    pasteEvent (e) {
+        if (e) {
+            const clipboardData = e.clipboardData
+            if (clipboardData) {
+                const text = clipboardData.getData('text/plain')
+                if (this.isAllSelected()) {
+                    const pastedWords = text.split(' ')
+                    const words = pastedWords.map((w) => this.spanHTML({ uuid: uuidv4(), start: this.region.start, end: this.region.end, text: w}))
+                    document.execCommand('insertHTML', false, words.join(this.spaceSpanHTML))
+                } else {
+                    document.execCommand('insertText', false, text)
+                }
+            }
+        }
+        e.preventDefault()
+    }
+
+    bindEvents () {
+        this.element.addEventListener('blur', () => {
+            this.updateAll()
+        })
+
+        this.element.addEventListener('click', (e) => {
+            this.clickEvent(e)
+        })
+
+        this.element.addEventListener('keydown', (e) => {
+            this.keydownEvent(e)
         })
 
         this.element.addEventListener('input', (e) => {
             if (e.inputType === 'historyUndo') {
                 document.execCommand('redo')
             }
+        })
+
+        this.element.addEventListener('paste', (e) => {
+            this.pasteEvent(e)
         })
     }
 
@@ -194,8 +247,10 @@ class GeckoEdtior {
     }
 
     setRegion (region) {
-        this.region = region
-        this.setWords(region.data.words)
+        if (region && region.data.words) {
+            this.region = region
+            this.setWords(region.data.words)
+        }
     }
 
     setWords (words) {
@@ -212,6 +267,7 @@ class GeckoEdtior {
     reset () {
         this.originalWords = []
         this.previousState = []
+        this.words = []
         this.cleanDOM()
     }
 
@@ -240,7 +296,6 @@ class GeckoEdtior {
                             word.text = span.textContent.trim().replace('&#8203;', '')
                             if (wasEdited) {
                                 word.wasEdited = true
-                                // this.trigger('wordChanged', wordUuid)
                                 span.style.color = 'rgb(129, 42, 193)'
                             } 
                         } else {

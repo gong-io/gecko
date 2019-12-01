@@ -66,7 +66,7 @@ function secondsToMinutes(time) {
 }
 
 class MainController {
-    constructor($scope, $uibModal, dataManager, dataBase, $timeout, $interval) {
+    constructor($scope, $uibModal, dataManager, dataBase, $timeout, $interval, eventBus) {
         this.dataManager = dataManager;
         this.dataBase = dataBase;
         this.$uibModal = $uibModal;
@@ -76,6 +76,7 @@ class MainController {
         this.isServerMode = false
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
+        this.eventBus = eventBus
     }
 
     loadApp(config) {
@@ -182,6 +183,18 @@ class MainController {
         this.ready = false;
 
         var self = this;
+
+        this.eventBus.on('wordClick', (word, e) => {
+            this.seek(word.start, 'right')
+            e.preventDefault()
+            e.stopPropagation()
+        })
+
+        this.eventBus.on('regionTextChanged', (fileIndex) => {
+            let currentRegion = this.currentRegions[fileIndex]
+            this.addHistory(currentRegion)
+            this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, currentRegion.id])
+        })
 
         document.onkeydown = (e) => {
             if (e.key === 'Escape') {
@@ -792,7 +805,7 @@ class MainController {
             } else {
                 this.wavesurfer.regions.list[regionId].update(this.copyRegion(history[history.length - 1]));
                 if (needUpdateEditable && this.selectedRegion && this.selectedRegion.id === regionId) {
-                    this.$timeout(() => this.resetEditableWords())
+                    this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
                 }
             }
         }
@@ -868,22 +881,16 @@ class MainController {
         this.deselectRegion();
 
         if (!region) { 
-            this.cleanEditableDOM()
+            this.eventBus.trigger('cleanEditableDOM')
             return
         }
 
         region.element.classList.add("selected-region");
 
-        region.data.words.forEach((w) => {
-            if (!w.uuid) {
-                w.uuid = uuidv4()
-            }
-        })
-
         this.selectedRegion = region;
 
-        if (needUpdateEditable) {
-            this.$timeout(() => this.resetEditableWords())
+        if (needUpdateEditable && this.selectedRegion) {
+            this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
         }
     }
 
@@ -1150,7 +1157,12 @@ class MainController {
                         initFinished: true,
                         fileIndex: fileIndex,
                         speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x => x), //removing empty speaker
-                        words: monologue.words
+                        words: monologue.words.map((w) => {
+                            return {
+                                ...w,
+                                uuid: uuidv4()
+                            }
+                        })
                     },
                     drag: false,
                     minLength: constants.MINIMUM_LENGTH
@@ -1918,18 +1930,6 @@ class MainController {
         });
     }
 
-    /* wordChanged(fileIndex, wordUuid) {
-        let currentRegion = this.currentRegions[fileIndex];
-        const word = currentRegion.data.words.find(w => w.uuid === wordUuid)
-        word.wasEdited = true
-    } */
-
-    regionTextChanged(fileIndex, contenteditable) {
-        let currentRegion = this.currentRegions[fileIndex]
-        this.addHistory(currentRegion);
-        this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, currentRegion.id]);
-    }
-
     seek(time, leanTo) {
         let offset = 0;
 
@@ -1941,12 +1941,6 @@ class MainController {
         }
 
         this.wavesurfer.seekTo((time + offset) / this.wavesurfer.getDuration());
-    }
-
-    wordClick(word, e) {
-        this.seek(word.start, 'right')
-        e.preventDefault()
-        e.stopPropagation()
     }
 
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
@@ -2009,7 +2003,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', '$timeout','$interval'];
+    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', '$timeout','$interval', 'eventBus'];
 export {
     MainController
 }

@@ -15,6 +15,7 @@ import collapse from 'angular-ui-bootstrap/src/collapse'
 import './third-party/localStorageDB.js'
 import {playPartDirective} from './playPartDirective'
 import {editableWordsDirective} from './editableWordsDirective'
+import EventBus from './eventBusService'
 
 var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse]);
 
@@ -25,7 +26,7 @@ speechRecognition.config(function($httpProvider) {
     $httpProvider.defaults.useXDomain = true;
 })
 
-
+speechRecognition.service('eventBus', ['$timeout', EventBus])
 speechRecognition.service('dataManager', dataManager);
 speechRecognition.service('dataBase', dataBase);
 speechRecognition.directive('playPart', playPartDirective);
@@ -64,7 +65,7 @@ speechRecognition.directive("fileread", [function () {
     }
 }]);
 
-speechRecognition.directive('editableWords', ['$timeout', editableWordsDirective])
+speechRecognition.directive('editableWords', ['$timeout', 'eventBus', editableWordsDirective])
 
 speechRecognition.directive("editable", function () {
     return {

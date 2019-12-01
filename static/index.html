@@ -456,12 +456,7 @@
                     <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
                     <editable-words 
                         region="ctrl.currentRegions[$index]"
-                        words="ctrl.currentRegions[$index].data.words" 
                         file-index="$index"
-                        word-click="ctrl.wordClick(word, event)"
-                        word-changed="ctrl.wordChanged(regionIndex, wordUuid)"
-                        region-text-changed="ctrl.regionTextChanged(regionIndex, words, contenteditable)"
-                        control="ctrl"
                         class="editable-words"
                     >
                     </editable-words>
