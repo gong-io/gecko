@@ -896,7 +896,9 @@ class MainController {
         this.deselectRegion();
 
         if (!region) { 
-            this.eventBus.trigger('cleanEditableDOM')
+            if (!this.proofReadingView) {
+                this.eventBus.trigger('cleanEditableDOM')
+            }
             return
         }
 
@@ -905,7 +907,9 @@ class MainController {
         this.selectedRegion = region;
 
         if (needUpdateEditable && this.selectedRegion) {
-            this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
+            if (!this.proofReadingView) {
+                this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
+            }
         }
     }
 
