@@ -523,6 +523,7 @@ class GeckoEdtior {
         spans.forEach(span => {
             const wordText = span.textContent.trim()
             const wordUuid = span.getAttribute('word-uuid')
+            const wordSelected = span.classList.contains('selected-word')
             if (wordText.length) {
                 const newWordSplited = wordText.split(' ')
                 const originalWord = this.originalWords.find((w) => w.uuid === wordUuid)
@@ -548,7 +549,8 @@ class GeckoEdtior {
                         updatedWords.push(Object.assign({}, {
                             ...word,
                             text: span.textContent.trim(),
-                            end: parseFloat(span.getAttribute('data-end'))
+                            end: parseFloat(span.getAttribute('data-end')),
+                            isSelected: wordSelected
                         }))
                     } else {
                         updatedWords.push({
@@ -556,7 +558,8 @@ class GeckoEdtior {
                             uuid: uuidv4(),
                             start: this.region.start,
                             end: this.region.end,
-                            wasEdited: true
+                            wasEdited: true,
+                            isSelected: wordSelected
                         })
                     }
                 } else {
@@ -565,12 +568,14 @@ class GeckoEdtior {
                             updatedWords.push(Object.assign({}, {
                                 ...word,
                                 text: newWordSplited[0].trim(),
-                                wasEdited: true
+                                wasEdited: true,
+                                isSelected: wordSelected
                             }))
                         } else {
                             updatedWords.push(Object.assign({}, {
                                 ...word,
-                                text: newWordSplited[0].trim()
+                                text: newWordSplited[0].trim(),
+                                isSelected: wordSelected
                             }))
                         }
                         for (let i = 1; i < newWordSplited.length; i++) {
@@ -579,7 +584,8 @@ class GeckoEdtior {
                                     ...word,
                                     text: newWordSplited[i].replace('&#8203;', ''),
                                     uuid: uuidv4(),
-                                    wasEdited: true
+                                    wasEdited: true,
+                                    isSelected: wordSelected
                                 })
                                 updatedWords.push(wordCopy)
                             }
@@ -592,7 +598,8 @@ class GeckoEdtior {
                                     uuid: uuidv4(),
                                     start: this.region.start,
                                     end: this.region.end,
-                                    wasEdited: true
+                                    wasEdited: true,
+                                    isSelected: wordSelected
                                 })
                             }
                         }
@@ -646,6 +653,11 @@ class GeckoEdtior {
         span.style.color = 'rgb(0,0,0)'
         if (w.wasEdited) {
             span.style.color = 'rgb(129, 42, 193)'
+        }
+
+        if (w.isSelected) {
+            span.classList.add('selected-word')
+            delete w.isSelected
         }
 
         if (w.confidence) {
