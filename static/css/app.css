@@ -196,6 +196,7 @@ a:hover, a:focus {
 .editable-words {
     display: block;
     margin-bottom: 2rem;
+    width: 100%;
 }
 
 .editable-words:focus {

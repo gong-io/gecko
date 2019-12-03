@@ -27,7 +27,7 @@ speechRecognition.config(function($httpProvider) {
     $httpProvider.defaults.useXDomain = true;
 })
 
-
+speechRecognition.service('eventBus', ['$timeout', EventBus])
 speechRecognition.service('dataManager', dataManager);
 speechRecognition.service('dataBase', dataBase);
 speechRecognition.service('eventBus', EventBus)

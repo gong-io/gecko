@@ -78,6 +78,7 @@ class MainController {
         this.proofReadingView = true
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
+        this.eventBus = eventBus
     }
 
     loadApp(config) {
@@ -187,7 +188,17 @@ class MainController {
 
         var self = this;
 
-        this.eventBus.setEvent('wordClick', (word, e) => this.wordClick(word, e))
+        this.eventBus.on('wordClick', (word, e) => {
+            this.seek(word.start, 'right')
+            e.preventDefault()
+            e.stopPropagation()
+        })
+
+        this.eventBus.on('regionTextChanged', (fileIndex) => {
+            let currentRegion = this.currentRegions[fileIndex]
+            this.addHistory(currentRegion)
+            this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, currentRegion.id])
+        })
 
         document.onkeydown = (e) => {
             if (e.key === 'Escape') {
@@ -658,7 +669,8 @@ class MainController {
             this.regionsHistory[region.id] = [];
         }
 
-        this.regionsHistory[region.id].push(this.copyRegion(region));
+        const regionCopy = this.copyRegion(region)
+        this.regionsHistory[region.id].push(regionCopy);
     }
 
     regionPositionUpdated(region) {
@@ -797,7 +809,7 @@ class MainController {
             } else {
                 this.wavesurfer.regions.list[regionId].update(this.copyRegion(history[history.length - 1]));
                 if (needUpdateEditable && this.selectedRegion && this.selectedRegion.id === regionId) {
-                    this.$timeout(() => this.resetEditableWords && this.resetEditableWords())
+                    this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
                 }
             }
         }
@@ -884,7 +896,7 @@ class MainController {
         this.deselectRegion();
 
         if (!region) { 
-            this.cleanEditableDOM && this.cleanEditableDOM()
+            this.eventBus.trigger('cleanEditableDOM')
             return
         }
 
@@ -892,8 +904,8 @@ class MainController {
 
         this.selectedRegion = region;
 
-        if (needUpdateEditable) {
-            this.$timeout(() => this.resetEditableWords && this.resetEditableWords())
+        if (needUpdateEditable && this.selectedRegion) {
+            this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
         }
     }
 
@@ -983,7 +995,7 @@ class MainController {
 
         words.forEach(function (word, i) {
             if (word.start <= time && word.end >= time) {
-                let newSelectedWord = document.getElementById('word_{0}_{1}'.format(fileIndex, (i).toString()));
+                let newSelectedWord = document.querySelector(`[word-uuid="${word.uuid}"]`)
 
                 if (newSelectedWord) {
                     newSelectedWord.classList.add('selected-word');
@@ -1160,7 +1172,12 @@ class MainController {
                         initFinished: true,
                         fileIndex: fileIndex,
                         speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x => x), //removing empty speaker
-                        words: monologue.words.map((w) => Object.assign(w, { uuid: uuidv4()}))
+                        words: monologue.words.map((w) => {
+                            return {
+                                ...w,
+                                uuid: uuidv4()
+                            }
+                        })
                     },
                     drag: false,
                     minLength: constants.MINIMUM_LENGTH
@@ -1928,21 +1945,6 @@ class MainController {
         });
     }
 
-    wordChanged(fileIndex, wordUuid) {
-        let currentRegion = this.currentRegions[fileIndex];
-        const word = currentRegion.data.words.find(w => w.uuid === wordUuid);
-        word.wasEdited = true
-        // this.addHistory(currentRegion);
-        // this.undoStack.push([currentRegion.id]);
-    }
-
-    regionTextChanged(fileIndex, words, contenteditable) {
-        let currentRegion = this.currentRegions[fileIndex]
-        currentRegion.data.words = words
-        this.addHistory(currentRegion);
-        this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, currentRegion.id]);
-    }
-
     seek(time, leanTo) {
         let offset = 0;
 
@@ -1954,12 +1956,6 @@ class MainController {
         }
 
         this.wavesurfer.seekTo((time + offset) / this.wavesurfer.getDuration());
-    }
-
-    wordClick(word, e) {
-        this.seek(word.start, 'right')
-        e.preventDefault()
-        e.stopPropagation()
     }
 
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
