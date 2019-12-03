@@ -28,12 +28,21 @@ class GeckoEdtior {
     }
 
     clickEvent (e) {
-        const clickedSpan = window.getSelection().anchorNode.parentNode
+        const selection = window.getSelection()
+        const clickedSpan = selection.anchorNode.parentNode
         if (e.ctrlKey || e.metaKey) {
             if (clickedSpan && this.isText(clickedSpan)) {
                 const wordUuid = clickedSpan.getAttribute('word-uuid')
                 const clickedWord = this.words.find(w => w.uuid === wordUuid)
                 this.trigger('wordClick', { word: clickedWord, event: e })
+            } else if (clickedSpan && this.isSpace(clickedSpan)) {
+                const range = selection.getRangeAt(0)
+                if (selection.isCollapsed && range.endOffset === clickedSpan.firstChild.textContent.length) {
+                    const nextWordSpan = clickedSpan.nextSibling
+                    const wordUuid = nextWordSpan.getAttribute('word-uuid')
+                    const clickedWord = this.words.find(w => w.uuid === wordUuid)
+                    this.trigger('wordClick', { word: clickedWord, event: e })
+                }
             }
         }
     }

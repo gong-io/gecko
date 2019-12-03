@@ -16,7 +16,7 @@ export function editableWordsDirective ($timeout, eventBus) {
             scope.originalWords = []
             scope.previousState = []
 
-            eventBus.on('resetEditableWords', () => {
+            eventBus.on('resetEditableWords', (region) => {
                 editor.setRegion(scope.region)
             })
 
