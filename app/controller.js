@@ -200,8 +200,9 @@ class MainController {
             this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
         })
 
-        this.eventBus.on('editableFocus', (editableRegion) => {
+        this.eventBus.on('editableFocus', (editableRegion, fileIndex) => {
             this.seek(editableRegion.start)
+            this.eventBus.trigger('proofReadingScroll', editableRegion, fileIndex)
         })
 
         document.onkeydown = (e) => {

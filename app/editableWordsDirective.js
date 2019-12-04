@@ -42,7 +42,7 @@ export function editableWordsDirective ($timeout, eventBus) {
             })
 
             editor.on('focus', () => {
-                eventBus.trigger('editableFocus', scope.region)
+                eventBus.trigger('editableFocus', scope.region, scope.fileIndex)
             })
         } 
     }
