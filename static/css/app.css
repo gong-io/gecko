@@ -226,3 +226,12 @@ kbd {
     background-color: #f7f7f7;
     color: black;
 }
+
+.segment-labeling {
+    top: 0px;
+    position: sticky;
+}
+
+.proofreading-selected {
+    background: rgba(255, 255, 90, 0.3)
+}

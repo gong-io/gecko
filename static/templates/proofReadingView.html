@@ -1,4 +1,4 @@
-<div ng-repeat="r in regions track by r.id">
+<div ng-repeat="r in regions track by r.id" ng-class="{'proofreading-selected': r.id == currentRegion.id}">
     <p><b style="word-break: break-all;">{{ r.data.speaker | speakersFilter}}</b> ({{r.start | toMMSS}} - {{r.end | toMMSS}})</p>
     <editable-words
         region="r"

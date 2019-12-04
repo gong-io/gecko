@@ -6,18 +6,14 @@ export function proofReadingViewDirective ($timeout, eventBus) {
         templateUrl,
         scope: {
             fileIndex: '=',
-            regionTextChanged: '&',
-            control: '=',
-            regions: '='
+            regions: '=',
+            currentRegion: '='
         },
         link: function (scope, element, attrs) {
-            scope.appControl = scope.control || {}
             scope.isReady = false
-            console.log('here', scope.regions)
 
             scope.$watch('regions', (newVal) => {
                 if (newVal && newVal.length && !scope.isReady) {
-                    console.log('reset')
                     eventBus.trigger('resetEditableWords')
                     scope.isReady = true
                 }
