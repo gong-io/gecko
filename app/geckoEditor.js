@@ -627,7 +627,15 @@ class GeckoEdtior {
             this.words = updatedWords
         }
 
-        this.trigger('wordsUpdated', this.words, this.previousState)
+        this.trigger('wordsUpdated', this.words.map((w) => {
+            const copy = Object.assign({}, w)
+            delete copy.isSelected
+            return copy
+        }), this.previousState.map((w) => {
+            const copy = Object.assign({}, w)
+            delete copy.isSelected
+            return copy
+        }))
 
         this.previousState = JSON.parse(JSON.stringify(this.words))
         this.formDOM(this.words)
