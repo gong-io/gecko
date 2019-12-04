@@ -29,7 +29,7 @@ export function editableWordsDirective ($timeout, eventBus) {
                     scope.region.data.words = newWords
                     if(!angular.equals(newWords, previousWords)) {
                         $timeout(() => {
-                            eventBus.trigger('regionTextChanged', scope.fileIndex)
+                            eventBus.trigger('regionTextChanged', scope.region.id)
                         })
                     }
                 })
@@ -39,6 +39,10 @@ export function editableWordsDirective ($timeout, eventBus) {
                 $timeout(() => {
                     eventBus.trigger('wordClick', word, event)
                 })
+            })
+
+            editor.on('focus', () => {
+                eventBus.trigger('editableFocus', scope.region)
             })
         } 
     }

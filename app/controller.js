@@ -194,10 +194,14 @@ class MainController {
             e.stopPropagation()
         })
 
-        this.eventBus.on('regionTextChanged', (fileIndex) => {
-            let currentRegion = this.currentRegions[fileIndex]
+        this.eventBus.on('regionTextChanged', (regionId) => {
+            let currentRegion = this.getRegion(regionId)
             this.addHistory(currentRegion)
-            this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, currentRegion.id])
+            this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
+        })
+
+        this.eventBus.on('editableFocus', (editableRegion) => {
+            this.seek(editableRegion.start)
         })
 
         document.onkeydown = (e) => {

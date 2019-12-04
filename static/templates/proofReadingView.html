@@ -1,9 +1,11 @@
-<editable-words
-    ng-repeat="r in regions track by r.id"
-    region="r"
-    words="r.data.words"
-    file-index="fileIndex"
-    automatic-mode="automaticMode"
-    class="editable-words"
->
-</editable-words>
+<div ng-repeat="r in regions track by r.id">
+    <p><b style="word-break: break-all;">{{ r.data.speaker | speakersFilter}}</b> ({{r.start | toMMSS}} - {{r.end | toMMSS}})</p>
+    <editable-words
+        region="r"
+        words="r.data.words"
+        file-index="fileIndex"
+        automatic-mode="automaticMode"
+        class="editable-words"
+    >
+    </editable-words>
+</div>

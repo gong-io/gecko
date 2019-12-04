@@ -216,3 +216,9 @@ speechRecognition.filter('to_trusted', ['$sce', function($sce){
         return $sce.trustAsHtml(text);
     };
 }])
+
+speechRecognition.filter('toMMSS', function(){
+    return (seconds) => {
+        return new Date(seconds * 1000).toISOString().substr(14, 5)
+    }
+})

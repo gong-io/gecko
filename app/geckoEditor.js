@@ -430,6 +430,10 @@ class GeckoEdtior {
             this.updateAll()
         })
 
+        this.element.addEventListener('focus', (e) => {
+            this.trigger('focus', e)
+        })
+
         this.element.addEventListener('click', (e) => {
             this.clickEvent(e)
         })
