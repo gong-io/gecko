@@ -30,12 +30,14 @@
     "ngstorage": "^0.3.11",
     "sweetalert2": "^9.3.6",
     "underscore": "^1.9.1",
+    "uuid": "^3.3.3",
     "video.js": "^7.6.5",
     "wavesurfer.js": "^3.2.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.5",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "css-loader": "^3.2.0",
     "dotenv-webpack": "^1.7.0",

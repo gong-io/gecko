@@ -453,19 +453,13 @@
                         }}</b></p>
                     <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
                     <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
-                    <span ng-repeat="word in ctrl.currentRegions[$index].data.words track by $index"
-                          style="color: rgba(0,0,0, {{ word.confidence }})"
-                          ng-style="word.wasEdited && {'color':'rgba(129, 42, 193, ' + word.confidence + ')'}"
-                          class="segment-text__word-wrapper"
-                          ng-class="{'low-confidence': word.confidence < 0.95 && word.confidence >= 0}"
-                          title="Confidence: {{ word.confidence }}"
-                          editable
-                          ng-model="word.text"
-                          changed="ctrl.wordChanged($parent.$index, $index)"
-                          keys-mapping="ctrl.editableKeysMapping($parent.$index, $index, keys, which)"
-                          ng-click="ctrl.wordClick(word, $event)"
-                          id="word_{{$parent.$index}}_{{$index}}">
-                </span>
+                    <editable-words 
+                        ng-if="ctrl.currentRegions[$index]"
+                        region="ctrl.currentRegions[$index]"
+                        file-index="$index"
+                        class="editable-words"
+                    >
+                    </editable-words>
                 </div>
             </div>
         </div>
