@@ -248,3 +248,7 @@ kbd {
 .proofreading__timing {
     font-size: 1.2rem;
 }
+
+.glyphicon-large {
+    font-size: 20px;
+}

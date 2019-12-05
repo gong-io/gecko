@@ -1,3 +1,5 @@
+import Swal from 'sweetalert2'
+
 class dataManager {
     constructor($http, $q) {
         this.$http = $http;
@@ -20,12 +22,17 @@ class dataManager {
         a.dispatchEvent(e);
     }
 
-    async saveDataToServer(data, filename) {
+    async saveDataToServer(data, { filename, s3Subfolder }) {
         const spl = filename.split('.')
         const ext = spl.pop()
         const d = new Date()
         const datestring = d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0' + d.getDate()).slice(-2) + '-' + ('0' + d.getHours()).slice(-2) + ('0' + d.getMinutes()).slice(-2)
-        const timestampedFilename = `${spl.join('.')}_${datestring}.${ext}`
+        let timestampedS3Filename = `${spl.join('.')}_${datestring}.${ext}`
+        let s3Filename = filename
+        if (s3Subfolder) {
+            timestampedS3Filename = `${s3Subfolder}/${timestampedS3Filename}`
+            s3Filename = `${s3Subfolder}/${filename}`
+        }
         const resp = await this.$http({
             method: 'POST',
             url:  '/upload_s3',
@@ -33,7 +40,7 @@ class dataManager {
                 'Access-Control-Allow-Origin': true
             },
             data: {
-                filename: timestampedFilename,
+                filename: timestampedS3Filename,
                 data
             }
         })
@@ -46,15 +53,23 @@ class dataManager {
                     'Access-Control-Allow-Origin': true
                 },
                 data: {
-                    filename,
+                    filename: s3Filename,
                     data
                 }
             })
             if (respSecond.data && respSecond.data.OK) {
-                alert(`File ${timestampedFilename} successefully uploaded`)
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: `File ${timestampedS3Filename} successefully uploaded`
+                })
             }
         } else {
-            alert('Upload error:', resp.data.error)
+            Swal.fire({
+                icon: 'error',
+                title: 'Upload error',
+                text: resp.data.error
+            })
         }
     }
 
@@ -83,17 +98,31 @@ class dataManager {
         }));
 
         config.ctms.forEach((ctm) => {
+            let ctmSubfolder = null
+            /* for s3 proxy */
+            if (ctm.url.includes('s3_files')) {
+                const splFiles = ctm.url.split('/s3_files/')
+                if (splFiles.length > 1) {
+                    const s3Path = splFiles[1]
+                    const splS3Path = s3Path.split('/')
+                    ctmSubfolder = splS3Path.slice(0, splS3Path.length - 1).join('/')
+                }
+            }
             promises.push(this.$http({
                 method: 'GET',
                 url: ctm.url
             }).then(function (response) {
-                res.segmentFiles.push({
+                const addedFile = {
                     filename: ctm.fileName,
                     data: response.data,
                     headers: {
                         'Access-Control-Allow-Origin': true
                     }
-                });
+                }
+                if (ctmSubfolder) {
+                    addedFile.s3Subfolder = ctmSubfolder
+                }
+                res.segmentFiles.push(addedFile);
             }))
         })
 

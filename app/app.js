@@ -12,13 +12,14 @@ import {Checklist} from './third-party/checked-list.js'
 import dropdown from 'angular-ui-bootstrap/src/dropdown'
 import modal from 'angular-ui-bootstrap/src/modal'
 import collapse from 'angular-ui-bootstrap/src/collapse'
+import tooltip from 'angular-ui-bootstrap/src/tooltip'
 import './third-party/localStorageDB.js'
 import {playPartDirective} from './playPartDirective'
 import {editableWordsDirective} from './editableWordsDirective'
 import {proofReadingViewDirective} from './proofReadingViewDirective'
 import EventBus from './eventBusService'
 
-var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse]);
+var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse, tooltip]);
 
 speechRecognition.controller('MainController', MainController);
 
