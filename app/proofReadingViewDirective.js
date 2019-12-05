@@ -7,7 +7,8 @@ export function proofReadingViewDirective ($timeout, eventBus) {
         scope: {
             fileIndex: '=',
             regions: '=',
-            currentRegion: '='
+            currentRegion: '=',
+            legend: '='
         },
         link: function (scope, element, attrs) {
             scope.isReady = false
@@ -19,6 +20,14 @@ export function proofReadingViewDirective ($timeout, eventBus) {
                     })
                     scope.isReady = true
                 }
+            })
+
+            eventBus.on('proofReadingScrollToSelected', () => {
+                document.querySelectorAll('.proofreading--selected').forEach((n) => {
+                    if (n) {
+                        element[0].parentNode.scrollTop = n.offsetTop - 36
+                    }
+                })
             })
 
             /* eventBus.on('proofReadingScroll', (region, fileIndex) => {

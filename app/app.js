@@ -211,10 +211,11 @@ speechRecognition.filter("speakersFilter", function () {
     }
 })
 
-speechRecognition.filter("speakersColoredFilter", function () {
-    return function (items) {
+speechRecognition.filter("speakersFilterColor", function () {
+    return function (items, legend) {
         if (items && items.length) {
-            return items.join(', ')
+            const spans = items.map(s => `<span style="color: ${legend[s]};">${s}</span>`)
+            return spans.join(', ')
         } else if (items && !items.length) {
             return 'No speaker'
         } else {

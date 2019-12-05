@@ -75,7 +75,7 @@ class MainController {
         this.$timeout = $timeout
         this.$interval = $interval
         this.isServerMode = false
-        this.proofReadingView = true
+        this.proofReadingView = false
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
         this.eventBus = eventBus
@@ -201,8 +201,10 @@ class MainController {
         })
 
         this.eventBus.on('editableFocus', (editableRegion, fileIndex) => {
+            this.selectedRegion = editableRegion
+            this.selectedFileIndex = fileIndex
             this.seek(editableRegion.start)
-            this.eventBus.trigger('proofReadingScroll', editableRegion, fileIndex)
+            //this.eventBus.trigger('proofReadingScroll', editableRegion, fileIndex)
         })
 
         document.onkeydown = (e) => {
@@ -814,7 +816,7 @@ class MainController {
             } else {
                 this.wavesurfer.regions.list[regionId].update(this.copyRegion(history[history.length - 1]));
                 if (needUpdateEditable && this.selectedRegion && this.selectedRegion.id === regionId) {
-                    this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
+                    this.$timeout(() => this.eventBus.trigger('resetEditableWords', { id: regionId }))
                 }
             }
         }
@@ -870,7 +872,14 @@ class MainController {
         for (let i = 0; i < this.filesData.length; i++) {
             const currentRegion = this.getCurrentRegion(i);
             if (currentRegion && currentRegion !== this.currentRegions[i]) {
-                this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
+                if (this.proofReadingView) {
+                    if (currentRegion !== this.selectedRegion) {
+                        this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
+                    }
+                } else {
+                    this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
+                }
+                
             } else if (!currentRegion) {
                 this.$timeout(() => this.eventBus.trigger('cleanEditableDOM', i))
             }
@@ -2018,6 +2027,13 @@ class MainController {
 
     toggleProofReadingView () {
         this.proofReadingView = !this.proofReadingView
+        if (!this.proofReadingView) {
+            this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
+        } else {
+            for (let i = 0; i < this.filesData.length; i++) {
+                this.eventBus.trigger('proofReadingScrollToSelected')
+            }
+        }
     }
 }
 

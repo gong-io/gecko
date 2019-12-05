@@ -1,7 +1,7 @@
 <div ng-repeat="r in regions track by r.id" class="proofreading" data-region="{{r.id}}" ng-class="{'proofreading--selected': r.id == currentRegion.id}">
     <div class="row">
         <div class="col-md-2 proofreading__info">
-            <p class="proofreading__speaker">{{ r.data.speaker | speakersFilter}}</p>
+            <p class="proofreading__speaker" ng-bind-html="r.data.speaker | speakersFilterColor : legend | to_trusted"></p>
             <p class="proofreading__timing"> ({{r.start | toMMSS}} - {{r.end | toMMSS}})</p>
         </div>
         <div class="col-md-10 proofreading__editable">
