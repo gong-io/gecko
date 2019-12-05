@@ -852,7 +852,7 @@ class MainController {
             if (currentRegion && currentRegion !== this.currentRegions[i]) {
                 this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
             } else if (!currentRegion) {
-                this.$timeout(() => this.eventBus.trigger('cleanEditableDOM'))
+                this.$timeout(() => this.eventBus.trigger('cleanEditableDOM', i))
             }
             this.currentRegions[i] = currentRegion
         }
