@@ -14,19 +14,21 @@ export function proofReadingViewDirective ($timeout, eventBus) {
 
             scope.$watch('regions', (newVal) => {
                 if (newVal && newVal.length && !scope.isReady) {
-                    eventBus.trigger('resetEditableWords')
+                    newVal.forEach((r) => {
+                        eventBus.trigger('resetEditableWords', r)
+                    })
                     scope.isReady = true
                 }
             })
 
-            eventBus.on('proofReadingScroll', (region, fileIndex) => {
+            /* eventBus.on('proofReadingScroll', (region, fileIndex) => {
                 if (fileIndex !== scope.fileIndex) {
                     const regionElement = document.querySelector(`[data-region="${region.id}"]`)
                     if (regionElement) {
                         element[0].parentNode.scrollTop = regionElement.offsetTop - 36
                     }
                 }
-            })
+            }) */
         }
     }
 }

@@ -211,6 +211,18 @@ speechRecognition.filter("speakersFilter", function () {
     }
 })
 
+speechRecognition.filter("speakersColoredFilter", function () {
+    return function (items) {
+        if (items && items.length) {
+            return items.join(', ')
+        } else if (items && !items.length) {
+            return 'No speaker'
+        } else {
+            return ''
+        }
+    }
+})
+
 speechRecognition.filter('to_trusted', ['$sce', function($sce){
     return function(text) {
         return $sce.trustAsHtml(text);

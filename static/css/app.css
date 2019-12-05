@@ -236,6 +236,15 @@ kbd {
     position: sticky;
 }
 
-.proofreading-selected {
+.proofreading--selected {
     background: rgba(255, 255, 90, 0.3)
+}
+
+.proofreading__speaker {
+    font-weight: bold;
+    font-size: 1.4rem;
+}
+
+.proofreading__timing {
+    font-size: 1.2rem;
 }

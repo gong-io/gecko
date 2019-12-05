@@ -8,7 +8,8 @@ export function editableWordsDirective ($timeout, eventBus) {
         restrict: 'E',
         scope: {
             fileIndex: '=',
-            region: '='
+            region: '=',
+            proofReading: '='
         },
         link: function (scope, element, attrs) {
             const editor = new GeckoEditor(element[0], scope.fileIndex)
@@ -25,6 +26,9 @@ export function editableWordsDirective ($timeout, eventBus) {
             })
 
             eventBus.on('cleanEditableDOM', (fileIndex) => {
+                if (scope.proofReading) {
+                    return
+                }
                 if (fileIndex == scope.fileIndex) {
                     editor.reset()
                 }

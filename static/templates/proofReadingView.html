@@ -1,11 +1,19 @@
-<div ng-repeat="r in regions track by r.id" data-region="{{r.id}}" ng-class="{'proofreading-selected': r.id == currentRegion.id}">
-    <p><b style="word-break: break-all;">{{ r.data.speaker | speakersFilter}}</b> ({{r.start | toMMSS}} - {{r.end | toMMSS}})</p>
-    <editable-words
-        region="r"
-        words="r.data.words"
-        file-index="fileIndex"
-        automatic-mode="automaticMode"
-        class="editable-words"
-    >
-    </editable-words>
+<div ng-repeat="r in regions track by r.id" class="proofreading" data-region="{{r.id}}" ng-class="{'proofreading--selected': r.id == currentRegion.id}">
+    <div class="row">
+        <div class="col-md-2 proofreading__info">
+            <p class="proofreading__speaker">{{ r.data.speaker | speakersFilter}}</p>
+            <p class="proofreading__timing"> ({{r.start | toMMSS}} - {{r.end | toMMSS}})</p>
+        </div>
+        <div class="col-md-10 proofreading__editable">
+            <editable-words
+                region="r"
+                words="r.data.words"
+                file-index="fileIndex"
+                automatic-mode="automaticMode"
+                class="editable-words"
+                proof-reading="true"
+            >
+            </editable-words>
+        </div>
+    </div>
 </div>
