@@ -17,11 +17,17 @@ export function editableWordsDirective ($timeout, eventBus) {
             scope.previousState = []
 
             eventBus.on('resetEditableWords', (region) => {
-                editor.setRegion(scope.region)
+                if (scope.region) {
+                    if (!region || (region && region.id === scope.region.id)) {
+                        editor.setRegion(scope.region)
+                    }
+                }
             })
 
-            eventBus.on('cleanEditableDOM', () => {
-                editor.reset()
+            eventBus.on('cleanEditableDOM', (fileIndex) => {
+                if (fileIndex == scope.fileIndex) {
+                    editor.reset()
+                }
             })
 
             editor.on('wordsUpdated', (newWords, previousWords) => {

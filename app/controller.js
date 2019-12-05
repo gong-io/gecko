@@ -868,7 +868,13 @@ class MainController {
 
     calcCurrentRegions() {
         for (let i = 0; i < this.filesData.length; i++) {
-            this.currentRegions[i] = this.getCurrentRegion(i);
+            const currentRegion = this.getCurrentRegion(i);
+            if (currentRegion && currentRegion !== this.currentRegions[i]) {
+                this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
+            } else if (!currentRegion) {
+                this.$timeout(() => this.eventBus.trigger('cleanEditableDOM', i))
+            }
+            this.currentRegions[i] = currentRegion
         }
 
         this.$scope.$$postDigest(this.updateSelectedWordInFiles.bind(this));
@@ -888,34 +894,19 @@ class MainController {
     }
 
     selectRegion(region) {
-        let needUpdateEditable = false
-
         if (!region) {
             region = this.getCurrentRegion(this.selectedFileIndex);
-        }
-
-        if (region !== this.selectedRegion) {
-            needUpdateEditable = true
         }
 
         this.deselectRegion();
 
         if (!region) { 
-            if (!this.proofReadingView) {
-                this.eventBus.trigger('cleanEditableDOM')
-            }
             return
         }
 
         region.element.classList.add("selected-region");
 
         this.selectedRegion = region;
-
-        if (needUpdateEditable && this.selectedRegion) {
-            if (!this.proofReadingView) {
-                this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
-            }
-        }
     }
 
     jumpRegion(next) {
