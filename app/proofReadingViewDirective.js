@@ -13,13 +13,24 @@ export function proofReadingViewDirective ($timeout, eventBus) {
         link: function (scope, element, attrs) {
             scope.isReady = false
 
-            scope.$watch('regions', (newVal) => {
-                if (newVal && newVal.length && !scope.isReady) {
-                    newVal.forEach((r) => {
+            scope.rebuildProofReading = () => {
+                console.log('rebuild', scope.regions)
+                scope.regions.forEach((merged) => {
+                    merged.forEach((r) => {
                         eventBus.trigger('resetEditableWords', r)
                     })
+                })
+            }
+
+            scope.$watch('regions', (newVal) => {
+                if (newVal && newVal.length && !scope.isReady) {
+                    scope.rebuildProofReading()
                     scope.isReady = true
                 }
+            })
+
+            eventBus.on('rebuildProofReading', () => {
+                scope.rebuildProofReading()
             })
 
             eventBus.on('proofReadingScrollToSelected', () => {

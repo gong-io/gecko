@@ -829,7 +829,10 @@ class MainController {
             }
         }
 
-        this.updateView();
+        this.updateView()
+        this.$timeout(() => {
+            this.eventBus.trigger('rebuildProofReading')
+        })
         this.$scope.$evalAsync();
     }
 
@@ -837,9 +840,9 @@ class MainController {
         this.selectRegion();
         this.silence = this.calcSilenceRegion();
         this.setCurrentTime();
+        this.setAllRegions()
         this.calcCurrentRegions();
         this.updateSelectedDiscrepancy();
-        this.setAllRegions()
     }
 
     setAllRegions() {
@@ -861,7 +864,7 @@ class MainController {
                 }
                 return acc
             }, [])
-        }        
+        }      
     }
 
     calcCurrentFileIndex(e) {
@@ -1484,6 +1487,10 @@ class MainController {
         self.undoStack.push([self.selectedRegion.id]);
 
         this.regionUpdated(self.selectedRegion);
+        this.$timeout(() => {
+            this.setAllRegions()
+            this.eventBus.trigger('rebuildProofReading')
+        })
     }
 
     speakerNameChanged(oldText, newText) {
