@@ -30,6 +30,13 @@ export function proofReadingViewDirective ($timeout, eventBus) {
                 })
             })
 
+            eventBus.on('proofReadingScrollToRegion', (region) => {
+                const regionElement = document.querySelector(`[data-region="${region.id}"]`)
+                if (regionElement) {
+                    element[0].parentNode.scrollTop = regionElement.offsetTop - 36
+                }
+            }) 
+
             /* eventBus.on('proofReadingScroll', (region, fileIndex) => {
                 if (fileIndex !== scope.fileIndex) {
                     const regionElement = document.querySelector(`[data-region="${region.id}"]`)

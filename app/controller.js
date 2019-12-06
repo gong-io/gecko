@@ -75,7 +75,7 @@ class MainController {
         this.$timeout = $timeout
         this.$interval = $interval
         this.isServerMode = false
-        this.proofReadingView = false
+        this.proofReadingView = true
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
         this.eventBus = eventBus
@@ -156,7 +156,7 @@ class MainController {
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
-        this.currentGainProc = constants.DEFAULT_GAIN * 100
+        this.currentGainProc = constants.DEFAULT_GAIN * 100 * 0
         this.minGainProc = constants.MIN_GAIN * 100
         this.maxGainProc = constants.MAX_GAIN * 100
         this.maxZoom = constants.MAX_ZOOM
@@ -848,7 +848,19 @@ class MainController {
             this.iterateRegions((r) => {
                 ret.push(r)
             }, i)
-            this.allRegions[i] = ret
+            this.allRegions[i] = ret.reduce((acc, current) => {
+                const last = acc[acc.length - 1]
+                if (last && last.length) {
+                    if (angular.equals(last[0].data.speaker, current.data.speaker)) {
+                        last.push(current)
+                    } else {
+                        acc.push([ current ])
+                    }
+                } else {
+                    acc.push([ current ])
+                }
+                return acc
+            }, [])
         }        
     }
 
@@ -883,6 +895,10 @@ class MainController {
                 if (this.proofReadingView) {
                     if (currentRegion !== this.selectedRegion) {
                         this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
+                    }
+
+                    if (this.isPlaying) {
+                        this.eventBus.trigger('proofReadingScrollToRegion', currentRegion)
                     }
                 } else {
                     this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
