@@ -156,7 +156,7 @@ class MainController {
         this.currentTime = "00:00";
         // this.currentTimeSeconds = 0;
         this.zoomLevel = constants.ZOOM;
-        this.currentGainProc = constants.DEFAULT_GAIN * 100 * 0
+        this.currentGainProc = constants.DEFAULT_GAIN * 100
         this.minGainProc = constants.MIN_GAIN * 100
         this.maxGainProc = constants.MAX_GAIN * 100
         this.maxZoom = constants.MAX_ZOOM

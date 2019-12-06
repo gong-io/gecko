@@ -6,16 +6,18 @@
             <p class="proofreading__timing"> ({{merged[0].start | toMMSS}} - {{merged[merged.length - 1].end | toMMSS}})</p>
         </div>
         <div class="col-md-10 proofreading__editable">
-            <editable-words
-                ng-repeat="r in merged track by r.id"
-                region="r"
-                words="r.data.words"
-                file-index="fileIndex"
-                automatic-mode="automaticMode"
-                class="editable-words"
-                proof-reading="true"
-            >
-            </editable-words>
+            <div ng-repeat="r in merged track by r.id" data-region="{{r.id}}">
+                <editable-words
+                    region="r"
+                    words="r.data.words"
+                    file-index="fileIndex"
+                    automatic-mode="automaticMode"
+                    class="editable-words"
+                    proof-reading="true"
+                >
+                </editable-words>
+            </div>
+            
         </div>
     </div>
 </div>

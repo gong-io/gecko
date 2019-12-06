@@ -14,7 +14,6 @@ export function proofReadingViewDirective ($timeout, eventBus) {
             scope.isReady = false
 
             scope.rebuildProofReading = () => {
-                console.log('rebuild', scope.regions)
                 scope.regions.forEach((merged) => {
                     merged.forEach((r) => {
                         eventBus.trigger('resetEditableWords', r)
@@ -31,6 +30,7 @@ export function proofReadingViewDirective ($timeout, eventBus) {
 
             eventBus.on('rebuildProofReading', () => {
                 scope.rebuildProofReading()
+                scope.setSelected()
             })
 
             eventBus.on('proofReadingScrollToSelected', () => {
@@ -41,10 +41,39 @@ export function proofReadingViewDirective ($timeout, eventBus) {
                 })
             })
 
+            const findTopAncestor = (el) => {
+                while (!el.classList.contains('proofreading')) {
+                    el = el.parentNode
+                }
+                return el
+            }
+
+            scope.setSelected = () => {
+                const currentSelected = element[0].querySelector('.proofreading--selected')
+                if (currentSelected) {
+                    currentSelected.classList.remove('proofreading--selected')
+                }
+
+                if (!scope.currentRegion) {
+                    return
+                }
+
+                const regionElement = document.querySelector(`[data-region="${scope.currentRegion.id}"]`)
+                if (regionElement) {
+                    const topAncestor = findTopAncestor(regionElement)
+                    topAncestor.classList.add('proofreading--selected')
+                }
+            }
+
+            scope.$watch('currentRegion', () => {
+                scope.setSelected()
+            })
+
             eventBus.on('proofReadingScrollToRegion', (region) => {
                 const regionElement = document.querySelector(`[data-region="${region.id}"]`)
                 if (regionElement) {
-                    element[0].parentNode.scrollTop = regionElement.offsetTop - 36
+                    const topAncestor = findTopAncestor(regionElement)
+                    element[0].parentNode.scrollTop = topAncestor.offsetTop - 36
                 }
             }) 
 
