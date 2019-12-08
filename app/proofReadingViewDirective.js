@@ -13,12 +13,14 @@ export function proofReadingViewDirective ($timeout, eventBus) {
         link: function (scope, element, attrs) {
             scope.isReady = false
 
-            scope.rebuildProofReading = () => {
-                scope.regions.forEach((merged) => {
-                    merged.forEach((r) => {
-                        eventBus.trigger('resetEditableWords', r)
+            scope.rebuildProofReading = (selectedRegion, fileIndex) => {
+                if (scope.fileIndex === fileIndex || (!fileIndex && fileIndex !== 0)) {
+                    scope.regions.forEach((merged) => {
+                        merged.forEach((r) => {
+                            eventBus.trigger('resetEditableWords', r)
+                        })
                     })
-                })
+                }
             }
 
             scope.$watch('regions', (newVal) => {
@@ -28,8 +30,8 @@ export function proofReadingViewDirective ($timeout, eventBus) {
                 }
             })
 
-            eventBus.on('rebuildProofReading', () => {
-                scope.rebuildProofReading()
+            eventBus.on('rebuildProofReading', (selectedRegion, fileIndex) => {
+                scope.rebuildProofReading(selectedRegion, fileIndex)
                 scope.setSelected()
             })
 

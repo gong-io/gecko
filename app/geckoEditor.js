@@ -18,6 +18,10 @@ class GeckoEdtior {
         this.bindEvents()
     }
 
+    destroy () {
+        this.element.remove()
+    }
+
     spanHTML ({ uuid, confidence, color, text }) {
         return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" style="color: ${ color ? color : 'rgb(0, 0, 0)' };">${text}</span>`
     }

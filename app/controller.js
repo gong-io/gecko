@@ -1489,7 +1489,7 @@ class MainController {
         this.regionUpdated(self.selectedRegion);
         this.$timeout(() => {
             this.setAllRegions()
-            this.eventBus.trigger('rebuildProofReading')
+            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
         })
     }
 

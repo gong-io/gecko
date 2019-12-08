@@ -3,7 +3,7 @@
     <div class="row proofreading__container">
         <div class="col-md-2 proofreading__info">
             <p class="proofreading__speaker" ng-bind-html="merged[0].data.speaker | speakersFilterColor : legend | to_trusted"></p>
-            <p class="proofreading__timing"> ({{merged[0].start | toMMSS}} - {{merged[merged.length - 1].end | toMMSS}})</p>
+            <p class="proofreading__timing">{{merged[0].start | toMMSS}}-{{merged[merged.length - 1].end | toMMSS}}</p>
         </div>
         <div class="col-md-10 proofreading__editable">
             <div ng-repeat="r in merged track by r.id" data-region="{{r.id}}">

@@ -13,6 +13,7 @@ export function editableWordsDirective ($timeout, eventBus) {
         },
         link: function (scope, element, attrs) {
             const editor = new GeckoEditor(element[0], scope.fileIndex)
+            const editableUuid = uuidv4()
 
             scope.originalWords = []
             scope.previousState = []
@@ -23,7 +24,7 @@ export function editableWordsDirective ($timeout, eventBus) {
                         editor.setRegion(scope.region)
                     }
                 }
-            })
+            }, editableUuid)
 
             eventBus.on('cleanEditableDOM', (fileIndex) => {
                 if (scope.proofReading) {
@@ -32,7 +33,7 @@ export function editableWordsDirective ($timeout, eventBus) {
                 if (fileIndex == scope.fileIndex) {
                     editor.reset()
                 }
-            })
+            }, editableUuid)
 
             editor.on('wordsUpdated', (newWords, previousWords) => {
                 $timeout(() => {
@@ -53,6 +54,11 @@ export function editableWordsDirective ($timeout, eventBus) {
 
             editor.on('focus', () => {
                 eventBus.trigger('editableFocus', scope.region, scope.fileIndex)
+            })
+
+            scope.$on('$destroy', function() {
+                eventBus.removeListener(editableUuid)
+                editor.destroy()
             })
         } 
     }
