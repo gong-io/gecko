@@ -1,19 +1,30 @@
+import uuidv4 from 'uuid/v4'
+
 class EventBus {
     constructor ($timeout) {
         this.listeners = new Map()
         this.$timeout = $timeout
     }
 
-    on (label, callback) {
-        this.listeners.has(label) || this.listeners.set(label, [])
-        this.listeners.get(label).push(callback)
+    on (label, callback, listenerUuid) {
+        listenerUuid = listenerUuid || uuidv4()
+        this.listeners.has(label) || this.listeners.set(label, new Map())
+        this.listeners.get(label).set(listenerUuid, callback)
+    }
+
+    removeListener (uuid) {
+        this.listeners.forEach(l => {
+            if (l.has(uuid)) {
+                l.delete(uuid)
+            }
+        })
     }
 
     trigger (label, ...args) {
         let res = false
         const _trigger = (inListener, label, ...args) => {
             let listeners = inListener.get(label)
-            if (listeners && listeners.length) {
+            if (listeners && listeners.size) {
                 listeners.forEach((listener) => {
                     listener(...args)
                 });

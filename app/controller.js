@@ -66,14 +66,16 @@ function secondsToMinutes(time) {
 }
 
 class MainController {
-    constructor($scope, $uibModal, dataManager, dataBase, $timeout, $interval, eventBus) {
+    constructor($scope, $uibModal, dataManager, dataBase, eventBus, $timeout, $interval) {
         this.dataManager = dataManager;
         this.dataBase = dataBase;
+        this.eventBus = eventBus
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.$timeout = $timeout
         this.$interval = $interval
         this.isServerMode = false
+        this.proofReadingView = true
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
         this.eventBus = eventBus
@@ -174,6 +176,8 @@ class MainController {
         this.regionsHistory = {};
         this.updateOtherRegions = new Set();
 
+        this.allRegions = []
+
         this.isRegionClicked = false;
         this.isTextChanged = false;
         this.wavesurfer = initWaveSurfer();
@@ -190,10 +194,17 @@ class MainController {
             e.stopPropagation()
         })
 
-        this.eventBus.on('regionTextChanged', (fileIndex) => {
-            let currentRegion = this.currentRegions[fileIndex]
+        this.eventBus.on('regionTextChanged', (regionId) => {
+            let currentRegion = this.getRegion(regionId)
             this.addHistory(currentRegion)
-            this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, currentRegion.id])
+            this.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
+        })
+
+        this.eventBus.on('editableFocus', (editableRegion, fileIndex) => {
+            this.selectedRegion = editableRegion
+            this.selectedFileIndex = fileIndex
+            this.seek(editableRegion.start)
+            //this.eventBus.trigger('proofReadingScroll', editableRegion, fileIndex)
         })
 
         document.onkeydown = (e) => {
@@ -408,7 +419,7 @@ class MainController {
             }
             //TODO: creating a new word is bad if we want to keep the segment clear.
             if (!region.data.words || region.data.words.length === 0) {
-                region.data.words = [{start: region.start, end: region.end, text: ""}];
+                region.data.words = [{start: region.start, end: region.end, text: "", uuid: uuidv4()}];
             }
 
             var elem = region.element;
@@ -813,12 +824,15 @@ class MainController {
             } else {
                 this.wavesurfer.regions.list[regionId].update(this.copyRegion(history[history.length - 1]));
                 if (needUpdateEditable && this.selectedRegion && this.selectedRegion.id === regionId) {
-                    this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
+                    this.$timeout(() => this.eventBus.trigger('resetEditableWords', { id: regionId }))
                 }
             }
         }
 
-        this.updateView();
+        this.updateView()
+        this.$timeout(() => {
+            this.eventBus.trigger('rebuildProofReading')
+        })
         this.$scope.$evalAsync();
     }
 
@@ -826,8 +840,31 @@ class MainController {
         this.selectRegion();
         this.silence = this.calcSilenceRegion();
         this.setCurrentTime();
+        this.setAllRegions()
         this.calcCurrentRegions();
         this.updateSelectedDiscrepancy();
+    }
+
+    setAllRegions() {
+        for (let i = 0; i < this.filesData.length; i++) {
+            const ret = []
+            this.iterateRegions((r) => {
+                ret.push(r)
+            }, i)
+            this.allRegions[i] = ret.reduce((acc, current) => {
+                const last = acc[acc.length - 1]
+                if (last && last.length) {
+                    if (angular.equals(last[0].data.speaker, current.data.speaker)) {
+                        last.push(current)
+                    } else {
+                        acc.push([ current ])
+                    }
+                } else {
+                    acc.push([ current ])
+                }
+                return acc
+            }, [])
+        }      
     }
 
     calcCurrentFileIndex(e) {
@@ -858,7 +895,18 @@ class MainController {
         for (let i = 0; i < this.filesData.length; i++) {
             const currentRegion = this.getCurrentRegion(i);
             if (currentRegion && currentRegion !== this.currentRegions[i]) {
-                this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
+                if (this.proofReadingView) {
+                    if (currentRegion !== this.selectedRegion) {
+                        this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
+                    }
+
+                    if (this.isPlaying) {
+                        this.eventBus.trigger('proofReadingScrollToRegion', currentRegion)
+                    }
+                } else {
+                    this.$timeout(() => this.eventBus.trigger('resetEditableWords', currentRegion))
+                }
+                
             } else if (!currentRegion) {
                 this.$timeout(() => this.eventBus.trigger('cleanEditableDOM', i))
             }
@@ -1153,7 +1201,7 @@ class MainController {
                 last_end = end;
 
                 //region.element.innerText = speaker;
-                var region = this.wavesurfer.addRegion({
+                const region = this.wavesurfer.addRegion({
                     start: start,
                     end: end,
                     data: {
@@ -1439,6 +1487,10 @@ class MainController {
         self.undoStack.push([self.selectedRegion.id]);
 
         this.regionUpdated(self.selectedRegion);
+        this.$timeout(() => {
+            this.setAllRegions()
+            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
+        })
     }
 
     speakerNameChanged(oldText, newText) {
@@ -2003,10 +2055,21 @@ class MainController {
         }
         this.showSpectrogram = !this.showSpectrogram
     }
+
+    toggleProofReadingView () {
+        this.proofReadingView = !this.proofReadingView
+        if (!this.proofReadingView) {
+            this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
+        } else {
+            for (let i = 0; i < this.filesData.length; i++) {
+                this.eventBus.trigger('proofReadingScrollToSelected')
+            }
+        }
+    }
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', '$timeout','$interval', 'eventBus'];
+    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', 'eventBus', '$timeout','$interval'];
 export {
     MainController
 }

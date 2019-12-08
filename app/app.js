@@ -16,6 +16,7 @@ import tooltip from 'angular-ui-bootstrap/src/tooltip'
 import './third-party/localStorageDB.js'
 import {playPartDirective} from './playPartDirective'
 import {editableWordsDirective} from './editableWordsDirective'
+import {proofReadingViewDirective} from './proofReadingViewDirective'
 import EventBus from './eventBusService'
 
 var speechRecognition = angular.module('speechRecognition', [dropdown, modal, collapse, tooltip]);
@@ -30,6 +31,7 @@ speechRecognition.config(function($httpProvider) {
 speechRecognition.service('eventBus', ['$timeout', EventBus])
 speechRecognition.service('dataManager', dataManager);
 speechRecognition.service('dataBase', dataBase);
+speechRecognition.service('eventBus', EventBus)
 speechRecognition.directive('playPart', playPartDirective);
 speechRecognition.directive('checklistModel', Checklist);
 speechRecognition.directive("fileread", [function () {
@@ -67,6 +69,7 @@ speechRecognition.directive("fileread", [function () {
 }]);
 
 speechRecognition.directive('editableWords', ['$timeout', 'eventBus', editableWordsDirective])
+speechRecognition.directive('proofReadingView', ['$timeout', 'eventBus', proofReadingViewDirective])
 
 speechRecognition.directive("editable", function () {
     return {
@@ -209,8 +212,27 @@ speechRecognition.filter("speakersFilter", function () {
     }
 })
 
+speechRecognition.filter("speakersFilterColor", function () {
+    return function (items, legend) {
+        if (items && items.length) {
+            const spans = items.map(s => `<span style="color: ${legend[s]};">${s}</span>`)
+            return spans.join(', ')
+        } else if (items && !items.length) {
+            return 'No speaker'
+        } else {
+            return ''
+        }
+    }
+})
+
 speechRecognition.filter('to_trusted', ['$sce', function($sce){
     return function(text) {
         return $sce.trustAsHtml(text);
     };
 }])
+
+speechRecognition.filter('toMMSS', function(){
+    return (seconds) => {
+        return new Date(seconds * 1000).toISOString().substr(14, 5)
+    }
+})

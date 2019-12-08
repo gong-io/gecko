@@ -1,4 +1,5 @@
 import uuidv4 from 'uuid/v4'
+import crel from 'crel'
 
 const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1
 
@@ -15,6 +16,10 @@ class GeckoEdtior {
     init () {
         this.element.setAttribute('contenteditable', true)
         this.bindEvents()
+    }
+
+    destroy () {
+        this.element.remove()
     }
 
     spanHTML ({ uuid, confidence, color, text }) {
@@ -430,6 +435,10 @@ class GeckoEdtior {
             this.updateAll()
         })
 
+        this.element.addEventListener('focus', (e) => {
+            this.trigger('focus', e)
+        })
+
         this.element.addEventListener('click', (e) => {
             this.clickEvent(e)
         })
@@ -645,58 +654,57 @@ class GeckoEdtior {
 
     formDOM (words) {
         this.cleanDOM()
+        const frag = document.createDocumentFragment()
         if (words) {
             words.forEach((w, index) => {
-                const span = this.createSpan(w, index)
-                this.element.appendChild(span)
-    
+                frag.appendChild(this.createSpan(w, index))
                 if (index < words.length - 1) {
-                    const spaceSpan = this.createSpace()
-                    this.element.appendChild(spaceSpan)
+                    frag.appendChild(this.createSpace())
                 }
             })
         }
+        this.element.appendChild(frag)
     }
 
     createSpan (w) {
-        const span = document.createElement('span')
-        if (w.text.length) {
-            span.textContent = w.text
-        } else {
-            span.innerHTML = '&#8203;'
-        }
-        
-        span.classList.add('segment-text__word-wrapper')
-        span.style.color = 'rgb(0,0,0)'
-        if (w.wasEdited) {
-            span.style.color = 'rgb(129, 42, 193)'
-        }
+        const classes = ['segment-text__word-wrapper']
 
-        if (w.isSelected) {
-            span.classList.add('selected-word')
-            delete w.isSelected
-        }
+        if (w.wasEdited) {
+            classes.push('segment-text__word-wrapper--was-edited')
+        } 
 
         if (w.confidence) {
-            span.style.opacity = w.confidence
             if (w.confidence < 0.95 && w.confidence >= 0) {
-                span.classList.add('low-confidence')
+                classes.push('low-confidence')
             }
         }
 
-        span.setAttribute('title', `Confidence: ${w.confidence ? w.confidence : ''}`)
-        span.setAttribute('data-start', w.start)
-        span.setAttribute('data-end', w.end)
-        span.setAttribute('word-uuid', w.uuid)
+        if (w.isSelected) {
+            classes.push('selected-word')
+            delete w.isSelected
+        }
 
-        return span
+        const el = crel(
+            'span',
+            {
+                'class' : classes.join(' '),
+                'title' : `Confidence: ${w.confidence ? w.confidence : ''}`,
+                'data-start': w.start,
+                'data-end': w.end,
+                'word-uuid': w.uuid
+            },
+            w.text.length ? document.createTextNode(w.text) : document.createTextNode('&#8203;')
+        )
+
+        if (w.confidence) {
+            el.style.opacity = w.confidence
+        }
+
+        return el
     }
 
     createSpace () {
-        const span = document.createElement('span')
-        span.innerHTML = ' '
-        span.classList.add('segment-text__space')
-        return span
+        return crel('span', { 'class' : 'segment-text__space' }, document.createTextNode(' '))
     }
 }
 

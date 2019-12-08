@@ -8,10 +8,12 @@ export function editableWordsDirective ($timeout, eventBus) {
         restrict: 'E',
         scope: {
             fileIndex: '=',
-            region: '='
+            region: '=',
+            proofReading: '='
         },
         link: function (scope, element, attrs) {
             const editor = new GeckoEditor(element[0], scope.fileIndex)
+            const editableUuid = uuidv4()
 
             scope.originalWords = []
             scope.previousState = []
@@ -22,20 +24,23 @@ export function editableWordsDirective ($timeout, eventBus) {
                         editor.setRegion(scope.region)
                     }
                 }
-            })
+            }, editableUuid)
 
             eventBus.on('cleanEditableDOM', (fileIndex) => {
+                if (scope.proofReading) {
+                    return
+                }
                 if (fileIndex == scope.fileIndex) {
                     editor.reset()
                 }
-            })
+            }, editableUuid)
 
             editor.on('wordsUpdated', (newWords, previousWords) => {
                 $timeout(() => {
                     scope.region.data.words = newWords
                     if(!angular.equals(newWords, previousWords)) {
                         $timeout(() => {
-                            eventBus.trigger('regionTextChanged', scope.fileIndex)
+                            eventBus.trigger('regionTextChanged', scope.region.id)
                         })
                     }
                 })
@@ -45,6 +50,15 @@ export function editableWordsDirective ($timeout, eventBus) {
                 $timeout(() => {
                     eventBus.trigger('wordClick', word, event)
                 })
+            })
+
+            editor.on('focus', () => {
+                eventBus.trigger('editableFocus', scope.region, scope.fileIndex)
+            })
+
+            scope.$on('$destroy', function() {
+                eventBus.removeListener(editableUuid)
+                editor.destroy()
             })
         } 
     }
