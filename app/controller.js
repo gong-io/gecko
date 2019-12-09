@@ -75,7 +75,7 @@ class MainController {
         this.$timeout = $timeout
         this.$interval = $interval
         this.isServerMode = false
-        this.proofReadingView = true
+        this.proofReadingView = false
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
         this.eventBus = eventBus
