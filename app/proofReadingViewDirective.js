@@ -51,10 +51,10 @@ export function proofReadingViewDirective ($timeout, eventBus) {
             }
 
             scope.setSelected = () => {
-                const currentSelected = element[0].querySelector('.proofreading--selected')
-                if (currentSelected) {
-                    currentSelected.classList.remove('proofreading--selected')
-                }
+                const currentSelected = element[0].querySelectorAll('.proofreading--selected')
+                if (currentSelected.forEach((n) => {
+                    n.classList.remove('proofreading--selected')
+                }))
 
                 if (!scope.currentRegion) {
                     return
@@ -67,8 +67,10 @@ export function proofReadingViewDirective ($timeout, eventBus) {
                 }
             }
 
-            scope.$watch('currentRegion', () => {
-                scope.setSelected()
+            scope.$watch('currentRegion', (newVal) => {
+                $timeout(() => {
+                    scope.setSelected()
+                })
             })
 
             eventBus.on('proofReadingScrollToRegion', (region) => {

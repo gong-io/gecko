@@ -203,7 +203,7 @@ class MainController {
         this.eventBus.on('editableFocus', (editableRegion, fileIndex) => {
             this.selectedRegion = editableRegion
             this.selectedFileIndex = fileIndex
-            this.seek(editableRegion.start)
+            this.seek(editableRegion.start, 'right')
             //this.eventBus.trigger('proofReadingScroll', editableRegion, fileIndex)
         })
 
@@ -850,7 +850,7 @@ class MainController {
             const ret = []
             this.iterateRegions((r) => {
                 ret.push(r)
-            }, i)
+            }, i, true)
             this.allRegions[i] = ret.reduce((acc, current) => {
                 const last = acc[acc.length - 1]
                 if (last && last.length) {
@@ -1259,6 +1259,11 @@ class MainController {
         //the list order matters!
         this.undoStack.push([first.id, second.id, region.id])
         this.regionsHistory[region.id].push(null);
+
+        this.$timeout(() => {
+            this.setAllRegions()
+            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
+        })
     }
 
     deleteRegionAction(region) {
@@ -1609,6 +1614,8 @@ class MainController {
             backdrop: 'static',
             controller: async ($scope, $uibModalInstance, $timeout, zoom) => {
                 $scope.draftAvailable = false
+                $scope.newSegmentFiles = [undefined];
+                $scope.isLoading = false
                 const draftCounts = await this.dataBase.getCounts()
                 if (draftCounts) {
                     self.$timeout(() => {
@@ -1616,6 +1623,9 @@ class MainController {
                     })
                 } 
                 $scope.runDemo = async () => {
+                    if ($scope.isLoading) {
+                        return
+                    }
                     const demoFile = {
                         filename: 'demo.json',
                         data: self.handleTextFormats('demo.json', JSON.stringify(demoJson))
@@ -1624,6 +1634,7 @@ class MainController {
                     self.filesData = [
                         demoFile
                     ];
+                    $scope.isLoading = true
                     await this.dataBase.addFile({
                         fileName: demoFile.filename,
                         fileData: demoFile.data
@@ -1641,20 +1652,24 @@ class MainController {
                         fileData: res.audioFile
                     })
                     self.wavesurfer.loadBlob(res.audioFile);
+                    $scope.isLoading = false
                     $uibModalInstance.close(false);
                 };
 
                 $scope.loadDraft = async () => {
+                    if ($scope.isLoading) {
+                        return
+                    }
                     self.init()
                     const audio = self.dataBase.getLastMediaFile()
                     const files = self.dataBase.getFiles()
+                    $scope.isLoading = true
                     const res = await Promise.all([ audio, files ])
                     self.loadFromDB(res)
+                    $scope.isLoading = false
 
                     $uibModalInstance.close(false);
                 };
-
-                $scope.newSegmentFiles = [undefined];
 
                 $scope.ok = function () {
                     // Take only selected files
@@ -2061,9 +2076,11 @@ class MainController {
         if (!this.proofReadingView) {
             this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
         } else {
-            for (let i = 0; i < this.filesData.length; i++) {
-                this.eventBus.trigger('proofReadingScrollToSelected')
-            }
+            this.$timeout(() => {
+                for (let i = 0; i < this.filesData.length; i++) {
+                    this.eventBus.trigger('proofReadingScrollToSelected')
+                }
+            })
         }
     }
 }
