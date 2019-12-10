@@ -3,43 +3,22 @@ import uuidv4 from 'uuid/v4'
 
 import * as constants from './constants'
 
-import './third-party/soundtouch.js'
-
 import {config} from './config.js'
 import Swal from 'sweetalert2'
-import {PUNCTUATION_TYPE} from "./constants";
 
 import videojs from 'video.js'
 
 import Shortcuts from './shortcuts'
+import wavesurferEvents from './waveSurferEvents'
 
 import { parse as parseTextFormats, convert as convertTextFormats } from './textFormats'
 
-import { jsonStringify } from './utils'
+import { jsonStringify, secondsToMinutes, sortDict } from './utils'
+
+import loadingModal from './loadingModal'
+import shortcutsModal from './shortcutsModal'
 
 var Diff = require('diff');
-
-var demoJson = require('../samples/demo');
-
-const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/selectAudioModal.html')
-const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/shortcutsInfo.html')
-
-function sortDict(dict, sortBy, sortFunction) {
-    var sorted = {};
-
-    if (sortBy !== undefined) {
-        sortFunction = function (a, b) {
-            return (dict[a][sortBy] < dict[b][sortBy]) ? -1 : ((dict[a][sortBy] > dict[b][sortBy]) ? 1 : 0)
-        };
-    }
-
-    // sort by keys if sortFunction is undefined
-    Object.keys(dict).sort(sortFunction).forEach(function (key) {
-        sorted[key] = dict[key];
-    });
-
-    return sorted;
-}
 
 // First, checks if it isn't implemented yet.
 if (!String.prototype.format) {
@@ -52,17 +31,6 @@ if (!String.prototype.format) {
                 ;
         });
     };
-}
-
-function str_pad_left(string, pad, length) {
-    return (new Array(length + 1).join(pad) + string).slice(-length);
-}
-
-function secondsToMinutes(time) {
-    var nstring = (time.toFixed(3) + ""),
-        nindex = nstring.indexOf("."),
-        floatPart = (nindex > -1 ? nstring.substring(nindex + 1) : "000");
-    return str_pad_left(Math.floor(time / 60), '0', 2) + ':' + str_pad_left(Math.floor(time % 60), '0', 2) + "." + floatPart;
 }
 
 class MainController {
@@ -135,51 +103,52 @@ class MainController {
         }
     }
 
-    reset () {
-        this.wavesurfer && this.wavesurfer.destroy()
-        this.$scope.$evalAsync(() => {
-            this.loader = false
-            this.audioFileName = null
-            this.currentTime = '00:00'
-            this.zoomLevel = constants.ZOOM
-            this.isPlaying = false
-            this.playbackSpeeds = constants.PLAYBACK_SPEED
-            this.currentPlaybackSpeed = 1
-            this.videoMode = false
-            this.showSpectrogram = false
-            this.showSpectrogramButton = false
-            this.spectrogramReady = false
-        })
-    }
-
-    init() {
-        this.currentTime = "00:00";
-        // this.currentTimeSeconds = 0;
-        this.zoomLevel = constants.ZOOM;
-        this.currentGainProc = constants.DEFAULT_GAIN * 100
-        this.minGainProc = constants.MIN_GAIN * 100
-        this.maxGainProc = constants.MAX_GAIN * 100
-        this.maxZoom = constants.MAX_ZOOM
-        this.isPlaying = false;
-        this.playbackSpeeds = constants.PLAYBACK_SPEED;
-        this.currentPlaybackSpeed = 1;
+    setInitialValues () {
+        this.loader = false
+        this.audioFileName = null
+        this.currentTime = '00:00'
+        this.currentTimeSeconds = 0
+        this.zoomLevel = constants.ZOOM
+        this.isPlaying = false
+        this.playbackSpeeds = constants.PLAYBACK_SPEED
+        this.currentPlaybackSpeed = 1
         this.videoMode = false
         this.showSpectrogram = false
         this.showSpectrogramButton = false
         this.spectrogramReady = false
-        if (config.wavesurfer.useSpectrogram) {
-            this.showSpectrogramButton = true
-        }
 
         // history variables
-        this.undoStack = [];
-        this.regionsHistory = {};
-        this.updateOtherRegions = new Set();
-
-        this.allRegions = []
+        this.undoStack = []
+        this.regionsHistory = {}
+        this.updateOtherRegions = new Set()
 
         this.isRegionClicked = false;
         this.isTextChanged = false;
+
+        this.allRegions = []
+    }
+
+    setConstants () {
+        this.minGainProc = constants.MIN_GAIN * 100
+        this.maxGainProc = constants.MAX_GAIN * 100
+        this.maxZoom = constants.MAX_ZOOM
+        this.playbackSpeeds = constants.PLAYBACK_SPEED
+        if (config.wavesurfer.useSpectrogram) {
+            this.showSpectrogramButton = true
+        }
+    }
+
+    reset () {
+        this.wavesurfer && this.wavesurfer.destroy()
+        this.$scope.$evalAsync(() => {
+            this.setInitialValues()
+        })
+    }
+
+    init() {
+        this.setConstants()
+        this.setInitialValues()
+        
         this.wavesurfer = initWaveSurfer();
         this.wavesurferElement = this.wavesurfer.drawer.container;
 
@@ -222,277 +191,45 @@ class MainController {
             } */
         };
 
-        this.wavesurferElement.onclick = function (e) {
-            if (!self.isRegionClicked) {
-                self.calcCurrentFileIndex(e);
-                // self.deselectRegion();
-            }
-
-            self.isRegionClicked = false;
-        };
-
-        this.wavesurfer.on('audioprocess', function (e) {
-            self.updateView();
-        });
-
-        this.wavesurfer.on('error', (e) => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Wavesurfer error',
-                text: e
-            })
-            console.error("wavesurfer error:")
-            console.log(e)
-            this.reset()
-            if (!this.isServerMode) {
-                this.loadClientMode()
-            }
-        });
-
-        this.wavesurfer.on('loading', function () {
-            self.$scope.$evalAsync(function () {
-                self.loader = true;
-            });
-        });
-
-        this.wavesurfer.on('ready', function (e) {
-            self.previousHeight = parseInt(self.wavesurfer.getHeight());
-            self.totalTime = secondsToMinutes(self.wavesurfer.getDuration());
-            self.wavesurfer.enableDragSelection(
-                {
-                    drag: false,
-                    minLength: constants.MINIMUM_LENGTH
-                });
-
-            self.$scope.$watch(() => self.zoomLevel, function (newVal, oldVal) {
-                if (newVal) {
-                    if (!self.noUpdateZoom) {
-                        if (Math.round(newVal) !== Math.round(oldVal)) {
-                            self.wavesurfer.zoom(self.zoomLevel);
-                        }
-                    } else {
-                        self.noUpdateZoom = false
-                    }
-                }
-            });
-
-            self.$scope.$watch(() => self.currentGainProc, function (newVal) {
-                if (newVal) {
-                    self.gainNode.gain.value = newVal / 100
-                }
-            });
-
-            self.createSpeakerLegends();
-
-            self.addRegions();
-
-
-            // // map between speakers according to EDER mapping
-            // if (self.EDER) {
-            //     var mapping = self.EDER.map;
-            //     for (let s in self.speakersColors) {
-            //         var mapped = mapping[s];
-            //         if (mapped) {
-            //             self.speakersColors[mapped] = self.speakersColors[s];
-            //         }
-            //     }
-            // }
-
-            self.transcriptPanelSize = parseInt(9 / self.filesData.length);
-
-            // select the first region
-            self.selectedFileIndex = 0;
-            self.selectRegion();
-
-            // var interval = setInterval(function () {
-            //     self.iterateRegions(function (region) {
-            //         if (region.end <= region.start) {
-            //             alert("STOP! CALL GOLAN.");
-            //             console.log("start: {0} End: {1}".format(region.start, region.end));
-            //             console.log(region);
-            //             clearInterval(interval);
-            //             throw "ERROR";
-            //         }
-            //     });
-            // }, 100)
-
-            self.initAudioContext();
-
-            self.handleCtm();
-
-            var st = new soundtouch.SoundTouch(self.wavesurfer.backend.ac.sampleRate);
-            var buffer = self.wavesurfer.backend.buffer;
-            var channels = buffer.numberOfChannels;
-            var l = buffer.getChannelData(0);
-            var r = channels > 1 ? buffer.getChannelData(1) : l;
-            self.length = buffer.length;
-            self.seekingPos = null;
-            var seekingDiff = 0;
-
-            var source = {
-                extract: function (target, numFrames, position) {
-                    if (self.seekingPos != null) {
-                        seekingDiff = self.seekingPos - position;
-                        self.seekingPos = null;
-                    }
-
-                    position += seekingDiff;
-
-                    for (var i = 0; i < numFrames; i++) {
-                        target[i * 2] = l[i + position];
-                        target[i * 2 + 1] = r[i + position];
-                    }
-
-                    return Math.min(numFrames, self.length - position);
-                }
-            }
-
-
-            self.soundtouchNode = null;
-
-            self.gainNode = self.wavesurfer.backend.ac.createGain()
-            self.gainNode.gain.value = self.currentGainProc / 100
-
-            var filter = new soundtouch.SimpleFilter(source, st);
-            self.soundtouchNode = soundtouch.getWebAudioNode(self.wavesurfer.backend.ac, filter);
-
-            self.wavesurfer.on('play', function () {
-                self.seekingPos = ~~(self.wavesurfer.backend.getPlayedPercents() * self.length);
-                st.tempo = self.wavesurfer.getPlaybackRate();
-                self.wavesurfer.backend.disconnectFilters();
-
-                if (st.tempo === 1) {
-                    self.wavesurfer.backend.setFilters([self.gainNode])
-                } else {
-                    self.wavesurfer.backend.setFilters([self.soundtouchNode, self.gainNode])
-                }
-
-                self.isPlaying = true;
-                self.$scope.$evalAsync();
-            });
-
-            self.wavesurfer.on('pause', function () {
-                self.soundtouchNode && self.soundtouchNode.disconnect();
-                self.isPlaying = false;
-                self.$scope.$evalAsync();
-            });
-
-
-            self.loader = false;
-            self.ready = true;
-
-            window.onbeforeunload = function (event) {
-                return confirm("Confirm refresh");
-            };
-
-            self.$scope.$evalAsync();
-        });
-
-        this.wavesurfer.on('seek', function (e) {
-            self.updateView();
-            self.videoPlayer && self.videoPlayer.currentTime(self.wavesurfer.getCurrentTime())
-
-            self.$scope.$evalAsync();
-        });
-
-        this.wavesurfer.on("region-created", function (region) {
-            var numOfFiles = self.filesData.length;
-
-            // indication when file was created by drag
-            if (region.data.fileIndex === undefined) {
-                // to notify "region-update" for the first update
-                // (to get the start value which for some reason we don't get on "region-created")
-
-                self.calcCurrentFileIndex(event);
-
-                region.data.fileIndex = self.selectedFileIndex;
-                // region.data.speaker = constants.UNKNOWN_SPEAKER;
-                region.data.speaker = [];
-
-                region.data.initFinished = false;
-            } else {
-                // fix regions if not added through drag (on drag there is no 'start')
-                self.fixRegionsOrder(region);
-
-                // when file is added by dragging, update-end will take care of history
-                self.addHistory(region);
-            }
-            //TODO: creating a new word is bad if we want to keep the segment clear.
-            if (!region.data.words || region.data.words.length === 0) {
-                region.data.words = [{start: region.start, end: region.end, text: "", uuid: uuidv4()}];
-            }
-
-            var elem = region.element;
-
-
-            // Shrink regions
-            elem.style.height = 100 / numOfFiles + "%";
-            // Arrange regions top to bottom
-            elem.style.top = 100 / numOfFiles * parseInt(region.data.fileIndex) + "%";
-
-            // unset handlers manual style
-            elem.children[0].removeAttribute('style');
-            elem.children[1].removeAttribute('style');
-
-            // region.color = self.filesData[region.data.fileIndex].legend[region.data.speaker];
-            // if (region.data.speaker !== 'EDER') {
-            // region.color = self.speakersColors[region.data.speaker];
-            // }
-
-            self.regionUpdated(region);
-            self.updateView();
-        });
-
-        this.wavesurfer.on("region-updated", function (region) {
-            self.regionPositionUpdated(region);
-
-        });
-
-        this.wavesurfer.on('region-update-end', function (region) {
-            self.regionPositionUpdated(region);
-
-            var multiEffect = [region.id];
-            self.addHistory(region);
-
-            for (let r of self.updateOtherRegions) {
-                self.addHistory(r);
-                multiEffect.push(r.id);
-            }
-
-            self.updateOtherRegions.clear()
-            self.undoStack.push(multiEffect);
-
-            self.$scope.$evalAsync();
-        });
-
-        // this.wavesurfer.on('region-in', function (region) {
-        //     if (region.data.fileIndex === self.selectedFileIndex) {
-        //         self.selectRegion(region);
-        //     }
-        //
-        //     self.currentRegions[region.data.fileIndex] = region;
-        // });
-
-        // this.wavesurfer.on('region-out', function (region) {
-        //     if (region.data.fileIndex === self.selectedFileIndex) {
-        //         self.deselectRegion(region)
-        //     }
-        //
-        //     self.currentRegions[region.data.fileIndex] = undefined;
-        // });
-
-        this.wavesurfer.on('region-click', function (region) {
-            self.isRegionClicked = true;
-            self.selectedFileIndex = region.data.fileIndex;
-
-            // self.selectRegion(region);
-            //self.updateView();
-        });
+        this.bindWaveSurferEvents()
 
         this.$interval(() => {
             this.saveToDB()
         }, constants.SAVE_THRESHOLD)
+    }
 
+    bindWaveSurferEvents () {
+        this.wavesurferElement.onclick = (e) => {
+            if (!this.isRegionClicked) {
+                this.calcCurrentFileIndex(e);
+                // self.deselectRegion();
+            }
+
+            this.isRegionClicked = false;
+        };
+
+        this.wavesurferElement.addEventListener('mousedown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                this.isDownCtrl = true
+            }
+        })
+
+        this.wavesurferElement.addEventListener('mouseup', () => {
+            this.isDownCtrl = false
+        })
+
+        this.wavesurfer.on('audioprocess', () => wavesurferEvents.audioProcess(this))
+        this.wavesurfer.on('error', (e) => wavesurferEvents.error(this, e))
+        this.wavesurfer.on('loading', () => wavesurferEvents.loading(this))
+        this.wavesurfer.on('ready', () => wavesurferEvents.ready(this))
+        this.wavesurfer.on('seek', () => wavesurferEvents.seek(this));
+        this.wavesurfer.on('region-created', (region) => wavesurferEvents.regionCreated(this, region));
+        this.wavesurfer.on('region-updated', (region) => wavesurferEvents.regionUpdated(this, region))
+        this.wavesurfer.on('region-update-end', (region) => wavesurferEvents.regionUpdateEnd(this, region))
+        // this.wavesurfer.on('region-in', (region) => wavesurferEvents.regionIn(this, region))
+        // this.wavesurfer.on('region-out', (region) => wavesurferEvents.regionOut(this, region))
+        this.wavesurfer.on('region-click', (region) => wavesurferEvents.regionClick(this, region))
+        this.wavesurfer.on('pause', () => wavesurferEvents.pause(this))
     }
 
     zoomIntoRegion () {
@@ -522,63 +259,6 @@ class MainController {
         await this.dataBase.clearFiles()
         await this.dataBase.saveFiles(this.filesData)
     }
-
-    // for debugging
-    _printRegionsInfo(fileIndex) {
-        var self = this;
-        let i = 0;
-        var formatted = {};
-        this.iterateRegions(function (region) {
-            var r = self.copyRegion(region);
-            r.i = i;
-            r.fileIndex = r.data.fileIndex;
-            r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
-            r.initFinished = r.data.initFinished;
-            delete r.data;
-            delete r.drag;
-            delete r.minLength;
-            var id = r.id;
-            delete r.id;
-            formatted[id] = r;
-            i++;
-        }, fileIndex, true);
-
-        console.table(formatted);
-    }
-
-    _printHistoryInfo(onlyAvailableHistory) {
-        var self = this;
-
-        Object.keys(this.regionsHistory).forEach(function (key) {
-            var history = self.regionsHistory[key];
-            var formatted = [];
-
-            if (onlyAvailableHistory && history.length < 2) {
-                return;
-            }
-
-            for (let i = 0; i < history.length; i++) {
-                var region = history[i];
-                if (region) {
-                    var r = self.copyRegion(region);
-                    r.fileIndex = r.data.fileIndex;
-                    r.speaker = r.data.speaker.join(constants.SPEAKERS_SEPARATOR);
-                    r.initFinished = r.data.initFinished;
-                    delete r.data;
-                    delete r.drag;
-                    delete r.minLength;
-
-                    formatted.push(r);
-                } else {
-                    formatted.push(region);
-                }
-            }
-
-            console.log(key);
-            console.table(formatted);
-        });
-    }
-
 
     handleCtm() {
         if (this.ctmData.length !== 2 || this.filesData.length !== 2) return;
@@ -660,6 +340,10 @@ class MainController {
     }
 
     fixRegionsOrder(region) {
+        if (region.data.isDummy) {
+            return
+        }
+
         var prevRegion = this.findClosestRegionToTime(region.data.fileIndex, region.start, true);
 
         if (prevRegion) {
@@ -698,32 +382,34 @@ class MainController {
             this.fixRegionsOrder(region);
         }
 
-        var prevRegion = this.getRegion(region.prev);
-        var nextRegion = this.getRegion(region.next);
+        if (!region.data.isDummy) {
+            var prevRegion = this.getRegion(region.prev);
+            var nextRegion = this.getRegion(region.next);
 
-        if (prevRegion !== null) {
-            if (region.start < prevRegion.start + constants.MINIMUM_LENGTH) {
-                region.start = prevRegion.start + constants.MINIMUM_LENGTH;
-                region.end = Math.max(region.start + constants.MINIMUM_LENGTH, region.end);
+            if (prevRegion !== null) {
+                if (region.start < prevRegion.start + constants.MINIMUM_LENGTH) {
+                    region.start = prevRegion.start + constants.MINIMUM_LENGTH;
+                    region.end = Math.max(region.start + constants.MINIMUM_LENGTH, region.end);
+                }
+
+                if (region.start < prevRegion.end) {
+                    prevRegion.end = region.start;
+                    self.updateOtherRegions.add(prevRegion);
+                    self.regionUpdated(prevRegion);
+                }
             }
 
-            if (region.start < prevRegion.end) {
-                prevRegion.end = region.start;
-                self.updateOtherRegions.add(prevRegion);
-                self.regionUpdated(prevRegion);
-            }
-        }
+            if (nextRegion !== null) {
+                if (region.end > nextRegion.end - constants.MINIMUM_LENGTH) {
+                    region.end = nextRegion.end - constants.MINIMUM_LENGTH;
+                    region.start = Math.min(region.start, region.end - constants.MINIMUM_LENGTH);
+                }
 
-        if (nextRegion !== null) {
-            if (region.end > nextRegion.end - constants.MINIMUM_LENGTH) {
-                region.end = nextRegion.end - constants.MINIMUM_LENGTH;
-                region.start = Math.min(region.start, region.end - constants.MINIMUM_LENGTH);
-            }
-
-            if (region.end > nextRegion.start) {
-                nextRegion.start = region.end;
-                self.updateOtherRegions.add(nextRegion);
-                self.regionUpdated(nextRegion);
+                if (region.end > nextRegion.start) {
+                    nextRegion.start = region.end;
+                    self.updateOtherRegions.add(nextRegion);
+                    self.regionUpdated(nextRegion);
+                }
             }
         }
 
@@ -732,7 +418,6 @@ class MainController {
 
     // change region visually
     regionUpdated(region) {
-
         // fix first and last words
         let words = region.data.words;
         words[0].start = region.start;
@@ -742,6 +427,10 @@ class MainController {
 
         if (region.data.speaker.length === 0) {
             region.color = constants.UNKNOWN_SPEAKER_COLOR;
+
+            if (region.data && region.data.isDummy) {
+                region.element.style.background = 'repeating-linear-gradient(135deg, rgb(128, 128, 128) 20px, rgb(180, 180, 180) 40px) rgb(128, 128, 128)'
+            }
         } else if (region.data.speaker.length === 1) {
             region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker[0]];
 
@@ -766,10 +455,9 @@ class MainController {
     }
 
     copyRegion(region) {
-
         //TODO: change the copy of data to deep copy by "JSON.parse(JSON.stringify(object))"
         // and then handle "words" correctly
-        return {
+        const ret = {
             id: region.id,
             // data: {
             //     initFinished: region.data.initFinished,
@@ -783,8 +471,114 @@ class MainController {
             drag: region.drag,
             minLength: constants.MINIMUM_LENGTH
         }
+
+        return ret
     }
 
+    insertDummyRegion () {
+        const { dummyRegion } = this
+        const truncateRegions = []
+
+        this.iterateRegions(region => {
+            let overlap = false
+            if (region.start >= dummyRegion.start && region.end <= dummyRegion.end
+                || region.start <= dummyRegion.end && region.end >= dummyRegion.end
+                || region.start <= dummyRegion.start && region.end <= dummyRegion.end && region.end >= dummyRegion.start) {
+                overlap = true
+            }
+
+            if (overlap && region !== dummyRegion) {
+                truncateRegions.push(region)
+            }
+        }, this.selectedFileIndex)
+
+        if (truncateRegions.length) {
+            const newRegionWords = []
+            const newRegionSpeakers = []
+            let regionsToDel = []
+            let regionsToAdd = []
+            truncateRegions.forEach(r => {
+                const speakers = JSON.parse(JSON.stringify(r.data.speaker))
+                speakers.forEach(s => {
+                    if (!newRegionSpeakers.includes(s)) {
+                        newRegionSpeakers.push(s)
+                    }
+                })
+                const words = JSON.parse(JSON.stringify(r.data.words))
+                words.forEach(w => {
+                    if (w.start >= dummyRegion.start && w.end <= dummyRegion.end) {
+                        newRegionWords.push(w)
+                    }
+                })
+
+                if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) { 
+                    /* region is fully overlaped */
+                    regionsToDel.push(r.id)
+                    this.__deleteRegion(r)
+                } else if (r.start <= dummyRegion.end && r.end >= dummyRegion.end) {
+                    /* region is overlaped from right side */
+                    let original = this.copyRegion(r)
+                    regionsToDel.push(original.id)
+
+                    delete original.id
+                    original.start = dummyRegion.end
+
+                    let words = JSON.parse(JSON.stringify(r.data.words))
+                    let i
+                    for (i = 0; i < words.length; i++) {
+                        if (words[i].start > dummyRegion.end) break
+                    }
+
+                    original.data.words = words.slice(i)
+
+                    this.__deleteRegion(r)
+                    original = this.wavesurfer.addRegion(original)
+                    regionsToAdd.push(original.id)
+                } else if (r.start <= dummyRegion.start && r.end <= dummyRegion.end && r.end >= dummyRegion.start) {
+                    /* region is overlaped from left side */
+                    let original = this.copyRegion(r)
+                    regionsToDel.push(original.id)
+
+                    delete original.id
+                    original.end = dummyRegion.start
+
+                    let words = JSON.parse(JSON.stringify(r.data.words))
+                    let i
+                    for (i = 0; i < words.length; i++) {
+                        if (words[i].start > dummyRegion.start) break
+                    }
+
+                    original.data.words = words.slice(0, i)
+
+                    this.__deleteRegion(r)
+                    original = this.wavesurfer.addRegion(original)
+                    regionsToAdd.push(original.id)
+                }
+            })
+            
+            const newRegion = this.wavesurfer.addRegion({
+                start: dummyRegion.start,
+                end: dummyRegion.end,
+                data: {
+                    initFinished: true,
+                    fileIndex: this.selectedFileIndex,
+                    speaker: newRegionSpeakers,
+                    words: newRegionWords
+                },
+                drag: false,
+                minLength: constants.MINIMUM_LENGTH
+            })
+
+            regionsToDel.push(dummyRegion.id)
+            const changedIds = [ newRegion.id, ...regionsToAdd, ...regionsToDel ]
+
+            this.undoStack.push(changedIds)
+            regionsToDel.forEach((id) => this.regionsHistory[id].push(null))
+
+            this.dummyRegion.remove()
+            this.dummyRegion = null
+        }
+    }
 
     undo() {
         let self = this;
@@ -817,7 +611,8 @@ class MainController {
 
             if (lastState === null) {
                 // pop again because "region-created" will insert another to history
-                var newRegion = this.wavesurfer.addRegion(history.pop());
+                const addRegion = history.pop()
+                var newRegion = this.wavesurfer.addRegion(addRegion);
                 this.regionPositionUpdated(newRegion);
             } else if (history.length === 0) {
                 this.__deleteRegion(this.getRegion(regionId));
@@ -1084,11 +879,11 @@ class MainController {
         var closest = null;
         this.iterateRegions(function (region) {
             if (before) {
-                if (region.start < time - 0.01 && (closest === null || region.start > closest.start)) {
+                if (region.start < time - 0.01 && (closest === null || region.start > closest.start) && !region.data.isDummy) {
                     closest = region;
                 }
             } else {
-                if (region.end > time && (closest === null || region.end < closest.end)) {
+                if (region.end > time && (closest === null || region.end < closest.end) && !region.data.isDummy) {
                     closest = region;
                 }
             }
@@ -1274,6 +1069,10 @@ class MainController {
 
     __deleteRegion(region) {
         if (!region) return;
+
+        if (region.data && region.data.isDummy) {
+            this.dummyRegion = null
+        }
 
         var prev = this.getRegion(region.prev);
         if (prev) prev.next = region.next;
@@ -1601,180 +1400,9 @@ class MainController {
         })
     }
 
-    //TODO: move all that to a different file
     loadClientMode() {
         var self = this;
-        var modalInstance = this.$uibModal.open({
-            templateUrl: audioModalTemplate,
-            backdrop: 'static',
-            controller: async ($scope, $uibModalInstance, $timeout, zoom) => {
-                $scope.draftAvailable = false
-                const draftCounts = await this.dataBase.getCounts()
-                if (draftCounts) {
-                    self.$timeout(() => {
-                        $scope.draftAvailable = true
-                    })
-                } 
-                $scope.runDemo = async () => {
-                    const demoFile = {
-                        filename: 'demo.json',
-                        data: self.handleTextFormats('demo.json', JSON.stringify(demoJson))
-                    }
-
-                    self.filesData = [
-                        demoFile
-                    ];
-                    await this.dataBase.addFile({
-                        fileName: demoFile.filename,
-                        fileData: demoFile.data
-                    })
-                    self.audioFileName = 'demo.mp3';
-                    self.init();
-                    const res = await this.dataManager.loadFileFromServer({
-                        audio: {
-                            url: 'https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3'
-                        },
-                        ctms: []
-                    })
-                    this.dataBase.addMediaFile({
-                        fileName: self.audioFileName,
-                        fileData: res.audioFile
-                    })
-                    self.wavesurfer.loadBlob(res.audioFile);
-                    $uibModalInstance.close(false);
-                };
-
-                $scope.loadDraft = async () => {
-                    self.init()
-                    const audio = self.dataBase.getLastMediaFile()
-                    const files = self.dataBase.getFiles()
-                    const res = await Promise.all([ audio, files ])
-                    self.loadFromDB(res)
-
-                    $uibModalInstance.close(false);
-                };
-
-                $scope.newSegmentFiles = [undefined];
-
-                $scope.ok = function () {
-                    // Take only selected files
-                    var segmentsFiles = [];
-                    for (var i = 0; i < $scope.newSegmentFiles.length; i++) {
-                        var current = $scope.newSegmentFiles[i];
-                        if (current && current.name && current.name !== "") {
-                            segmentsFiles.push(current);
-                        }
-                    }
-
-                    var call_from_url;
-                    if ($scope.chosen_call_id) {
-                        if ($scope.chosen_call_id.length !== 1) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Please choose only one call'
-                            })
-                            return;
-                        }
-                        call_from_url = $scope.chosen_call_id[0];
-                    }
-
-                    $uibModalInstance.close({
-                        audio: $scope.newAudioFile,
-                        call_from_url: call_from_url,
-                        segmentsFiles: segmentsFiles,
-                        zoom: $scope.zoom
-                    });
-                };
-
-                $scope.zoom = zoom;
-
-                $scope.selectAudio = function () {
-                    inputAudio.value = "";
-                    inputAudio.click();
-                };
-
-                $scope.loadUrls = function () {
-                    var filename = $scope.newAudioFile.name;
-                    var ext = filename.substr(filename.lastIndexOf('.') + 1);
-                    if (ext === 'json') {
-                        var reader = new FileReader();
-
-                        var self = this;
-                        reader.onload = function (e) {
-                            $scope.$evalAsync(function () {
-                                $scope.call_urls = JSON.parse(e.target.result)
-                                    .map(function (x) {
-                                        var k = Object.keys(x)[0];
-                                        return {'id': k, 'url': x[k]}
-                                    });
-                            });
-                        };
-
-                        reader.readAsText($scope.newAudioFile);
-                    } else {
-                        $scope.$evalAsync(function () {
-                            $scope.call_urls = undefined;
-                            $scope.chosen_call_id = undefined;
-                        });
-                    }
-                };
-
-
-                $scope.selectTextFile = function (id) {
-                    var inputElement = document.getElementById(id);
-                    inputElement.value = "";
-                    inputElement.click();
-                }
-
-                $scope.addFileSlot = function () {
-                    $timeout(function () {
-                        if ($scope.newSegmentFiles[$scope.newSegmentFiles.length - 1] !== undefined) {
-                            $scope.newSegmentFiles.push(undefined);
-                        }
-                    });
-                }
-
-                $scope.handleMultiple = function (extra_files) {
-                    $scope.newSegmentFiles = $scope.newSegmentFiles.concat(extra_files);
-                }
-
-                $scope.cancel = function () {
-                    $uibModalInstance.dismiss('cancel');
-                };
-
-                $scope.$watch('newAudioFile', (newVal) => {
-                    if (!newVal) {
-                        return
-                    }
-                    const reader = new FileReader()
-                    reader.onload = function (event) {
-                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        try {
-                            audioContext.decodeAudioData(event.target.result).then((buffer) => {
-                            }).catch(e => {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Audio decoding error',
-                                    text: e
-                                })
-                            });
-                        } catch (e) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Audio decoding error',
-                                text: e
-                            })
-                        }
-                    };
-                    reader.readAsArrayBuffer(newVal)
-                })
-            },
-            resolve: {
-                zoom: function () {
-                    return constants.ZOOM;
-                }
-            }
-        });
+        var modalInstance = this.$uibModal.open(loadingModal(this));
 
         modalInstance.result.then(function (res) {
             if (res) {
@@ -1973,16 +1601,7 @@ class MainController {
     }
 
     openShortcutsInfo() {
-        var self = this;
-        var modalInstance = this.$uibModal.open({
-            templateUrl: shortcutsInfoTemplate,
-            controller: function ($scope, $uibModalInstance) {
-                $scope.ok = function () {
-                    $uibModalInstance.close();
-                };
-                $scope.shortcuts = self.shortcuts.getInfo()
-            }
-        });
+        this.$uibModal.open(shortcutsModal(this));
     }
 
     seek(time, leanTo) {
