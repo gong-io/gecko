@@ -1,3 +1,4 @@
+import uuidv4 from 'uuidv4'
 export default (parent, region) => {
     if (parent.isDownCtrl) {
         if (parent.dummyRegion) {
@@ -34,7 +35,7 @@ export default (parent, region) => {
     }
     //TODO: creating a new word is bad if we want to keep the segment clear.
     if (!region.data.words || region.data.words.length === 0) {
-        region.data.words = [{start: region.start, end: region.end, text: ""}];
+        region.data.words = [{start: region.start, end: region.end, text: '', uuid: uuidv4()}];
     }
 
     var elem = region.element;
