@@ -464,12 +464,13 @@
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
                 </div>
                 <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
-                    <p><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
+                    <p ng-if="!ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
                         }}</b></p>
+                    <p ng-if="ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">Dummy Region</b></p>
                     <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
                     <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
                     <editable-words 
-                        ng-if="ctrl.currentRegions[$index]"
+                        ng-if="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
                         region="ctrl.currentRegions[$index]"
                         file-index="$index"
                         class="editable-words"

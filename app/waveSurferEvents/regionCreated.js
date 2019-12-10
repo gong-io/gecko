@@ -1,4 +1,4 @@
-import uuidv4 from 'uuidv4'
+import uuidv4 from 'uuid/v4'
 export default (parent, region) => {
     if (parent.isDownCtrl) {
         if (parent.dummyRegion) {

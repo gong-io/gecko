@@ -578,6 +578,11 @@ class MainController {
             this.dummyRegion.remove()
             this.dummyRegion = null
         }
+
+        this.$timeout(() => {
+            this.setAllRegions()
+            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
+        })
     }
 
     undo() {
@@ -644,8 +649,10 @@ class MainController {
         for (let i = 0; i < this.filesData.length; i++) {
             const ret = []
             this.iterateRegions((r) => {
-                ret.push(r)
-            }, i)
+                if (!r.data.isDummy) {
+                    ret.push(r)
+                }
+            }, i, true)
             this.allRegions[i] = ret.reduce((acc, current) => {
                 const last = acc[acc.length - 1]
                 if (last && last.length) {
