@@ -458,7 +458,7 @@
 
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
              ng-repeat="file in ctrl.filesData track by $index"
-             ng-if="!ctrl.proofReadingView">
+             ng-show="!ctrl.proofReadingView">
             <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
@@ -480,7 +480,7 @@
             </div>
         </div>
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
-             ng-if="ctrl.proofReadingView"
+             ng-show="ctrl.proofReadingView"
              ng-repeat="file in ctrl.filesData track by $index">
              <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">

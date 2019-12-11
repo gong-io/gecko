@@ -18,7 +18,10 @@ export function editableWordsDirective ($timeout, eventBus) {
             scope.originalWords = []
             scope.previousState = []
 
-            eventBus.on('resetEditableWords', (region) => {
+            eventBus.on('resetEditableWords', (region, uuid) => {
+                if (uuid && uuid === editableUuid) {
+                    return
+                }
                 if (scope.region) {
                     if (!region || (region && region.id === scope.region.id)) {
                         editor.setRegion(scope.region)
@@ -41,6 +44,7 @@ export function editableWordsDirective ($timeout, eventBus) {
                     if(!angular.equals(newWords, previousWords)) {
                         $timeout(() => {
                             eventBus.trigger('regionTextChanged', scope.region.id)
+                            eventBus.trigger('resetEditableWords', scope.region, editableUuid)
                         })
                     }
                 })

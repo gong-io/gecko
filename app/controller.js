@@ -833,10 +833,10 @@ class MainController {
 
         words.forEach(function (word, i) {
             if (word.start <= time && word.end >= time) {
-                let newSelectedWord = document.querySelector(`[word-uuid="${word.uuid}"]`)
+                let newSelectedWords = document.querySelectorAll(`[word-uuid="${word.uuid}"]`)
 
-                if (newSelectedWord) {
-                    newSelectedWord.classList.add('selected-word');
+                if (newSelectedWords) {
+                    newSelectedWords.forEach(w => w.classList.add('selected-word'))
                 }
             }
         });
@@ -1685,11 +1685,11 @@ class MainController {
     toggleProofReadingView () {
         this.proofReadingView = !this.proofReadingView
         if (!this.proofReadingView) {
-            this.$timeout(() => this.eventBus.trigger('resetEditableWords'))
-        } else {
             for (let i = 0; i < this.filesData.length; i++) {
-                this.eventBus.trigger('proofReadingScrollToSelected')
+                this.$timeout(() => this.eventBus.trigger('resetEditableWords', this.getCurrentRegion(i)))
             }
+        } else {
+            this.eventBus.trigger('proofReadingScrollToSelected')
         }
     }
 }
