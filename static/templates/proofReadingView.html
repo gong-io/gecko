@@ -9,9 +9,7 @@
             <div ng-repeat="r in merged track by r.id" data-region="{{r.id}}">
                 <editable-words
                     region="r"
-                    words="r.data.words"
                     file-index="fileIndex"
-                    automatic-mode="automaticMode"
                     class="editable-words"
                     proof-reading="true"
                 >
