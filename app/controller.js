@@ -1402,9 +1402,7 @@ class MainController {
     }
 
     saveClient(extension) {
-        for (var i = 0; i < this.filesData.length; i++) {
-            this.save(extension, convertTextFormats(extension, this, config.parserOptions))
-        }
+        this.save(extension, convertTextFormats(extension, this, config.parserOptions))
     }
 
     checkValidRegions(fileIndex) {
