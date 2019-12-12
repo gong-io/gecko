@@ -18,12 +18,21 @@ export function editableWordsDirective ($timeout, eventBus) {
             scope.originalWords = []
             scope.previousState = []
 
+            const checkIsEmpty = () => {
+                if (!element[0].textContent.trim().length) {
+                    element[0].classList.add('editable-words--outlined')
+                } else {
+                    element[0].classList.remove('editable-words--outlined')
+                }
+            }
+
             eventBus.on('resetEditableWords', (region) => {
                 if (scope.region) {
                     if (!region || (region && region.id === scope.region.id)) {
                         editor.setRegion(scope.region)
                     }
                 }
+                checkIsEmpty()
             }, editableUuid)
 
             eventBus.on('cleanEditableDOM', (fileIndex) => {
@@ -44,6 +53,7 @@ export function editableWordsDirective ($timeout, eventBus) {
                         })
                     }
                 })
+                checkIsEmpty()
             })
 
             editor.on('wordClick', ({ word, event }) => {

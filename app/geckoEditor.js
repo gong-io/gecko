@@ -53,7 +53,7 @@ class GeckoEdtior {
     }
 
     cleanEditor () {
-        const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: '&#8203;'})
+        const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: ''})
         document.execCommand('insertHTML', false, html)
     }
 
@@ -553,7 +553,7 @@ class GeckoEdtior {
                             if (word.text.length) {
                                 wasEdited = true
                             }
-                            word.text = span.textContent.trim().replace('&#8203;', '')
+                            word.text = span.textContent.trim()
                             if (wasEdited) {
                                 word.wasEdited = true
                                 span.style.color = 'rgb(129, 42, 193)'
@@ -600,7 +600,7 @@ class GeckoEdtior {
                             if (newWordSplited[i].trim().length) {
                                 const wordCopy = Object.assign({}, {
                                     ...word,
-                                    text: newWordSplited[i].replace('&#8203;', ''),
+                                    text: newWordSplited[i],
                                     uuid: uuidv4(),
                                     wasEdited: true,
                                     isSelected: wordSelected
@@ -612,7 +612,7 @@ class GeckoEdtior {
                         for (let i = 0; i < newWordSplited.length; i++) {
                             if (newWordSplited[i].trim()) {
                                 updatedWords.push({
-                                    text: newWordSplited[i].replace('&#8203;', ''),
+                                    text: newWordSplited[i],
                                     uuid: uuidv4(),
                                     start: this.region.start,
                                     end: this.region.end,
@@ -693,7 +693,7 @@ class GeckoEdtior {
                 'data-end': w.end,
                 'word-uuid': w.uuid
             },
-            w.text.length ? document.createTextNode(w.text) : document.createTextNode('&#8203;')
+            w.text.length ? document.createTextNode(w.text) : document.createTextNode('')
         )
 
         if (w.confidence) {

@@ -59,7 +59,6 @@ export const parse = (data) => {
 }
 
 export const convert = (app, fileIndex) => {
-    console.log('inside convert')
     var self = app;
     var data = {schemaVersion: "2.0", monologues: []};
     app.iterateRegions(function (region) {
@@ -69,6 +68,7 @@ export const convert = (app, fileIndex) => {
             words.forEach(w => {
                 // copy word to cancel references
                 let t = JSON.parse(JSON.stringify(w))
+                delete t.uuid
 
                 t.type = constants.WORD_TYPE;
                 terms.push(t);
