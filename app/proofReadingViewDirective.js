@@ -64,7 +64,7 @@ export function proofReadingViewDirective ($timeout, eventBus) {
                 if (regionElement) {
                     const topAncestor = findTopAncestor(regionElement)
                     topAncestor.classList.add('proofreading--selected')
-                }
+                } 
             }
 
             scope.$watch('currentRegion', (newVal) => {

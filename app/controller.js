@@ -1368,20 +1368,25 @@ class MainController {
         }
     }
 
-    async saveS3(extension, converter) {
+    async saveS3() {
         try {
             await this.dataBase.clearDB()
         } catch (e) {
         }
+        const fileNameSpl = this.filesData[0].filename.split('.')
+        const extension = fileNameSpl[fileNameSpl.length - 1]
+        const converter = convertTextFormats(extension, this, config.parserOptions)
         for (var i = 0; i < this.filesData.length; i++) {
             var current = this.filesData[i];
             if (current.data) {
-                // convert the filename to "rttm" extension
                 var filename = current.filename.substr(0, current.filename.lastIndexOf('.')) + "." + extension;
 
                 if (!this.checkValidRegions(i)) return;
+                try {
+                    this.dataManager.saveDataToServer(converter(i), { filename, s3Subfolder: current.s3Subfolder });
+                } catch (e) {
 
-                this.dataManager.saveDataToServer(converter(i), { filename, s3Subfolder: current.s3Subfolder });
+                }
             }
         }
     }
@@ -1389,16 +1394,6 @@ class MainController {
     saveDiscrepancyResults() {
         this.dataManager.downloadFileToClient(jsonStringify(this.discrepancies),
             this.filesData[0].filename + "_VS_" + this.filesData[1].filename + ".json");
-    }
-
-    saveData() {
-        for (var i = 0; i < this.filesData.length; i++) {
-            const current = this.filesData[i]
-            const splName = current.filename.split('.')
-            const extension = splName[splName.length - 1]
-            const saveFunction = this.isServerMode ? this.saveS3.bind(this) : this.save.bind(this)
-            saveFunction(extension, convertTextFormats(extension, this, config.parserOptions))
-        }
     }
 
     saveClient(extension) {

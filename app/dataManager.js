@@ -33,42 +33,51 @@ class dataManager {
             timestampedS3Filename = `${s3Subfolder}/${timestampedS3Filename}`
             s3Filename = `${s3Subfolder}/${filename}`
         }
-        const resp = await this.$http({
-            method: 'POST',
-            url:  '/upload_s3',
-            headers: {
-                'Access-Control-Allow-Origin': true
-            },
-            data: {
-                filename: timestampedS3Filename,
-                data
-            }
-        })
 
-        if (resp.data && resp.data.OK) {
-            const respSecond = await this.$http({
+        try {
+            const resp = await this.$http({
                 method: 'POST',
                 url:  '/upload_s3',
                 headers: {
                     'Access-Control-Allow-Origin': true
                 },
                 data: {
-                    filename: s3Filename,
+                    filename: timestampedS3Filename,
                     data
                 }
             })
-            if (respSecond.data && respSecond.data.OK) {
+    
+            if (resp.data && resp.data.OK) {
+                const respSecond = await this.$http({
+                    method: 'POST',
+                    url:  '/upload_s3',
+                    headers: {
+                        'Access-Control-Allow-Origin': true
+                    },
+                    data: {
+                        filename: s3Filename,
+                        data
+                    }
+                })
+                if (respSecond.data && respSecond.data.OK) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: `File ${timestampedS3Filename} successefully uploaded`
+                    })
+                }
+            } else {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: `File ${timestampedS3Filename} successefully uploaded`
+                    icon: 'error',
+                    title: 'Upload error',
+                    text: resp.data.error
                 })
             }
-        } else {
+        } catch (e) {
             Swal.fire({
                 icon: 'error',
                 title: 'Upload error',
-                text: resp.data.error
+                text: e.statusText
             })
         }
     }
