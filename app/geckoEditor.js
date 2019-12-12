@@ -130,23 +130,27 @@ class GeckoEdtior {
         const selection = document.getSelection()
         const range = selection.getRangeAt(0)
         const rangeOffset = range.startOffset
-        const previousSpace = firstNode.previousSibling
-
-        const nextWord = lastNode.nextSibling
-        const newText = text && text !== ' ' ? `${firstNode.textContent.substring(0, rangeOffset)}${text}${nextWord.textContent}` : `${firstNode.textContent.substring(0, rangeOffset)}${nextWord.textContent}`
-        firstNode.textContent = newText
-        firstNode.setAttribute('data-end', nextWord.getAttribute('data-end'))
-        firstNode.setAttribute('word-uuid', nextWord.getAttribute('word-uuid'))
-        lastNode.remove()
-        nextWord.remove()
 
         const newRange = document.createRange()
+        const nextWord = lastNode.nextSibling
 
-        if (rangeOffset !== 0) {
-            newRange.setStart(firstNode.firstChild, text ? rangeOffset + text.length : rangeOffset)
+        if (rangeOffset && !text.trim().length) {
+            firstNode.textContent = `${firstNode.textContent.substring(0, rangeOffset)}`
+            newRange.setStart(lastNode.firstChild, lastNode.textContent.length)
         } else {
-            newRange.setStart(previousSpace.firstChild, previousSpace.firstChild.length)
-            newRange.collapse()
+            const newText = text ? `${firstNode.textContent.substring(0, rangeOffset)}${text.trim().length ? text : ''}${nextWord.textContent}` : `${firstNode.textContent.substring(0, rangeOffset)}${nextWord.textContent}`
+            firstNode.textContent = newText
+            firstNode.setAttribute('data-end', nextWord.getAttribute('data-end'))
+            firstNode.setAttribute('word-uuid', nextWord.getAttribute('word-uuid'))
+            lastNode.remove()
+            nextWord.remove()
+
+            if (text.trim().length) {
+                newRange.setStart(firstNode.firstChild, text ? rangeOffset + text.length : rangeOffset)
+            } else {
+                const previousSpace = firstNode.previousSibling
+                newRange.setStart(previousSpace.firstChild, previousSpace.textContent.length)
+            }
         }
         
         selection.removeAllRanges()
