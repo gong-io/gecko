@@ -8,7 +8,7 @@ export const parse = (data) => {
         var speaker = cells[2];
         var start = parseFloat(cells[0]);
         var end = parseFloat(cells[1]);
-        monologues.push({speaker: {id: speaker}, start: start, end: end});
+        monologues.push({speaker: {id: speaker}, start: start, end: end, words: []});
 
     }
 
