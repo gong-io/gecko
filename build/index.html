@@ -404,7 +404,7 @@
                             -->
                             <span class="input-group-btn">
                                 <button ng-if="ctrl.discrepancies" class="btn btn-primary"
-                                        ng-click="ctrl.jumpNextDiscrepancy()" title="Jump to the next difference">
+                                        ng-click="ctrl.discrepancyService.jumpNextDiscrepancy(ctrl)" title="Jump to the next difference">
                                     <i class="glyphicon glyphicon-forward"></i>
                                     Next
                                 </button>

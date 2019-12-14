@@ -223,7 +223,7 @@
             </button>
 
 
-            <button class="btn btn-default" ng-click="ctrl.undo()" ng-disabled="!ctrl.undoStack.length"
+            <button class="btn btn-default" ng-click="ctrl.historyService.undo(ctrl)" ng-disabled="!ctrl.historyService.undoStack.length"
                     title="Undo the last operation"
                     data-toggle="tooltip" data-placement="top">
                 <i class="glyphicon glyphicon-share-alt" style="transform: scaleX(-1);"></i>
