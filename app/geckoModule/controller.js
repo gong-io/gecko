@@ -731,13 +731,17 @@ class MainController {
             regions = sortDict(regions, 'start');
         }
 
-        for (let key in regions) {
+        Object.keys(regions).forEach(function (key) {
             var region = regions[key];
             if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
                 return;
             }
-            func(region);
-        }
+            // if (speaker !== undefined && region.data.speaker !== speaker) {
+            //     return;
+            // }
+
+            func(region)
+        })
     }
 
     findClosestRegionToTime(fileIndex, time, before) {

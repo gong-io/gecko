@@ -97,7 +97,7 @@ export const parseAndLoadAudio = async (context, res) => {
         await context.dataBase.clearDB()
         if (!context.videoMode) {
             context.dataBase.addMediaFile({
-                fileName: this.audioFileName,
+                fileName: context.audioFileName,
                 fileData: fileResult
             })
             try {
