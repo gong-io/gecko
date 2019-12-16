@@ -123,7 +123,7 @@
             <i class="glyphicon glyphicon-zoom-out glyphicon-large pull-right"></i>
         </div>
 
-        <div class="col-md-10">
+        <div class="col-md-7">
             <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
                    max="{{ ctrl.maxZoom }}"
                    style="width: 100%" 
@@ -134,26 +134,27 @@
         <div class="col-md-1">
             <i class="glyphicon glyphicon-zoom-in glyphicon-large"></i>
         </div>
-    </div>
 
-    <div id="volume" class="row" style="margin-bottom: 2em;" ng-show="!ctrl.proofReadingView">
-            <div class="col-md-1">
-                <i class="glyphicon glyphicon-volume-down glyphicon-large pull-right"></i>
-            </div>
-    
-            <div class="col-md-10">
-                <input id="slider" ng-model="ctrl.currentGainProc" type="range" min="{{ ctrl.minGainProc }}"
-                       max="{{ ctrl.maxGainProc }}"
-                       style="width: 100%"/>
-                <!--            <div class="text-center">-->
-                <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
-                <!--            </div>-->
-            </div>
-    
-            <div class="col-md-1">
-                <i class="glyphicon glyphicon-volume-up glyphicon-large"></i>
-            </div>
+        <div class="col-md-1">
+            <i class="glyphicon glyphicon-volume-down glyphicon-large pull-right"></i>
         </div>
+
+        <div class="col-md-1">
+            <input id="slider" ng-model="ctrl.currentGainProc" type="range" min="{{ ctrl.minGainProc }}"
+                    class="volume-slider"
+                    max="{{ ctrl.maxGainProc }}"
+                    tooltip-placement="top"
+                    uib-tooltip="Volume: {{ ctrl.currentGainProc }}"
+                    style="width: 100%"/>
+            <!--            <div class="text-center">-->
+            <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
+            <!--            </div>-->
+        </div>
+
+        <div class="col-md-1">
+            <i class="glyphicon glyphicon-volume-up glyphicon-large"></i>
+        </div>
+    </div>
 
     <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram"></div>
 
@@ -215,8 +216,15 @@
                 <i class="glyphicon glyphicon-trash"></i>
             </button>
 
+            <button class="btn btn-default" ng-click="ctrl.insertDummyRegion()" ng-disabled="!ctrl.dummyRegion"
+                    title="Insert dummy region"
+                    data-toggle="tooltip" data-placement="top">
+                <i class="glyphicon glyphicon-pushpin"></i>
+                Insert
+            </button>
 
-            <button class="btn btn-default" ng-click="ctrl.undo()" ng-disabled="!ctrl.undoStack.length"
+
+            <button class="btn btn-default" ng-click="ctrl.historyService.undo(ctrl)" ng-disabled="!ctrl.historyService.undoStack.length"
                     title="Undo the last operation"
                     data-toggle="tooltip" data-placement="top">
                 <i class="glyphicon glyphicon-share-alt" style="transform: scaleX(-1);"></i>
@@ -404,7 +412,7 @@
                             -->
                             <span class="input-group-btn">
                                 <button ng-if="ctrl.discrepancies" class="btn btn-primary"
-                                        ng-click="ctrl.discrepancyService.jumpNextDiscrepancy(ctrl)" title="Jump to the next difference">
+                                        ng-click="ctrl.jumpNextDiscrepancy()" title="Jump to the next difference">
                                     <i class="glyphicon glyphicon-forward"></i>
                                     Next
                                 </button>
@@ -451,18 +459,19 @@
 
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
              ng-repeat="file in ctrl.filesData track by $index"
-             ng-if="!ctrl.proofReadingView">
+             ng-show="!ctrl.proofReadingView">
             <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
                 </div>
                 <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
-                    <p><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
+                    <p ng-if="!ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
                         }}</b></p>
+                    <p ng-if="ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">Dummy Region</b></p>
                     <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
                     <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
                     <editable-words 
-                        ng-if="ctrl.currentRegions[$index]"
+                        ng-if="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
                         region="ctrl.currentRegions[$index]"
                         file-index="$index"
                         class="editable-words"
@@ -472,7 +481,7 @@
             </div>
         </div>
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
-             ng-if="ctrl.proofReadingView"
+             ng-show="ctrl.proofReadingView"
              ng-repeat="file in ctrl.filesData track by $index">
              <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">
