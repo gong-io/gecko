@@ -123,7 +123,7 @@
             <i class="glyphicon glyphicon-zoom-out glyphicon-large pull-right"></i>
         </div>
 
-        <div class="col-md-10">
+        <div class="col-md-7">
             <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
                    max="{{ ctrl.maxZoom }}"
                    style="width: 100%" 
@@ -134,26 +134,27 @@
         <div class="col-md-1">
             <i class="glyphicon glyphicon-zoom-in glyphicon-large"></i>
         </div>
-    </div>
 
-    <div id="volume" class="row" style="margin-bottom: 2em;" ng-show="!ctrl.proofReadingView">
-            <div class="col-md-1">
-                <i class="glyphicon glyphicon-volume-down glyphicon-large pull-right"></i>
-            </div>
-    
-            <div class="col-md-10">
-                <input id="slider" ng-model="ctrl.currentGainProc" type="range" min="{{ ctrl.minGainProc }}"
-                       max="{{ ctrl.maxGainProc }}"
-                       style="width: 100%"/>
-                <!--            <div class="text-center">-->
-                <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
-                <!--            </div>-->
-            </div>
-    
-            <div class="col-md-1">
-                <i class="glyphicon glyphicon-volume-up glyphicon-large"></i>
-            </div>
+        <div class="col-md-1">
+            <i class="glyphicon glyphicon-volume-down glyphicon-large pull-right"></i>
         </div>
+
+        <div class="col-md-1">
+            <input id="slider" ng-model="ctrl.currentGainProc" type="range" min="{{ ctrl.minGainProc }}"
+                    class="volume-slider"
+                    max="{{ ctrl.maxGainProc }}"
+                    tooltip-placement="top"
+                    uib-tooltip="Volume: {{ ctrl.currentGainProc }}"
+                    style="width: 100%"/>
+            <!--            <div class="text-center">-->
+            <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
+            <!--            </div>-->
+        </div>
+
+        <div class="col-md-1">
+            <i class="glyphicon glyphicon-volume-up glyphicon-large"></i>
+        </div>
+    </div>
 
     <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram"></div>
 

@@ -115,6 +115,7 @@ class MainController {
         this.showSpectrogram = false
         this.showSpectrogramButton = false
         this.spectrogramReady = false
+        this.currentGainProc = 100
 
         // history variables
         this.historyService.reset()
