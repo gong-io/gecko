@@ -12,5 +12,10 @@ export default (parent, region) => {
     parent.historyService.updateOtherRegions.clear()
     parent.historyService.undoStack.push(multiEffect)
 
+    parent.eventBus.trigger('geckoChanged', {
+        event: 'regionUpdateEnd',
+        data: region
+    })
+
     parent.$scope.$evalAsync()
 }

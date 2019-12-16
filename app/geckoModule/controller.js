@@ -162,6 +162,11 @@ class MainController {
             let currentRegion = this.getRegion(regionId)
             this.historyService.addHistory(currentRegion)
             this.historyService.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
+
+            this.eventBus.trigger('geckoChanged', {
+                event: 'regionTextChanged',
+                data: currentRegion
+            })
         })
 
         this.eventBus.on('editableFocus', (editableRegion, fileIndex) => {
@@ -926,6 +931,11 @@ class MainController {
         this.historyService.undoStack.push([first.id, second.id, region.id])
         this.historyService.regionsHistory[region.id].push(null);
 
+        this.eventBus.trigger('geckoChanged', {
+            event: 'splitSegment',
+            data: [first.id, second.id, region.id]
+        })
+
         this.$timeout(() => {
             this.setAllRegions()
             this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
@@ -939,6 +949,11 @@ class MainController {
         this.historyService.regionsHistory[region.id].push(null);
 
         this.__deleteRegion(region);
+
+        this.eventBus.trigger('geckoChanged', {
+            event: 'deleteRegion',
+            data: region
+        })
 
         this.updateView();
     }
@@ -1124,6 +1139,12 @@ class MainController {
         this.historyService.undoStack.push([self.selectedRegion.id]);
 
         this.regionUpdated(self.selectedRegion);
+
+        this.eventBus.trigger('geckoChanged', {
+            event: 'speakerChanged',
+            data: speaker
+        })
+
         this.$timeout(() => {
             this.setAllRegions()
             this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
@@ -1148,6 +1169,11 @@ class MainController {
                 changedRegions.push(region.id);
             }
         }, self.selectedFileIndex);
+
+        this.eventBus.trigger('geckoChanged', {
+            event: 'speakerNameChanged',
+            data: [self.selectedFileIndex, oldText, newText, changedRegions]
+        })
 
         // notify the undo mechanism to change the legend as well as the regions
         this.historyService.undoStack.push([constants.SPEAKER_NAME_CHANGED_OPERATION_ID, self.selectedFileIndex, oldText, newText, changedRegions]);
