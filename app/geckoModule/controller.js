@@ -6,19 +6,19 @@ import videojs from 'video.js'
 import * as constants from './constants'
 import initWaveSurfer from './wavesurfer.js'
 
-import { config }  from './config.js'
+import {config} from './config.js'
 
 import Shortcuts from './shortcuts'
 import wavesurferEvents from './waveSurferEvents'
 
-import { 
+import {
     parse as parseTextFormats,
     convert as convertTextFormats
 } from './textFormats'
 
-import { 
+import {
     jsonStringify,
-    secondsToMinutes, 
+    secondsToMinutes,
     sortDict,
     copyRegion,
     parseAndLoadAudio,
@@ -102,7 +102,7 @@ class MainController {
         }
     }
 
-    setInitialValues () {
+    setInitialValues() {
         this.loader = false
         this.audioFileName = null
         this.currentTime = '00:00'
@@ -125,7 +125,7 @@ class MainController {
         this.allRegions = []
     }
 
-    setConstants () {
+    setConstants() {
         this.minGainProc = constants.MIN_GAIN * 100
         this.maxGainProc = constants.MAX_GAIN * 100
         this.maxZoom = constants.MAX_ZOOM
@@ -135,7 +135,7 @@ class MainController {
         }
     }
 
-    reset () {
+    reset() {
         this.wavesurfer && this.wavesurfer.destroy()
         this.$scope.$evalAsync(() => {
             this.setInitialValues()
@@ -145,7 +145,7 @@ class MainController {
     init() {
         this.setConstants()
         this.setInitialValues()
-        
+
         this.wavesurfer = initWaveSurfer();
         this.wavesurferElement = this.wavesurfer.drawer.container;
 
@@ -198,7 +198,7 @@ class MainController {
         }, constants.SAVE_THRESHOLD)
     }
 
-    bindWaveSurferEvents () {
+    bindWaveSurferEvents() {
         this.wavesurferElement.onclick = (e) => {
             if (!this.isRegionClicked) {
                 this.calcCurrentFileIndex(e);
@@ -232,30 +232,40 @@ class MainController {
         this.wavesurfer.on('pause', () => wavesurferEvents.pause(this))
     }
 
-    zoomIntoRegion () {
+    zoomIntoRegion() {
+        let self = this
+
         if (this.selectedRegion) {
             const delta = this.selectedRegion.end - this.selectedRegion.start
             const wavesurferWidth = this.wavesurfer.container.offsetWidth
 
-            let zoomLevel = wavesurferWidth / delta
+            // Zoom should be integer!
+            let zoomLevel = parseInt(wavesurferWidth / delta)
 
-            if (zoomLevel > constants.MAX_ZOOM){
+            if (zoomLevel > constants.MAX_ZOOM) {
                 zoomLevel = constants.MAX_ZOOM
             }
 
-            this.wavesurfer.zoom(zoomLevel);
-            this.noUpdateZoom = true
+            // update zoom through watch
             this.zoomLevel = zoomLevel
+
             this.seek(this.selectedRegion.start)
 
+            // Scroll in a way that small regions are in the middle
             const midPosition = (this.selectedRegion.start + this.selectedRegion.end) / 2 * zoomLevel
-            this.wavesurfer.container.children[0].scrollLeft = midPosition - (wavesurferWidth / 2)
+
+            // After zoom gets update, center the screen. Otherwise the zoom overrides the centeralization
+            self.wavesurfer.once('zoom', () => {
+                self.wavesurfer.drawer.recenterOnPosition(midPosition, true)
+            })
+
+
             // const startPosition = this.selectedRegion.start * zoomLevel
             // this.wavesurfer.container.children[0].scrollLeft = startPosition
         }
     }
 
-    async saveToDB () {
+    async saveToDB() {
         await this.dataBase.clearFiles()
         await this.dataBase.saveFiles(this.filesData)
     }
@@ -446,8 +456,8 @@ class MainController {
         this.$scope.$evalAsync();
     }
 
-    insertDummyRegion () {
-        const { dummyRegion } = this
+    insertDummyRegion() {
+        const {dummyRegion} = this
         const truncateRegions = []
 
         this.iterateRegions(region => {
@@ -482,7 +492,7 @@ class MainController {
                     }
                 })
 
-                if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) { 
+                if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) {
                     /* region is fully overlaped */
                     regionsToDel.push(r.id)
                     this.__deleteRegion(r)
@@ -526,7 +536,7 @@ class MainController {
                     regionsToAdd.push(original.id)
                 }
             })
-            
+
             const newRegion = this.wavesurfer.addRegion({
                 start: dummyRegion.start,
                 end: dummyRegion.end,
@@ -541,7 +551,7 @@ class MainController {
             })
 
             regionsToDel.push(dummyRegion.id)
-            const changedIds = [ newRegion.id, ...regionsToAdd, ...regionsToDel ]
+            const changedIds = [newRegion.id, ...regionsToAdd, ...regionsToDel]
 
             this.historyService.undoStack.push(changedIds)
             regionsToDel.forEach((id) => this.historyService.regionsHistory[id].push(null))
@@ -579,14 +589,14 @@ class MainController {
                     if (angular.equals(last[0].data.speaker, current.data.speaker)) {
                         last.push(current)
                     } else {
-                        acc.push([ current ])
+                        acc.push([current])
                     }
                 } else {
-                    acc.push([ current ])
+                    acc.push([current])
                 }
                 return acc
             }, [])
-        }      
+        }
     }
 
     calcCurrentFileIndex(e) {
@@ -628,7 +638,7 @@ class MainController {
                 } else {
                     this.eventBus.trigger('resetEditableWords', currentRegion)
                 }
-                
+
             } else if (!currentRegion) {
                 this.eventBus.trigger('cleanEditableDOM', i)
             }
@@ -658,7 +668,7 @@ class MainController {
 
         this.deselectRegion();
 
-        if (!region) { 
+        if (!region) {
             return
         }
 
@@ -1041,7 +1051,7 @@ class MainController {
             var current = this.filesData[i];
             if (current.data) {
                 // convert the filename to "rttm" extension
-                var filename = current.filename.substr(0, current.filename.lastIndexOf('.')) +'.' + extension;
+                var filename = current.filename.substr(0, current.filename.lastIndexOf('.')) + '.' + extension;
 
                 if (!this.checkValidRegions(i)) return;
 
@@ -1065,7 +1075,7 @@ class MainController {
 
                 if (!this.checkValidRegions(i)) return;
                 try {
-                    this.dataManager.saveDataToServer(converter(i), { filename, s3Subfolder: current.s3Subfolder });
+                    this.dataManager.saveDataToServer(converter(i), {filename, s3Subfolder: current.s3Subfolder});
                 } catch (e) {
 
                 }
@@ -1263,10 +1273,10 @@ class MainController {
         });
     }
 
-    async loadFromDB (res) {
+    async loadFromDB(res) {
         const mediaFile = res[0]
         const files = res[1]
-        
+
         if (files && files.length) {
             this.filesData = files.map((f) => {
                 return {
@@ -1288,7 +1298,7 @@ class MainController {
                 this.videoPlayer.ready(() => {
                     var fileUrl = URL.createObjectURL(mediaFile.fileData);
                     var fileType = mediaFile.fileData.type;
-                    this.src({ type: fileType, src: fileUrl });
+                    this.src({type: fileType, src: fileUrl});
                     this.load();
                     this.muted(true)
                 })
@@ -1308,11 +1318,10 @@ class MainController {
     seek(time, leanTo) {
         let offset = 0;
 
-        if (leanTo === 'right'){
-            offset =  0.0001;
-        }
-        else if(leanTo === 'left'){
-            offset = - 0.0001;
+        if (leanTo === 'right') {
+            offset = 0.0001;
+        } else if (leanTo === 'left') {
+            offset = -0.0001;
         }
 
         this.wavesurfer.seekTo((time + offset) / this.wavesurfer.getDuration());
@@ -1368,7 +1377,7 @@ class MainController {
         }
     }
 
-    toggleSpectrogram () {
+    toggleSpectrogram() {
         if (!this.spectrogramReady) {
             this.wavesurfer.initPlugin('spectrogram')
             this.spectrogramReady = true
@@ -1376,7 +1385,7 @@ class MainController {
         this.showSpectrogram = !this.showSpectrogram
     }
 
-    toggleProofReadingView () {
+    toggleProofReadingView() {
         this.proofReadingView = !this.proofReadingView
         if (!this.proofReadingView) {
             for (let i = 0; i < this.filesData.length; i++) {
@@ -1389,7 +1398,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', '$timeout','$interval'];
+    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', '$timeout', '$interval'];
 export {
     MainController
 }
