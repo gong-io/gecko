@@ -1,0 +1,53 @@
+<div class="modal-header">
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="modal-title" id="modal-title">Load data</h3>
+        </div>
+    </div>
+</div>
+<div class="modal-body" id="modal-body">
+    <div class="row" style="align-items:center; margin-bottom:2em">
+        <div class="col-md-12">
+            <input type="file" id="inputAudio" style="display:none" fileread="newAudioFile" afterread="loadUrls()"  accept="audio/*, video/*, application/json, text/json"/>
+            <label for="newAudioFile">Audio/video file or json of urls</label>
+            <label for="call_from_url" ng-show="call_urls">Choose one audio file:</label>
+            <div class="input-group">
+                <input class="form-control" id="newAudioFile" ng-model="newAudioFile.name" disabled type="text"">
+                <select multiple class="form-control" id="call_from_url" ng-model="chosen_call_id"
+                        ng-show="call_urls">
+                    <option ng-value="call_data" ng-repeat="call_data in call_urls"> {{ call_data.id }}</option>
+                </select>
+                <span class="input-group-btn">
+                        <button class="btn btn-default" ng-click="selectAudio()">
+                            <i class="glyphicon glyphicon-open"></i>
+                        </button>
+                    </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="align-items:center; margin-bottom:2em"
+         ng-repeat="segmentFile in newSegmentFiles track by $index">
+        <div class="col-md-12">
+            <input type="file" id="{{$index}}" style="display:none" fileread="newSegmentFiles[$index]"
+                   afterread="addFileSlot()" multiple="multiple" handlemultiple="handleMultiple(extrafiles)"/>
+            <label for="newFile{{$index}}">Segments File {{$index}}</label>
+            <div class="input-group">
+                <input class="form-control" id="newFile{{$index}}" ng-model="segmentFile.name" disabled
+                       type="text">
+                <span class="input-group-btn">
+                        <button class="btn btn-default" ng-click="selectTextFile($index)">
+                            <i class="glyphicon glyphicon-open"></i>
+                        </button>
+                    </span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-default pull-left" type="button" ng-click="runDemo()">Load Demo</button>
+    <button class="btn btn-default pull-left" type="button" ng-if="draftAvailable" ng-click="loadDraft()">Load Draft</button>
+    <button class="btn btn-primary" type="button"
+            ng-disabled="!newAudioFile" ng-click="ok()">OK
+    </button>
+</div>

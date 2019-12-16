@@ -193,16 +193,13 @@ a:hover, a:focus {
     outline: none;
 }
 
-/* .segment-text__word-wrapper {
-    display: inline-block;
-} */
-
-.segment-text__space {
-    
+.segment-text__word-wrapper--was-edited {
+    color: rgb(129, 42, 193);
 }
 
 .editable-words {
     display: block;
+    margin-bottom: 2rem;
     width: 100%;
 }
 
@@ -234,6 +231,43 @@ kbd {
     color: black;
 }
 
+.segment-labeling {
+    top: 0px;
+    position: sticky;
+}
+
+.proofreading--selected {
+    background: rgba(255, 255, 90, 0.3)
+}
+
+.proofreading__speaker {
+    font-weight: bold;
+    font-size: 1.4rem;
+    word-break: break-all;
+    margin-bottom: 0;
+}
+
+.proofreading__timing {
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
 .glyphicon-large {
     font-size: 20px;
+}
+
+.editable-words--outlined {
+    outline: 1px solid rgb(77, 144, 254);
+}
+
+input.volume-slider[type="range"]{
+    -webkit-appearance: none;
+    -moz-apperance: none;
+    width: 100%;
+    height: 8px;
+    background: rgb(0,255,23);
+    background: linear-gradient(90deg, rgba(0,255,23,1) 0%, rgba(0,255,23,1) 50%, rgba(219,234,0,1) 60%, rgba(219,234,0,1) 85%, rgba(255,0,0,1) 100%);
+    border-radius: 2px;
+    margin-top: 6px;
+    outline: none;
 }

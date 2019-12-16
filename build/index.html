@@ -77,7 +77,7 @@
                 <li class="dropdown" ng-if="ctrl.isServerMode">
                     <a href="#"
                        class="dropdown-toggle" role="button"
-                       ng-click="ctrl.saveData()">
+                       ng-click="ctrl.saveS3()">
                         <i class="glyphicon glyphicon-save"></i>
                         Save
                     </a>
@@ -111,14 +111,14 @@
     </div>
 </div>
 <!--<div style="resize:vertical;overflow-y:auto" ng-mousemove="ctrl.resizeWavesurfer($event)">-->
-<div id="waveform"></div>
+<div id="waveform" ng-show="!ctrl.proofReadingView"></div>
 <!--<div style="height:10px"></div>-->
 <!--</div>-->
-<div id="timeline">
+<div id="timeline" ng-show="!ctrl.proofReadingView">
 
 </div>
 <div class="wrapper" ng-show="ctrl.ready">
-    <div id="zoom" class="row" style="margin-bottom: 2em; margin-top: 1em;">
+    <div id="zoom" class="row" style="margin-bottom: 2em; margin-top: 1em;" ng-show="!ctrl.proofReadingView">
         <div class="col-md-1">
             <i class="glyphicon glyphicon-zoom-out glyphicon-large pull-right"></i>
         </div>
@@ -136,7 +136,7 @@
         </div>
     </div>
 
-    <div id="volume" class="row" style="margin-bottom: 2em;">
+    <div id="volume" class="row" style="margin-bottom: 2em;" ng-show="!ctrl.proofReadingView">
             <div class="col-md-1">
                 <i class="glyphicon glyphicon-volume-down glyphicon-large pull-right"></i>
             </div>
@@ -230,6 +230,13 @@
                 <i class="glyphicon glyphicon-stats"></i>
                 Toggle Spectrogram
             </button>
+
+            <button class="btn btn-default" ng-click="ctrl.toggleProofReadingView()"
+                    title="Show/hide Proofreading View"
+                    data-toggle="tooltip" data-placement="top">
+                <i class="glyphicon glyphicon-list-alt"></i>
+                Toggle Proofreading View
+            </button>
         </div>
     </div>
 
@@ -316,7 +323,7 @@
         <!--            </div>-->
         <!--        </div>-->
 
-        <div class="col col-md-3" ng-if="!ctrl.discrepancies">
+        <div class="col col-md-3 segment-labeling" ng-if="!ctrl.discrepancies">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
@@ -397,7 +404,7 @@
                             -->
                             <span class="input-group-btn">
                                 <button ng-if="ctrl.discrepancies" class="btn btn-primary"
-                                        ng-click="ctrl.jumpNextDiscrepancy()" title="Jump to the next difference">
+                                        ng-click="ctrl.discrepancyService.jumpNextDiscrepancy(ctrl)" title="Jump to the next difference">
                                     <i class="glyphicon glyphicon-forward"></i>
                                     Next
                                 </button>
@@ -443,7 +450,8 @@
         </div>
 
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
-             ng-repeat="file in ctrl.filesData track by $index">
+             ng-repeat="file in ctrl.filesData track by $index"
+             ng-if="!ctrl.proofReadingView">
             <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
@@ -461,6 +469,26 @@
                     >
                     </editable-words>
                 </div>
+            </div>
+        </div>
+        <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
+             ng-if="ctrl.proofReadingView"
+             ng-repeat="file in ctrl.filesData track by $index">
+             <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
+                <div class="panel-heading">
+                    <h3 class="panel-title">File: {{ file.filename }}</h3>
+                </div>
+                <div class="panel-body" style="min-height:650px; max-height: 650px;overflow-y: scroll;">
+                    <proof-reading-view
+                        control="ctrl"
+                        regions="ctrl.allRegions[$index]"
+                        current-region="ctrl.currentRegions[$index]"
+                        legend="file.legend"
+                        file-index="$index"
+                    >
+                    </proof-reading-view>
+                </div>   
+             </div>
             </div>
         </div>
     </div>
