@@ -1,7 +1,5 @@
 import Dexie from 'dexie'
 
-import { formatTime } from './utils'
-
 class dataBase {
     constructor() {
         this.db = new Dexie('GeckoDatabase')

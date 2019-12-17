@@ -23,6 +23,7 @@ import {
     copyRegion,
     parseAndLoadAudio,
     sortLegend,
+    formatTime
 } from './utils'
 
 import {
@@ -275,7 +276,31 @@ class MainController {
         }
         this.lastDraft = formatTime(new Date())
         this.toaster.pop('success', 'Draft saved')
-        this.dataBase.updateDraft(this.currentDraftId, this.filesData)
+        const filesData = []
+
+        for (let i = 0; i < this.filesData.length; i++) {
+            filesData.push({
+                filename: this.filesData[i].filename,
+                data: []
+            })
+            this.iterateRegions(region => {
+                filesData[filesData.length - 1].data.push({
+                    end: region.end,
+                    start: region.start,
+                    speaker: { id: region.data.speaker.join('+')},
+                    words: region.data.words.map(w => {
+                        return {
+                            start: w.start,
+                            end: w.end,
+                            text: w.text,
+                            confidence: w.confidence ? w.confidence : 1
+                        }
+                    })
+                })
+            }, i, true)
+        }
+
+        this.dataBase.updateDraft(this.currentDraftId, filesData)
     }
 
     handleCtm() {
@@ -1327,17 +1352,17 @@ class MainController {
 
         modalInstance.result.then((res) => {
             if (res) {
-                if (self.wavesurfer) self.wavesurfer.destroy();
-                self.init();
+                if (this.wavesurfer) this.wavesurfer.destroy();
+                this.init();
                 parseAndLoadAudio(this, res);
             }
         });
     }
 
-    async loadFromDB(res) {
-        const mediaFile = res[0]
-        const files = res[1]
-
+    async loadFromDB (res) {
+        const mediaFile = res.mediaFile
+        const files = res.files
+        
         if (files && files.length) {
             this.filesData = files.map((f) => {
                 return {

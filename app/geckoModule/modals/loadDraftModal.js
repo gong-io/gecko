@@ -1,6 +1,6 @@
 
-import { formatDate } from './utils'
-const loadDraftModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../static/templates/loadDraftModal.html')
+import { formatDate } from '../utils'
+const loadDraftModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../templates/loadDraftModal.html')
 
 export default (parent, drafts) => {
     return {

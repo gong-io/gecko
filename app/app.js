@@ -1,5 +1,6 @@
 import angular from 'angular'
 import 'video.js/dist/video-js.min.css'
+import 'angularjs-toaster/toaster.min.css'
 
 import '../static/css/bootstrap.min.theme_paper.css'
 import '../static/css/app.css'
