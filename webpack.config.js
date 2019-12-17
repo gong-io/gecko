@@ -12,6 +12,11 @@ module.exports = {
     path: path.resolve(__dirname, 'build'),
     filename: "gecko.js"
   },
+  resolve: {
+    alias: {
+      '@': path.join(__dirname, 'app'),
+    }
+  },
   devServer: {
     contentBase: 'build/', // Relative directory for base of server
     inline: true,
@@ -27,7 +32,8 @@ module.exports = {
         exclude: /node_modules/,
         loader: 'babel-loader',
         query: {
-          presets: ['es2015']
+          presets: ['es2015'],
+          plugins: ['transform-object-rest-spread']
         }
       },
       {
