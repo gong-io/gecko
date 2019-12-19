@@ -49,6 +49,23 @@ class DiscrepancyService {
             this.playDiscrepancy(context, context.filteredDiscrepancies[i]);
         }
     }
+
+    jumpPreviousDiscrepancy (context) {
+        if (!context.discrepancies) return;
+
+        let time = context.wavesurfer.getCurrentTime();
+
+        let i = context.filteredDiscrepancies.length - 1;
+        for (; i >=0; i--) {
+            if (context.filteredDiscrepancies[i].end < time + EXTRA_DISCREPANCY_TIME) {
+                break;
+            }
+        }
+
+        if (context.filteredDiscrepancies[i - 1]) {
+            context.discrepancyService.playDiscrepancy(context, context.filteredDiscrepancies[i - 1]);
+        }
+    }
 }
 
 export default DiscrepancyService
