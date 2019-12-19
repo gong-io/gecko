@@ -429,7 +429,7 @@
                             </tr>
                             <tr id="discrepancy_{{$index}}"
                                 ng-repeat="discrepancy in (ctrl.filteredDiscrepancies = (ctrl.discrepancies |mulSearch: searchDiscrepancy)) track by $index ">
-                                <td><a ng-click="ctrl.playDiscrepancy(discrepancy)" style="cursor: pointer">
+                                <td><a ng-click="ctrl.discrepancyService.playDiscrepancy(ctrl, discrepancy)" style="cursor: pointer">
                                     {{ discrepancy.startDisp }} - {{ discrepancy.endDisp }}</a>
                                 </td>
 
