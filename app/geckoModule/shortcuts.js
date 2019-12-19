@@ -142,7 +142,7 @@ class Shortcuts {
     }
 
     undoHandler (e) {
-        this.app.undo()
+        this.app.historyService.undo(this.app)
     }
 
     digitHandler (e) {
