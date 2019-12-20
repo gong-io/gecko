@@ -192,6 +192,7 @@ class MainController {
         };
 
         this.bindWaveSurferEvents()
+        this.bindDummyRegionEvents()
 
         this.$interval(() => {
             this.saveToDB()
@@ -228,8 +229,62 @@ class MainController {
         this.wavesurfer.on('region-update-end', (region) => wavesurferEvents.regionUpdateEnd(this, region))
         // this.wavesurfer.on('region-in', (region) => wavesurferEvents.regionIn(this, region))
         // this.wavesurfer.on('region-out', (region) => wavesurferEvents.regionOut(this, region))
-        this.wavesurfer.on('region-click', (region) => wavesurferEvents.regionClick(this, region))
+        this.wavesurfer.on('region-click', (region, e) => wavesurferEvents.regionClick(this, region, e))
         this.wavesurfer.on('pause', () => wavesurferEvents.pause(this))
+    }
+
+    bindDummyRegionEvents () {
+        this.isDrag = false
+
+        this.wavesurfer.drawer.wrapper.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'REGION') {
+                if (e.ctrlKey || e.metaKey) {
+                    e.stopPropagation()
+                    this.isDrag = true
+                    this.start = this.wavesurfer.drawer.handleEvent(e, true)
+                }
+            }
+        }, true)
+
+        this.wavesurfer.drawer.wrapper.addEventListener('mousemove', (e) => {
+            if (this.isDrag) {
+                let duration = this.wavesurfer.getDuration();
+                if (!this.dragRegion) {
+                    this.dragRegion = this.wavesurfer.addRegion({
+                        drag: false,
+                        minLength: constants.MINIMUM_LENGTH,
+                        data: {
+                            isDummy: true
+                        }
+                    })
+                    this.dragRegion.element.style.background = 'repeating-linear-gradient(135deg, rgb(128, 128, 128) 20px, rgb(180, 180, 180) 40px) rgb(128, 128, 128)'
+                }
+
+                const end = this.wavesurfer.drawer.handleEvent(e);
+                const startUpdate = this.wavesurfer.regions.util.getRegionSnapToGridValue(
+                    this.start * duration
+                );
+                const endUpdate = this.wavesurfer.regions.util.getRegionSnapToGridValue(
+                    end * duration
+                );
+
+                this.dragRegion.update({
+                    start: Math.min(endUpdate, startUpdate),
+                    end: Math.max(endUpdate, startUpdate)
+                })
+            }
+        }, true)
+
+        this.wavesurfer.drawer.wrapper.addEventListener('mouseup', (e) => {
+            if (this.isDrag) {
+                this.isDrag = false
+                if (this.dragRegion) {
+                    this.dragRegion.fireEvent('update-end', e)
+                    this.wavesurfer.fireEvent('region-update-end', this.dragRegion, e)
+                    this.dragRegion = null
+                }
+            }
+        })
     }
 
     zoomIntoRegion() {
@@ -475,24 +530,48 @@ class MainController {
 
         if (truncateRegions.length) {
             const newRegionWords = []
-            const newRegionSpeakers = []
             let regionsToDel = []
             let regionsToAdd = []
             truncateRegions.forEach(r => {
-                const speakers = JSON.parse(JSON.stringify(r.data.speaker))
-                speakers.forEach(s => {
-                    if (!newRegionSpeakers.includes(s)) {
-                        newRegionSpeakers.push(s)
-                    }
-                })
                 const words = JSON.parse(JSON.stringify(r.data.words))
                 words.forEach(w => {
                     if (w.start >= dummyRegion.start && w.end <= dummyRegion.end) {
                         newRegionWords.push(w)
                     }
                 })
+                if (r.start <= dummyRegion.start && r.end >= dummyRegion.end) {
+                    /* dummy region is fully overlaped*/
+                    let first = copyRegion(r)
+                    let second = copyRegion(r)
+                    regionsToDel.push(first.id)
 
-                if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) {
+                    delete first.id
+                    delete second.id
+
+                    first.end = dummyRegion.start
+                    second.start = dummyRegion.end
+
+                    let words = JSON.parse(JSON.stringify(r.data.words))
+                    let i
+                    for (i = 0, length = words.length; i < length; i++) {
+                        if (words[i].start > dummyRegion.start) break
+                    }
+
+                    first.data.words = words.slice(0, i)
+
+                    for (i = 0, length = words.length; i < length; i++) {
+                        if (words[i].start > dummyRegion.end) break
+                    }
+
+                    second.data.words = words.slice(i)
+
+                    this.__deleteRegion(r)
+                    first = this.wavesurfer.addRegion(first)
+                    second = this.wavesurfer.addRegion(second)
+                    regionsToAdd.push(first.id)
+                    regionsToAdd.push(second.id)
+                }
+                else if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) {
                     /* region is fully overlaped */
                     regionsToDel.push(r.id)
                     this.__deleteRegion(r)
@@ -543,7 +622,7 @@ class MainController {
                 data: {
                     initFinished: true,
                     fileIndex: this.selectedFileIndex,
-                    speaker: newRegionSpeakers,
+                    speaker: [],
                     words: newRegionWords
                 },
                 drag: false,
@@ -555,6 +634,28 @@ class MainController {
 
             this.historyService.undoStack.push(changedIds)
             regionsToDel.forEach((id) => this.historyService.regionsHistory[id].push(null))
+
+            this.dummyRegion.remove()
+            this.dummyRegion = null
+        } else {
+            /* insert a silent region */
+            const newRegion = this.wavesurfer.addRegion({
+                start: dummyRegion.start,
+                end: dummyRegion.end,
+                data: {
+                    initFinished: true,
+                    fileIndex: this.selectedFileIndex,
+                    speaker: [],
+                    words: []
+                },
+                drag: false,
+                minLength: constants.MINIMUM_LENGTH
+            })
+
+            const toDel = dummyRegion.id
+            const changedIds = [newRegion.id, toDel]
+            this.historyService.undoStack.push(changedIds)
+            this.historyService.regionsHistory[toDel].push(null)
 
             this.dummyRegion.remove()
             this.dummyRegion = null
@@ -605,8 +706,12 @@ class MainController {
 
         // vertical click location
         var posY = e.pageY - e.target.offsetTop;
-
-        this.selectedFileIndex = parseInt(posY / wavesurferHeight * this.filesData.length);
+        if (this.filesData.length > 1) {
+            this.selectedFileIndex = parseInt(posY / wavesurferHeight * this.filesData.length);
+        } else {
+            this.selectedFileIndex = 0
+        }
+        
     }
 
     deselectRegion(region) {
