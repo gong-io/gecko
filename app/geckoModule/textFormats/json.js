@@ -55,12 +55,16 @@ export const parse = (data) => {
             }
         }
     }
+
+    if (data['colors']) {
+        return [ monologues, data['colors'] ]
+    }
     return monologues;
 }
 
 export const convert = (app, fileIndex) => {
     var self = app;
-    var data = {schemaVersion: "2.0", monologues: []};
+    var data = {schemaVersion: "2.0", monologues: [], legend: []};
     app.iterateRegions((region) => {
         let words = region.data.words;
         let terms = []
@@ -69,6 +73,7 @@ export const convert = (app, fileIndex) => {
                 // copy word to cancel references
                 let t = JSON.parse(JSON.stringify(w))
                 delete t.uuid
+                delete t.wasEdited
 
                 t.type = constants.WORD_TYPE;
                 terms.push(t);
@@ -90,13 +95,18 @@ export const convert = (app, fileIndex) => {
             })
         }
         data.monologues.push({
-            speaker: {id: self.formatSpeaker(region.data.speaker), color: region.color},
+            speaker: {id: self.formatSpeaker(region.data.speaker)},
             start: region.start,
             end: region.end,
             terms: terms
         });
 
     }, fileIndex, true);
+
+    data.colors = {}
+    app.filesData[fileIndex].legend.forEach(l => {
+        data.colors[l.value] = l.color
+    })
 
     return jsonStringify(data);
 }

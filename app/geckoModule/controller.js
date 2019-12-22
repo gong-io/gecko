@@ -433,13 +433,16 @@ class MainController {
                 region.element.style.background = 'repeating-linear-gradient(135deg, rgb(128, 128, 128) 20px, rgb(180, 180, 180) 40px) rgb(128, 128, 128)'
             }
         } else if (region.data.speaker.length === 1) {
-            region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker[0]];
-
+            console.log(this.filesData[region.data.fileIndex].legend, region.data.speaker[0])
+            const legendSpeaker = this.filesData[region.data.fileIndex].legend.find(s => s.value === region.data.speaker[0])
+            region.color = legendSpeaker.color
         } else {
             let line_width = 20;
 
-            let colors = region.data.speaker.map((s, i) =>
-                `${this.filesData[region.data.fileIndex].legend[s]} ${(i + 1) * line_width}px`
+            let colors = region.data.speaker.map((speaker, i) => {
+                const legendSpeaker = this.filesData[region.data.fileIndex].legend.find(s => s.value === speaker)
+                return `${legendSpeaker.color} ${(i + 1) * line_width}px`
+            }
             ).join(',');
 
             region.element.style.background =
@@ -793,15 +796,37 @@ class MainController {
     createSpeakerLegends() {
         var self = this;
 
+        let defaultSpeakers = []
+        if (this.fileSpeakerColors) {
+            defaultSpeakers = constants.defaultSpeakers.map(ds => {
+                if (this.fileSpeakerColors[ds.value]) {
+                    return {
+                        ...ds,
+                        color: this.fileSpeakerColors[ds.value]
+                    }
+                }
+                return ds
+            })
+        } else {
+            defaultSpeakers = constants.defaultSpeakers
+        }
+
         // First aggregate all speakers, overwrite if "color" field is presented anywhere.
         // We set the same speaker for different files with the same color this way,
         // // determined by the last "color" field or one of the colors in the list
-        let speakersColors = Object.assign({}, constants.defaultSpeakers);
+        let speakersColors = defaultSpeakers.map(ds => {
+            return {
+                ...ds,
+                isDefault: true
+            }
+        })
 
         self.filesData.forEach(fileData => {
             let colorIndex = 0;
 
-            fileData.legend = Object.assign({}, constants.defaultSpeakers);
+            fileData.legend = defaultSpeakers
+
+            console.log(fileData.legend)
 
             fileData.data.forEach(monologue => {
                 if (!monologue.speaker.id) return;
@@ -819,22 +844,29 @@ class MainController {
                 if (speakers.length === 1) {
                     // forcefully set the color of the speaker
                     if (monologue.speaker.color) {
-                        speakersColors[speakerId] = monologue.speaker.color;
+                        const foundSpeaker = speakersColors.find(sc => sc.value === speakerId)
+                        if (foundSpeaker) {
+                            foundSpeaker.color = monologue.speaker.color
+                        }
                     }
                 }
 
                 speakers.forEach(s => {
-
+                    const found = speakersColors.find(sc => sc.value === s)
                     // Encounter the speaker id for the first time (among all files)
-                    if (!(s in speakersColors)) {
-                        speakersColors[s] = constants.SPEAKER_COLORS[colorIndex];
+                    if (!found) {
+                        speakersColors.push({
+                            value: s,
+                            display: s,
+                            shortcut: colorIndex + 1,
+                            color: constants.SPEAKER_COLORS[colorIndex]
+                        })
                         colorIndex = (colorIndex + 1) % constants.SPEAKER_COLORS.length;
                     }
-                    fileData.legend[s] = undefined;
                 });
             })
 
-            fileData.legend = sortLegend(fileData.legend);
+            // fileData.legend = sortLegend(fileData.legend);
         });
 
         // Set the actual colors for each speaker

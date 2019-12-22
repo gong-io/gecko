@@ -353,26 +353,28 @@
                     </div>
                     <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion">
                         <div class="form-group">
-                            <label class="annotation-label" style="background-color:{{ color + 80 }};"
-                                   ng-repeat="(speaker,color) in ctrl.filesData[ctrl.selectedFileIndex].legend">
+                            <label class="annotation-label" style="background-color:{{ speaker.color + 80 }};"
+                                   ng-repeat="speaker in ctrl.filesData[ctrl.selectedFileIndex].legend">
 
                                 <input type="checkbox"
-                                       value="{{speaker}}"
-                                       ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
-                                       ng-click="ctrl.speakerChanged(speaker)"
+                                       value="{{speaker.display}}"
+                                       ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker.value) > -1"
+                                       ng-click="ctrl.speakerChanged(speaker.value)"
                                        ng-disabled="!ctrl.selectedRegion"
                                 style="margin-bottom: 0px">
-                                <span editable
+                                <span class="speaker-legend">{{ speaker.shortcut }}.</span>
+                                <span ng-if="!speaker.isDefault" editable
                                       changed="ctrl.speakerNameChanged(oldText,newText)"
-                                      ng-model="speaker"
-                                      title="{{speaker}}"
+                                      ng-model="speaker.display"
+                                      title="{{speaker.display}}"
                                 class="speaker-legend">
                                 </span>
+                                <span title="{{speaker.display}}" class="speaker-legend" ng-if="speaker.isDefault">{{ speaker.display }}</span>
                                 <div class="pull-right">
                                     <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
-                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>
-                                    <input type="color" ng-model="color" class="pull-right"
-                                           ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker, color)"/>
+                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>
+                                    <input type="color" ng-model="speaker.color" class="pull-right"
+                                           ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker.value, speaker.color)"/>
                                 </div>
                             </label>
                         </div>
