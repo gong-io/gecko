@@ -111,7 +111,7 @@
     </div>
 </div>
 <!--<div style="resize:vertical;overflow-y:auto" ng-mousemove="ctrl.resizeWavesurfer($event)">-->
-<div id="waveform" ng-show="!ctrl.proofReadingView"></div>
+<div id="waveform" ng-show="!ctrl.proofReadingView" context-menu="regionContextMenu" app="ctrl"></div>
 <!--<div style="height:10px"></div>-->
 <!--</div>-->
 <div id="timeline" ng-show="!ctrl.proofReadingView">
@@ -359,14 +359,14 @@
                                 <input type="checkbox"
                                        value="{{speaker.display}}"
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker.value) > -1"
-                                       ng-click="ctrl.speakerChanged(speaker.value)"
+                                       ng-click="ctrl.speakerChanged(speaker)"
                                        ng-disabled="!ctrl.selectedRegion"
                                 style="margin-bottom: 0px">
-                                <span class="speaker-legend">{{ speaker.shortcut }}.</span>
+                                <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.</span>
                                 <span ng-if="!speaker.isDefault" editable
-                                      changed="ctrl.speakerNameChanged(oldText,newText)"
-                                      ng-model="speaker.display"
-                                      title="{{speaker.display}}"
+                                      changed="ctrl.speakerNameChanged(speaker, oldText,newText)"
+                                      ng-model="speaker.value"
+                                      title="{{speaker.value}}"
                                 class="speaker-legend">
                                 </span>
                                 <span title="{{speaker.display}}" class="speaker-legend" ng-if="speaker.isDefault">{{ speaker.display }}</span>
@@ -504,6 +504,22 @@
         </div>
     </div>
 </div>
+
+<ul id="regionContextMenu" class="dropdown-menu" role='menu'> 
+    <li ng-repeat="speaker in ctrl.filesData[ctrl.contextMenuFileIndex].legend">
+        <a class="region-context-menu__button" ng-click="ctrl.speakerChanged(speaker, true);$event.stopPropagation()">
+            <input type="checkbox"
+                    value="{{speaker.display}}"
+                    ng-checked="ctrl.contextMenuRegion.data.speaker.indexOf(speaker.value) > -1"
+                    ng-disabled="!ctrl.contextMenuRegion"
+                    ng-click="ctrl.speakerChanged(speaker, true);$event.stopPropagation()"
+                    style="margin-bottom: 0px">
+            <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.</span>
+            <span title="{{speaker.display}}" class="speaker-legend" ng-if="speaker.isDefault">{{ speaker.display }}</span>
+            <span title="{{speaker.value}}" class="speaker-legend" ng-if="!speaker.isDefault">{{ speaker.value }}</span>
+        </a>
+    </li>
+  </ul>
 
 <!--<script type="text/ng-template" id="selectAudioModal.html">-->
 <!--   -->

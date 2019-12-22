@@ -34,7 +34,7 @@ class HistoryService {
             let oldSpeaker = regionIds[2];
             let newSpeaker = regionIds[3];
 
-            self.updateLegend(fileIndex, newSpeaker, oldSpeaker);
+            context.updateLegend(fileIndex, newSpeaker, oldSpeaker);
 
             regionIds = regionIds[4];
         } else if (regionIds[0] === REGION_TEXT_CHANGED_OPERATION_ID) {

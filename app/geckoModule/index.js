@@ -21,7 +21,8 @@ import {
     playPartDirective,
     editableDirective,
     Checklist,
-    fileRead 
+    fileRead,
+    contextMenu
 } from './directives'
 
 import { 
@@ -48,6 +49,7 @@ geckoModule.directive('editable', editableDirective)
 geckoModule.directive('playPart', playPartDirective)
 geckoModule.directive('checklistModel', Checklist)
 geckoModule.directive('fileread', fileRead)
+geckoModule.directive('contextMenu', contextMenu)
 
 geckoModule.filter('mulSearch', mulSearch)
 geckoModule.filter('speakersFilter', speakersFilter)

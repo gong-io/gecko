@@ -50,7 +50,7 @@ export default () => {
 
             element.bind('keydown keypress', (e) => {
                 if (e.which === 13 || e.which === 27) {
-                    this.blur();
+                    element.blur();
                     e.preventDefault();
                 }
 
