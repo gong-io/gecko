@@ -25,6 +25,13 @@ export default () => {
                       left: event.clientX + 'px',
                       top: event.clientY + 'px'
                     });
+                    const bb = ul[0].getBoundingClientRect()
+                    const windowWidth = window.innerWidth
+                    if (event.clientX + bb.width > windowWidth) {
+                      ul.css({
+                        left: (event.clientX - bb.width) + 'px'
+                      })
+                    }
                     last = event.timeStamp;
                     scope.app.setContextMenuRegion(event.target.getAttribute('data-id'))
                 } else {
