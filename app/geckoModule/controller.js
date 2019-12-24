@@ -1451,13 +1451,21 @@ class MainController {
     }
 
     setContextMenuRegions (eventX) {
+        this.contextMenuPrevRegion = null
+        this.contextMenuNextRegion = null
+
         const wavesurferWidth = this.wavesurfer.drawer.width
         const duration = this.wavesurfer.getDuration()
         const perc = (eventX / wavesurferWidth)
         const time = perc * duration
+
         this.iterateRegions((r) => {
             const next = this.getRegion(r.next)
-            if (r.end < time && next.start > time) {
+            if (!r.prev && time < r.start) {
+                this.contextMenuNextRegion = r
+            } else if (!r.next && time > r.end){
+                this.contextMenuPrevRegion = r
+            } else if (next && r.end < time && next.start > time) {
                 this.contextMenuNextRegion = next
                 this.contextMenuPrevRegion = r
             }
