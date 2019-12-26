@@ -535,7 +535,8 @@ class MainController {
             truncateRegions.forEach(r => {
                 const words = JSON.parse(JSON.stringify(r.data.words))
                 words.forEach(w => {
-                    if (w.start >= dummyRegion.start && w.end <= dummyRegion.end) {
+                    const wordLength = w.end - w.start
+                    if (w.start >= dummyRegion.start && w.start + wordLength / 2 <= dummyRegion.end) {
                         newRegionWords.push(w)
                     }
                 })
@@ -554,15 +555,16 @@ class MainController {
                     let words = JSON.parse(JSON.stringify(r.data.words))
                     let i
                     for (i = 0, length = words.length; i < length; i++) {
-                        if (words[i].start > dummyRegion.start) break
+                        const wordLength = words[i].end - words[i].start
+                        if (words[i].start + wordLength / 2 > dummyRegion.start) break
                     }
 
                     first.data.words = words.slice(0, i)
 
                     for (i = 0, length = words.length; i < length; i++) {
-                        if (words[i].start > dummyRegion.end) break
+                        const wordLength = words[i].end - words[i].start
+                        if (words[i].start + wordLength / 2 > dummyRegion.end) break
                     }
-
                     second.data.words = words.slice(i)
 
                     this.__deleteRegion(r)
@@ -586,7 +588,8 @@ class MainController {
                     let words = JSON.parse(JSON.stringify(r.data.words))
                     let i
                     for (i = 0, length = words.length; i < length; i++) {
-                        if (words[i].start > dummyRegion.end) break
+                        const wordLength = words[i].end - words[i].start
+                        if (words[i].start + wordLength / 2 > dummyRegion.end) break
                     }
 
                     original.data.words = words.slice(i)
@@ -605,7 +608,8 @@ class MainController {
                     let words = JSON.parse(JSON.stringify(r.data.words))
                     let i
                     for (i = 0, length = words.length; i < length; i++) {
-                        if (words[i].start > dummyRegion.start) break
+                        const wordLength = words[i].end - words[i].start
+                        if (words[i].start + wordLength / 2 > dummyRegion.start) break
                     }
 
                     original.data.words = words.slice(0, i)
@@ -637,6 +641,8 @@ class MainController {
 
             this.dummyRegion.remove()
             this.dummyRegion = null
+
+            this.seek(newRegion.start, 'right')
         } else {
             /* insert a silent region */
             const newRegion = this.wavesurfer.addRegion({
