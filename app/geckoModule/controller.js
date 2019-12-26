@@ -632,7 +632,7 @@ class MainController {
                         this.eventBus.trigger('resetEditableWords', currentRegion)
                     }
 
-                    if (this.isPlaying) {
+                    if (this.isPlaying && config.proofreadingAutoScroll) {
                         this.eventBus.trigger('proofReadingScrollToRegion', currentRegion)
                     }
                 } else {
@@ -1001,14 +1001,45 @@ class MainController {
     }
 
     playRegion() {
-        if (this.selectedRegion) {
-            this.selectedRegion.play();
+        if (this.playRegionClicked) {
+            this.cancelPlayRegionClick = true
+            return
         }
-        // play silence region
-        else {
-            var silence = this.calcSilenceRegion();
-            this.wavesurfer.play(silence.start, silence.end);
-        }
+    
+        this.playRegionClicked = true
+    
+        this.$timeout(() => {
+            if (this.cancelPlayRegionClick) {
+                this.cancelPlayRegionClick = false;
+                this.playRegionClicked = false;
+                return;
+            }
+
+            if (this.selectedRegion) {
+                this.selectedRegion.play()
+            }
+            // play silence region
+            else {
+                var silence = this.calcSilenceRegion()
+                this.wavesurfer.play(silence.start, silence.end)
+            }
+
+            this.cancelPlayRegionClick = false
+            this.playRegionClicked = false
+        }, 250)
+    }
+
+    playRegionFromCurrentTime() {
+        this.$timeout(() => {
+            if (this.selectedRegion) {
+                this.wavesurfer.play(this.wavesurfer.getCurrentTime(), this.selectedRegion.end)
+            }
+            // play silence region
+            else {
+                var silence = this.calcSilenceRegion()
+                this.wavesurfer.play(this.wavesurfer.getCurrentTime(), silence.end)
+            }
+        })
     }
 
     calcSilenceRegion() {

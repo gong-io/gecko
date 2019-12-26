@@ -172,14 +172,15 @@
                 Pause
             </button>
 
-            <button class="btn btn-primary" ng-click="ctrl.playRegion()">
+            <button class="btn btn-primary" ng-click="ctrl.playRegion()" ng-dblclick="ctrl.playRegionFromCurrentTime()">
                 <i class="glyphicon glyphicon-play"></i>
                 Play Segment
             </button>
 
-            <button class="btn btn-primary" ng-click="ctrl.zoomIntoRegion()">
-                <i class="glyphicon glyphicon-zoom-in"></i>
-                Zoom to Segment
+            <button class="btn btn-default" ng-click="ctrl.zoomIntoRegion()"
+                    title="Zoom to Segment"
+                    ng-disabled="!ctrl.selectedRegion">
+                    <i class="glyphicon glyphicon-zoom-in"></i>
             </button>
 
             <div class="btn-group" uib-dropdown is-open="status.isopen">
