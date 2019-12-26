@@ -1455,7 +1455,7 @@ class MainController {
             res.segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
             self.filesData = res.segmentFiles;
 
-            if (this.dataBase) {
+            if (config.enableDrafts && this.dataBase) {
                 const serverDraft = await self.dataBase.createDraft({
                     mediaFile: {
                         name: audioFileName,
