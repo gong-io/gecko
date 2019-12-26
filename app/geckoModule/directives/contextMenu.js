@@ -40,15 +40,25 @@ export default () => {
                 DomUtils.disableScroll()
               });
 
-              $(document).click(function(event) {
-                var target = $(event.target);
-                if (!target.is(".popover") && !target.parents().is(".popover")) {
-                  if (last === event.timeStamp)
+              const closeMenu = (event) => {
+                if (last === event.timeStamp)
                     return;
                   ul.css({
                     'display': 'none'
                   });
                   DomUtils.enableScroll()
+              }
+
+              $(document).click(function(event) {
+                var target = $(event.target);
+                if (!target.is(".popover") && !target.parents().is(".popover")) {
+                  closeMenu(event)
+                }
+              });
+
+              $(document).keyup(function(event) {
+                if (event.which === 27) {
+                  closeMenu(event)
                 }
               });
             }
