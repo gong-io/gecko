@@ -352,7 +352,7 @@
                             ({{ ctrl.silence.end - ctrl.silence.start | number : 2}}s)
                         </dt>
                     </div>
-                    <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion">
+                    <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy">
                         <div class="form-group">
                             <label class="annotation-label" style="background-color:{{ color + 80 }};"
                                    ng-repeat="(speaker,color) in ctrl.filesData[ctrl.selectedFileIndex].legend">
@@ -361,7 +361,7 @@
                                        value="{{speaker}}"
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
-                                       ng-disabled="!ctrl.selectedRegion"
+                                       ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy""
                                 style="margin-bottom: 0px">
                                 <span editable
                                       changed="ctrl.speakerNameChanged(oldText,newText)"
