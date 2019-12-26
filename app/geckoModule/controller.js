@@ -665,6 +665,8 @@ class MainController {
 
             this.dummyRegion.remove()
             this.dummyRegion = null
+
+            this.seek(newRegion.start, 'right')
         }
 
         this.$timeout(() => {
