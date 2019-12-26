@@ -134,7 +134,7 @@ class GeckoEdtior {
         const newRange = document.createRange()
         const nextWord = lastNode.nextSibling
 
-        if (rangeOffset && !text.trim().length) {
+        if (rangeOffset && text && !text.trim().length) {
             firstNode.textContent = `${firstNode.textContent.substring(0, rangeOffset)}`
             newRange.setStart(lastNode.firstChild, lastNode.textContent.length)
         } else {
@@ -145,9 +145,11 @@ class GeckoEdtior {
             lastNode.remove()
             nextWord.remove()
 
-            if (text.trim().length) {
+            if (text && text.trim().length) {
                 newRange.setStart(firstNode.firstChild, text ? rangeOffset + text.length : rangeOffset)
-            } else {
+            } else if (!text) {
+                newRange.setStart(firstNode.firstChild, rangeOffset)
+            }else {
                 const previousSpace = firstNode.previousSibling
                 newRange.setStart(previousSpace.firstChild, previousSpace.textContent.length)
             }
@@ -236,6 +238,18 @@ class GeckoEdtior {
         selection.addRange(range)
     }
 
+    insertTextInsideTextNode (node, text) {
+        node.textContent = '\u200B'
+
+        const range = document.createRange()
+        range.selectNode(node.firstChild)
+        range.collapse()
+
+        const selection = window.getSelection()
+        selection.removeAllRanges()
+        selection.addRange(range)
+    }
+
     keydownEvent (e) {
         if (e.which === 13 || e.which === 27) {
             this.element.blur()
@@ -251,7 +265,7 @@ class GeckoEdtior {
                 const selection = document.getSelection()
                 const ancestorNode = this.findNodeAncestor(selection.focusNode)
                 if (e.which === 8 && this.isSpace(ancestorNode) && selection.isCollapsed) {
-                    /* deleting a space, cursor is in word start position */
+                    /* deleting a space, cursor is in word start position, backspace pressed */
                     const previousWord = ancestorNode.previousSibling
                     const nextWord = ancestorNode.nextSibling
                     const previousWordText = previousWord.textContent
@@ -269,8 +283,15 @@ class GeckoEdtior {
 
                     e.preventDefault()
                     return
+                } else if (e.which === 46 && this.isSpace(ancestorNode) && selection.isCollapsed) {
+                    /* deleting a last char, cursor is in word start position, delete pressed */
+                    if (ancestorNode.nextSibling.textContent.replace('\u200B', '').length === 1) {
+                        this.insertTextInsideTextNode(ancestorNode.nextSibling, null)
+                        e.preventDefault()
+                    }
+                    return
                 } else if (e.which === 46 && this.isText(ancestorNode) && selection.isCollapsed) {
-                    /* deleting a space, cursor is in word end position */
+                    /* deleting a space, cursor is in word end position, delete pressed */
                     if (selection.focusOffset === ancestorNode.textContent.length) {
                         const previousWord = ancestorNode
                         const nextSpace = ancestorNode.nextSibling
@@ -291,6 +312,32 @@ class GeckoEdtior {
                         e.preventDefault()
                         return
                     }
+                } else if (e.which === 8 && this.isText(ancestorNode) && selection.isCollapsed) {
+                    /* deleting a last character, cursor is in word end position, delete pressed */
+                    if (ancestorNode.textContent.replace('\u200B', '').length === 1) {
+                        this.insertTextInsideTextNode(ancestorNode, null)
+                        e.preventDefault()
+                    } else if (ancestorNode.textContent.replace('\u200B', '').length === 0) {
+                        const selection = document.getSelection()
+                        const range = document.createRange()
+
+                        const previousSpace = ancestorNode.previousSibling
+                        if (previousSpace) {
+                            const previousWord = previousSpace.previousSibling
+                            const previousWordText = previousWord.textContent
+
+                            ancestorNode.remove()
+                            previousSpace.remove()
+
+                            selection.removeAllRanges()
+
+                            range.setStart(previousWord.firstChild, previousWordText.length)
+                            range.setStart(previousWord.firstChild, previousWordText.length)
+                            selection.addRange(range)
+                        }
+                        e.preventDefault()
+                    } 
+                    return
                 }
 
                 /* selection between two text nodes */
@@ -312,6 +359,9 @@ class GeckoEdtior {
                     e.preventDefault()
                 } else if (this.isSpace(startNode)) {
                     this.insertTextInsideSpace(startNode, e.which === 32 ? ' ' : null)
+                    e.preventDefault()
+                } else if (!selection.isCollapsed && selection.toString().replace('\u200B', '').length === startNode.textContent.replace('\u200B', '').length) {
+                    this.insertTextInsideTextNode(startNode, e.which === 32 ? ' ' : null)
                     e.preventDefault()
                 }
             }
@@ -337,6 +387,16 @@ class GeckoEdtior {
                         range.setStart(nodeTo.firstChild, 1)
                         selection.addRange(range)
     
+                        e.preventDefault()
+                    } else if (ancestorNode.textContent.length === 0) {
+                        const nodeTo = ancestorNode
+                        nodeTo.textContent = `${e.key}`
+
+                        const range = document.createRange()
+                        selection.removeAllRanges()
+                        range.setStart(nodeTo.firstChild, 1)
+                        selection.addRange(range)
+
                         e.preventDefault()
                     }
                 } else {
@@ -543,7 +603,7 @@ class GeckoEdtior {
         }
         const updatedWords = []
         spans.forEach(span => {
-            const wordText = span.textContent.trim()
+            const wordText = span.textContent.trim().replace('\u200B', '')
             const wordUuid = span.getAttribute('word-uuid')
             const wordSelected = span.classList.contains('selected-word')
             if (wordText.length) {

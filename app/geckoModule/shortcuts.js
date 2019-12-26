@@ -150,7 +150,7 @@ class Shortcuts {
     }
 
     undoHandler (e) {
-        this.app.undo()
+        this.app.historyService.undo(this.app)
     }
 
     saveHandler (e) {
@@ -173,37 +173,11 @@ class Shortcuts {
     }
 
     jumpNextDiscrepancyHandler (e) {
-        if (!this.app.discrepancies) return;
-
-        let time = this.app.wavesurfer.getCurrentTime();
-
-        let i = 0;
-        for (; i < this.app.filteredDiscrepancies.length; i++) {
-            if (this.app.filteredDiscrepancies[i].start > time + constants.EXTRA_DISCREPANCY_TIME) {
-                break;
-            }
-        }
-
-        if (this.app.filteredDiscrepancies[i]) {
-            this.app.discrepancyService.playDiscrepancy(this.app.filteredDiscrepancies[i]);
-        }
+        this.app.discrepancyService.jumpNextDiscrepancy(this.app)
     }
 
     jumpPreviousDiscrepancyHandler (e) {
-        if (!this.app.discrepancies) return;
-
-        let time = this.app.wavesurfer.getCurrentTime();
-
-        let i = this.app.filteredDiscrepancies.length - 1;
-        for (; i >=0; i--) {
-            if (this.app.filteredDiscrepancies[i].end < time + constants.EXTRA_DISCREPANCY_TIME) {
-                break;
-            }
-        }
-
-        if (this.app.filteredDiscrepancies[i - 1]) {
-            this.app.playDiscrepancy(this.app.filteredDiscrepancies[i - 1]);
-        }
+        this.app.discrepancyService.jumpPreviousDiscrepancy(this.app)
     }
 }
 
