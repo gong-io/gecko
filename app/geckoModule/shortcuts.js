@@ -10,6 +10,10 @@ class Shortcuts {
         const digitsString = digits.map((d, idx) => `command+shift+${idx + 1},ctrl+shift+${idx + 1}`).join(',')
         this.hotkeysDesc = [
             {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>S</kbd>' : '<kbd>Ctrl</kbd>+<kbd>S</kbd>',
+                desc: 'Save a draft'
+            },
+            {
                 keyDesc: this.isMac ? '<kbd>Alt</kbd>+<kbd>Space</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Space</kbd>',
                 desc: 'Play/pause'
             },
@@ -88,6 +92,10 @@ class Shortcuts {
                 keys: 'ctrl+z,command+z'
             },
             {
+                handler: (e) => this.saveHandler(e),
+                keys: 'ctrl+s,command+s'
+            },
+            {
                 handler: (e) => this.deleteRegionHandler(e),
                 keys: 'ctrl+backspace,ctrl+delete,command+backspace,command+delete'
             },
@@ -143,6 +151,11 @@ class Shortcuts {
 
     undoHandler (e) {
         this.app.historyService.undo(this.app)
+    }
+
+    saveHandler (e) {
+        this.app.saveToDB()
+        e.preventDefault()
     }
 
     digitHandler (e) {
