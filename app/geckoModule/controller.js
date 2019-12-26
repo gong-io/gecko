@@ -34,7 +34,9 @@ import {
 class MainController {
     constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, $timeout, $interval) {
         this.dataManager = dataManager;
-        this.dataBase = dataBase;
+        if (config.enableDrafts) {
+            this.dataBase = dataBase;
+        }
         this.eventBus = eventBus
         this.$uibModal = $uibModal;
         this.$scope = $scope;
@@ -361,7 +363,7 @@ class MainController {
             }, i, true)
         }
 
-        this.dataBase.updateDraft(this.currentDraftId, filesData)
+        this.dataBase && this.dataBase.updateDraft(this.currentDraftId, filesData)
     }
 
     handleCtm() {
@@ -1242,7 +1244,9 @@ class MainController {
 
     async saveS3() {
         try {
-            await this.dataBase.clearDB()
+            if (this.dataBase) {
+                await this.dataBase.clearDB()
+            }
         } catch (e) {
         }
         const fileNameSpl = this.filesData[0].filename.split('.')
@@ -1427,11 +1431,13 @@ class MainController {
 
     async loadDraft (draft) {
         this.init()
-        const dbDraft = await this.dataBase.getDraft(draft)
-        this.currentDraftId = dbDraft.id
-        this.lastDraft = formatTime(new Date(dbDraft.mtime))
+        if (this.dataBase) {
+            const dbDraft = await this.dataBase.getDraft(draft)
+            this.currentDraftId = dbDraft.id
+            this.lastDraft = formatTime(new Date(dbDraft.mtime))
 
-        this.loadFromDB(dbDraft)
+            this.loadFromDB(dbDraft)
+        }
     }
 
     async loadServer (config) {
@@ -1449,17 +1455,19 @@ class MainController {
             res.segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
             self.filesData = res.segmentFiles;
 
-            const serverDraft = await self.dataBase.createDraft({
-                mediaFile: {
-                    name: audioFileName,
-                    data: res.audioFile,
-                    url: config.audio.url
-                },
-                files: self.filesData,
-                draftType: 1
-            })
-            self.currentDraftId = serverDraft
-            self.lastDraft = formatTime(new Date())
+            if (config.enableDrafts && this.dataBase) {
+                const serverDraft = await self.dataBase.createDraft({
+                    mediaFile: {
+                        name: audioFileName,
+                        data: res.audioFile,
+                        url: config.audio.url
+                    },
+                    files: self.filesData,
+                    draftType: 1
+                })
+                self.currentDraftId = serverDraft
+                self.lastDraft = formatTime(new Date())
+            }
         })
     }
 
@@ -1477,16 +1485,18 @@ class MainController {
                     confirmButtonText: 'Select draft'
                   }).then(async (result) => {
                     if (result.value) {
-                        const drafts = await this.dataBase.getDrafts(1)
-                        const modalInstance = this.$uibModal.open(loadDraftModal(this, drafts))
-                        modalInstance.result.then(async (res) => {
-                            if (res) {
-                                if (this.wavesurfer) this.wavesurfer.destroy();
-                                this.loadDraft(res)
-                            } else {
-                                this.loadServer(config)
-                            }
-                        });
+                        if (this.dataBase) {
+                            const drafts = await this.dataBase.getDrafts(1)
+                            const modalInstance = this.$uibModal.open(loadDraftModal(this, drafts))
+                            modalInstance.result.then(async (res) => {
+                                if (res) {
+                                    if (this.wavesurfer) this.wavesurfer.destroy();
+                                    this.loadDraft(res)
+                                } else {
+                                    this.loadServer(config)
+                                }
+                            });
+                        }
                     } else {
                         this.loadServer(config)
                     }
