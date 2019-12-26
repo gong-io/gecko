@@ -18,7 +18,8 @@ var config = {
     },
     slider: "#slider",
     isServerMode: false,
-    proofreadingAutoScroll: false
+    proofreadingAutoScroll: false,
+    enableDrafts: false
 }
 
 export { config }

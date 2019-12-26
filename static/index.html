@@ -41,7 +41,7 @@
                         {{ ctrl.currentTime }} / {{ ctrl.totalTime }}
                     </a>
                 </li>
-                <li class="" ng-if="ctrl.lastDraft">
+                <li class="" ng-if="ctrl.lastDraft && ctrl.config.enableDrafts">
                     <a href="#" ng-click="ctrl.saveToDB($event)">
                         <b>Saved on: </b>
                         {{ ctrl.lastDraft }}

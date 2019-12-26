@@ -16,13 +16,16 @@ export default (parent) => {
             $scope.draftAvailable = false
             $scope.isLoading = false
             $scope.newSegmentFiles = [undefined]
-
-            const draftCounts = await parent.dataBase.getCounts(0)
-            if (draftCounts) {
-                parent.$timeout(() => {
-                    $scope.draftAvailable = true
-                })
-            } 
+            
+            if (parent.config.enableDrafts) {
+                const draftCounts = await parent.dataBase.getCounts(0)
+                if (draftCounts) {
+                    parent.$timeout(() => {
+                        $scope.draftAvailable = true
+                    })
+                }
+            }
+ 
             $scope.runDemo = async () => {
                 if ($scope.isLoading) {
                     return
@@ -45,16 +48,18 @@ export default (parent) => {
                     },
                     ctms: []
                 })
-                const demoDraft = await parent.dataBase.createDraft({
-                    mediaFile: {
-                        name: 'demo.mp3',
-                        data: res.audioFile
-                    },
-                    files: parent.filesData,
-                    draftType: 0
-                })
-                parent.currentDraftId = demoDraft
-                parent.lastDraft = formatTime(new Date())
+                if (parent.config.enableDrafts) {
+                    const demoDraft = await parent.dataBase.createDraft({
+                        mediaFile: {
+                            name: 'demo.mp3',
+                            data: res.audioFile
+                        },
+                        files: parent.filesData,
+                        draftType: 0
+                    })
+                    parent.currentDraftId = demoDraft
+                    parent.lastDraft = formatTime(new Date())
+                }
 
                 parent.wavesurfer.loadBlob(res.audioFile);
                 $scope.isLoading = false

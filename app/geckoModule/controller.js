@@ -48,6 +48,7 @@ class MainController {
         this.eventBus = eventBus
         this.discrepancyService = discrepancyService
         this.historyService = historyService
+        this.config = config
     }
 
     async loadApp(config) {
@@ -199,9 +200,11 @@ class MainController {
         this.bindWaveSurferEvents()
         this.bindDummyRegionEvents()
 
-        this.$interval(() => {
-            this.saveToDB()
-        }, constants.SAVE_THRESHOLD)
+        if (config.enableDrafts) {
+            this.$interval(() => {
+                this.saveToDB()
+            }, constants.SAVE_THRESHOLD)
+        }
     }
 
     bindWaveSurferEvents() {
@@ -326,6 +329,9 @@ class MainController {
     }
 
     async saveToDB (e) {
+        if (!config.enableDrafts) {
+            return
+        }
         if (e) {
             e.preventDefault()
         }
@@ -1460,7 +1466,7 @@ class MainController {
     async loadServerMode(config) {
         if (config.audio && config.audio.url) {
             const fileDrafts = await this.dataBase.checkDraftUrl(config.audio.url)
-            if (fileDrafts && fileDrafts.length) {
+            if (fileDrafts && fileDrafts.length && config.enableDrafts) {
                 Swal.fire({
                     title: 'Select draft',
                     text: "Looks like you has a draft for this file.",
