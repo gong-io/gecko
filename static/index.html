@@ -362,14 +362,13 @@
                                        ng-click="ctrl.speakerChanged(speaker)"
                                        ng-disabled="!ctrl.selectedRegion"
                                 style="margin-bottom: 0px">
-                                <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.</span>
+                                <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.{{ speaker.display }}</span>
                                 <span ng-if="!speaker.isDefault" editable
                                       changed="ctrl.speakerNameChanged(speaker, oldText,newText)"
                                       ng-model="speaker.value"
                                       title="{{speaker.value}}"
                                 class="speaker-legend">
                                 </span>
-                                <span title="{{speaker.display}}" class="speaker-legend" ng-if="speaker.isDefault">{{ speaker.display }}</span>
                                 <div class="pull-right">
                                     <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
                                                representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>
@@ -514,8 +513,7 @@
                     ng-disabled="!ctrl.contextMenuRegion"
                     ng-click="ctrl.speakerChanged(speaker, true);$event.stopPropagation()"
                     style="margin-bottom: 0px">
-            <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.</span>
-            <span title="{{speaker.display}}" class="speaker-legend" ng-if="speaker.isDefault">{{ speaker.display }}</span>
+            <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.{{ speaker.display }}</span>
             <span title="{{speaker.value}}" class="speaker-legend" ng-if="!speaker.isDefault">{{ speaker.value }}</span>
         </a>
     </li>
