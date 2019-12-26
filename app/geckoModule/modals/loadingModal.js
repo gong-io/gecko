@@ -17,7 +17,7 @@ export default (parent) => {
             $scope.isLoading = false
             $scope.newSegmentFiles = [undefined]
             
-            if (parent.config.enableDrafts) {
+            if (parent.config.enableDrafts && parent.dataBase) {
                 const draftCounts = await parent.dataBase.getCounts(0)
                 if (draftCounts) {
                     parent.$timeout(() => {
@@ -48,7 +48,7 @@ export default (parent) => {
                     },
                     ctms: []
                 })
-                if (parent.config.enableDrafts) {
+                if (parent.config.enableDrafts && parent.dataBase) {
                     const demoDraft = await parent.dataBase.createDraft({
                         mediaFile: {
                             name: 'demo.mp3',
@@ -69,14 +69,17 @@ export default (parent) => {
             $scope.loadDraft = async () => {
                 // $uibModalInstance.close(false)
                 // parent.loadDraft()
-                const drafts = await parent.dataBase.getDrafts(0)
-                const modalInstance = parent.$uibModal.open(loadDraftModal(parent, drafts))
-                modalInstance.result.then(async (res) => {
-                    if (res) {
-                        $uibModalInstance.close(false)
-                        parent.loadDraft(res)
-                    }
-                });           
+                if (parent.dataBase) {
+                    const drafts = await parent.dataBase.getDrafts(0)
+                    const modalInstance = parent.$uibModal.open(loadDraftModal(parent, drafts))
+                    modalInstance.result.then(async (res) => {
+                        if (res) {
+                            $uibModalInstance.close(false)
+                            parent.loadDraft(res)
+                        }
+                    });
+                }
+                           
             };
 
             $scope.ok = () => {
