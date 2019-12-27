@@ -40,8 +40,12 @@ class Shortcuts {
                 desc: 'Undo'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>',
-                desc: 'Select annotation'
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>1</kbd>...<kbd>Ctrl</kbd>+<kbd>9</kbd>',
+                desc: 'Select fixed label'
+            },
+            {
+                keyDesc: '<kbd>Alt</kbd>+<kbd>1</kbd>...<kbd>Alt</kbd>+<kbd>9</kbd>',
+                desc: 'Select non-fixed label'
             },
             {
                 keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Click</kbd> on a word' : '<kbd>Ctrl</kbd>+<kbd>Click</kbd> on a word',

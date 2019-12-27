@@ -59,12 +59,12 @@ export const parse = (data) => {
     if (data['colors']) {
         return [ monologues, data['colors'] ]
     }
-    return monologues;
+    return [ monologues, null ];
 }
 
 export const convert = (app, fileIndex) => {
     var self = app;
-    var data = {schemaVersion: "2.0", monologues: [], legend: []};
+    var data = {schemaVersion: "2.0", monologues: []};
     app.iterateRegions((region) => {
         let words = region.data.words;
         let terms = []
