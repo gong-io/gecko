@@ -41,6 +41,12 @@
                         {{ ctrl.currentTime }} / {{ ctrl.totalTime }}
                     </a>
                 </li>
+                <li class="" ng-if="ctrl.lastDraft && ctrl.config.enableDrafts">
+                    <a href="#" ng-click="ctrl.saveToDB($event)">
+                        <b>Saved on: </b>
+                        {{ ctrl.lastDraft }}
+                    </a>
+                </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li class="active">
@@ -91,7 +97,7 @@
                 </li>
 
                 <li>
-                    <a href="https://github.com/gong-io/gecko">github.com/gong-io/gecko</a>
+                    <a target="_blank" href="https://github.com/gong-io/gecko">github.com/gong-io/gecko</a>
                 </li>
             </ul>
         </div>
@@ -172,14 +178,15 @@
                 Pause
             </button>
 
-            <button class="btn btn-primary" ng-click="ctrl.playRegion()">
+            <button class="btn btn-primary" ng-click="ctrl.playRegion()" ng-dblclick="ctrl.playRegionFromCurrentTime()">
                 <i class="glyphicon glyphicon-play"></i>
                 Play Segment
             </button>
 
-            <button class="btn btn-primary" ng-click="ctrl.zoomIntoRegion()">
-                <i class="glyphicon glyphicon-zoom-in"></i>
-                Zoom to Segment
+            <button class="btn btn-default" ng-click="ctrl.zoomIntoRegion()"
+                    title="Zoom to Segment"
+                    ng-disabled="!ctrl.selectedRegion">
+                    <i class="glyphicon glyphicon-zoom-in"></i>
             </button>
 
             <div class="btn-group" uib-dropdown is-open="status.isopen">
@@ -351,7 +358,7 @@
                             ({{ ctrl.silence.end - ctrl.silence.start | number : 2}}s)
                         </dt>
                     </div>
-                    <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion">
+                    <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy">
                         <div class="form-group">
                             <label class="annotation-label" style="background-color:{{ color + 80 }};"
                                    ng-repeat="(speaker,color) in ctrl.filesData[ctrl.selectedFileIndex].legend">
@@ -360,7 +367,7 @@
                                        value="{{speaker}}"
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
-                                       ng-disabled="!ctrl.selectedRegion"
+                                       ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy""
                                 style="margin-bottom: 0px">
                                 <span editable
                                       changed="ctrl.speakerNameChanged(oldText,newText)"
@@ -508,6 +515,8 @@
 <!--</script>-->
 
 <a id="downloadAnchorElem" style="display:none"></a>
+
+<toaster-container toaster-options="{'position-class': 'toast-bottom-right', 'time-out': 2000}"></toaster-container>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 

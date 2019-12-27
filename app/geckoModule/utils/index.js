@@ -97,6 +97,18 @@ export const _printHistoryInfo = (parent, onlyAvailableHistory) => {
     });
 }
 
+export const pad = (n) => n < 10 ? '0' + n : n
+
+export const formatTime = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+
+export const getCurrentTimeStamp = () => formatTime(new Date())
+
+export const formatDate = (date) => {
+    const hours = date.getHours()
+    const minutes = date.getMinutes()
+    const strTime = pad(hours) + ':' + pad(minutes)
+    return date.getMonth()+1 + "/" + date.getDate() + "/" + date.getFullYear() + "  " + strTime;
+}
 export const copyRegion = (region) => {
     //TODO: change the copy of data to deep copy by "JSON.parse(JSON.stringify(object))"
     // and then handle "words" correctly

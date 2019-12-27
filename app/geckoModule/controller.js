@@ -22,7 +22,8 @@ import {
     sortDict,
     copyRegion,
     parseAndLoadAudio,
-    prepareLegend
+    prepareLegend,
+    formatTime
 } from './utils'
 
 import {
@@ -31,9 +32,11 @@ import {
 } from './modals'
 
 class MainController {
-    constructor($scope, $uibModal, dataManager, dataBase, eventBus, discrepancyService, historyService, $timeout, $interval) {
+    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, $timeout, $interval) {
         this.dataManager = dataManager;
-        this.dataBase = dataBase;
+        if (config.enableDrafts) {
+            this.dataBase = dataBase;
+        }
         this.eventBus = eventBus
         this.$uibModal = $uibModal;
         this.$scope = $scope;
@@ -43,12 +46,14 @@ class MainController {
         this.proofReadingView = false
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
+        this.toaster = toaster
         this.eventBus = eventBus
         this.discrepancyService = discrepancyService
         this.historyService = historyService
+        this.config = config
     }
 
-    loadApp(config) {
+    async loadApp(config) {
         const urlParams = new URLSearchParams(window.location.search)
         const saveMode = urlParams.get('save_mode')
         if (saveMode) {
@@ -116,6 +121,9 @@ class MainController {
         this.showSpectrogramButton = false
         this.spectrogramReady = false
         this.currentGainProc = 100
+
+        this.lastDraft = null
+        this.currentDraftId = 0
 
         // history variables
         this.historyService.reset()
@@ -196,10 +204,13 @@ class MainController {
         };
 
         this.bindWaveSurferEvents()
+        this.bindDummyRegionEvents()
 
-        this.$interval(() => {
-            this.saveToDB()
-        }, constants.SAVE_THRESHOLD)
+        if (config.enableDrafts) {
+            this.$interval(() => {
+                this.saveToDB()
+            }, constants.SAVE_THRESHOLD)
+        }
     }
 
     bindWaveSurferEvents() {
@@ -232,8 +243,62 @@ class MainController {
         this.wavesurfer.on('region-update-end', (region) => wavesurferEvents.regionUpdateEnd(this, region))
         // this.wavesurfer.on('region-in', (region) => wavesurferEvents.regionIn(this, region))
         // this.wavesurfer.on('region-out', (region) => wavesurferEvents.regionOut(this, region))
-        this.wavesurfer.on('region-click', (region) => wavesurferEvents.regionClick(this, region))
+        this.wavesurfer.on('region-click', (region, e) => wavesurferEvents.regionClick(this, region, e))
         this.wavesurfer.on('pause', () => wavesurferEvents.pause(this))
+    }
+
+    bindDummyRegionEvents () {
+        this.isDrag = false
+
+        this.wavesurfer.drawer.wrapper.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'REGION') {
+                if (e.ctrlKey || e.metaKey) {
+                    e.stopPropagation()
+                    this.isDrag = true
+                    this.start = this.wavesurfer.drawer.handleEvent(e, true)
+                }
+            }
+        }, true)
+
+        this.wavesurfer.drawer.wrapper.addEventListener('mousemove', (e) => {
+            if (this.isDrag) {
+                let duration = this.wavesurfer.getDuration();
+                if (!this.dragRegion) {
+                    this.dragRegion = this.wavesurfer.addRegion({
+                        drag: false,
+                        minLength: constants.MINIMUM_LENGTH,
+                        data: {
+                            isDummy: true
+                        }
+                    })
+                    this.dragRegion.element.style.background = 'repeating-linear-gradient(135deg, rgb(128, 128, 128) 20px, rgb(180, 180, 180) 40px) rgb(128, 128, 128)'
+                }
+
+                const end = this.wavesurfer.drawer.handleEvent(e);
+                const startUpdate = this.wavesurfer.regions.util.getRegionSnapToGridValue(
+                    this.start * duration
+                );
+                const endUpdate = this.wavesurfer.regions.util.getRegionSnapToGridValue(
+                    end * duration
+                );
+
+                this.dragRegion.update({
+                    start: Math.min(endUpdate, startUpdate),
+                    end: Math.max(endUpdate, startUpdate)
+                })
+            }
+        }, true)
+
+        this.wavesurfer.drawer.wrapper.addEventListener('mouseup', (e) => {
+            if (this.isDrag) {
+                this.isDrag = false
+                if (this.dragRegion) {
+                    this.dragRegion.fireEvent('update-end', e)
+                    this.wavesurfer.fireEvent('region-update-end', this.dragRegion, e)
+                    this.dragRegion = null
+                }
+            }
+        })
     }
 
     zoomIntoRegion() {
@@ -269,9 +334,40 @@ class MainController {
         }
     }
 
-    async saveToDB() {
-        await this.dataBase.clearFiles()
-        await this.dataBase.saveFiles(this.filesData)
+    async saveToDB (e) {
+        if (!config.enableDrafts) {
+            return
+        }
+        if (e) {
+            e.preventDefault()
+        }
+        this.lastDraft = formatTime(new Date())
+        this.toaster.pop('success', 'Draft saved')
+        const filesData = []
+
+        for (let i = 0; i < this.filesData.length; i++) {
+            filesData.push({
+                filename: this.filesData[i].filename,
+                data: []
+            })
+            this.iterateRegions(region => {
+                filesData[filesData.length - 1].data.push({
+                    end: region.end,
+                    start: region.start,
+                    speaker: { id: region.data.speaker.join('+')},
+                    words: region.data.words.map(w => {
+                        return {
+                            start: w.start,
+                            end: w.end,
+                            text: w.text,
+                            confidence: w.confidence ? w.confidence : 1
+                        }
+                    })
+                })
+            }, i, true)
+        }
+
+        this.dataBase && this.dataBase.updateDraft(this.currentDraftId, filesData)
     }
 
     handleCtm() {
@@ -481,24 +577,50 @@ class MainController {
 
         if (truncateRegions.length) {
             const newRegionWords = []
-            const newRegionSpeakers = []
             let regionsToDel = []
             let regionsToAdd = []
             truncateRegions.forEach(r => {
-                const speakers = JSON.parse(JSON.stringify(r.data.speaker))
-                speakers.forEach(s => {
-                    if (!newRegionSpeakers.includes(s)) {
-                        newRegionSpeakers.push(s)
-                    }
-                })
                 const words = JSON.parse(JSON.stringify(r.data.words))
                 words.forEach(w => {
-                    if (w.start >= dummyRegion.start && w.end <= dummyRegion.end) {
+                    const wordLength = w.end - w.start
+                    if (w.start >= dummyRegion.start && w.start + wordLength / 2 <= dummyRegion.end) {
                         newRegionWords.push(w)
                     }
                 })
+                if (r.start <= dummyRegion.start && r.end >= dummyRegion.end) {
+                    /* dummy region is fully overlaped*/
+                    let first = copyRegion(r)
+                    let second = copyRegion(r)
+                    regionsToDel.push(first.id)
 
-                if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) {
+                    delete first.id
+                    delete second.id
+
+                    first.end = dummyRegion.start
+                    second.start = dummyRegion.end
+
+                    let words = JSON.parse(JSON.stringify(r.data.words))
+                    let i
+                    for (i = 0, length = words.length; i < length; i++) {
+                        const wordLength = words[i].end - words[i].start
+                        if (words[i].start + wordLength / 2 > dummyRegion.start) break
+                    }
+
+                    first.data.words = words.slice(0, i)
+
+                    for (i = 0, length = words.length; i < length; i++) {
+                        const wordLength = words[i].end - words[i].start
+                        if (words[i].start + wordLength / 2 > dummyRegion.end) break
+                    }
+                    second.data.words = words.slice(i)
+
+                    this.__deleteRegion(r)
+                    first = this.wavesurfer.addRegion(first)
+                    second = this.wavesurfer.addRegion(second)
+                    regionsToAdd.push(first.id)
+                    regionsToAdd.push(second.id)
+                }
+                else if (r.start >= dummyRegion.start && r.end <= dummyRegion.end) {
                     /* region is fully overlaped */
                     regionsToDel.push(r.id)
                     this.__deleteRegion(r)
@@ -513,7 +635,8 @@ class MainController {
                     let words = JSON.parse(JSON.stringify(r.data.words))
                     let i
                     for (i = 0, length = words.length; i < length; i++) {
-                        if (words[i].start > dummyRegion.end) break
+                        const wordLength = words[i].end - words[i].start
+                        if (words[i].start + wordLength / 2 > dummyRegion.end) break
                     }
 
                     original.data.words = words.slice(i)
@@ -532,7 +655,8 @@ class MainController {
                     let words = JSON.parse(JSON.stringify(r.data.words))
                     let i
                     for (i = 0, length = words.length; i < length; i++) {
-                        if (words[i].start > dummyRegion.start) break
+                        const wordLength = words[i].end - words[i].start
+                        if (words[i].start + wordLength / 2 > dummyRegion.start) break
                     }
 
                     original.data.words = words.slice(0, i)
@@ -549,7 +673,7 @@ class MainController {
                 data: {
                     initFinished: true,
                     fileIndex: this.selectedFileIndex,
-                    speaker: newRegionSpeakers,
+                    speaker: [],
                     words: newRegionWords
                 },
                 drag: false,
@@ -564,6 +688,32 @@ class MainController {
 
             this.dummyRegion.remove()
             this.dummyRegion = null
+
+            this.seek(newRegion.start, 'right')
+        } else {
+            /* insert a silent region */
+            const newRegion = this.wavesurfer.addRegion({
+                start: dummyRegion.start,
+                end: dummyRegion.end,
+                data: {
+                    initFinished: true,
+                    fileIndex: this.selectedFileIndex,
+                    speaker: [],
+                    words: []
+                },
+                drag: false,
+                minLength: constants.MINIMUM_LENGTH
+            })
+
+            const toDel = dummyRegion.id
+            const changedIds = [newRegion.id, toDel]
+            this.historyService.undoStack.push(changedIds)
+            this.historyService.regionsHistory[toDel].push(null)
+
+            this.dummyRegion.remove()
+            this.dummyRegion = null
+
+            this.seek(newRegion.start, 'right')
         }
 
         this.$timeout(() => {
@@ -611,8 +761,12 @@ class MainController {
 
         // vertical click location
         var posY = e.pageY - e.target.offsetTop;
-
-        this.selectedFileIndex = parseInt(posY / wavesurferHeight * this.filesData.length);
+        if (this.filesData.length > 1) {
+            this.selectedFileIndex = parseInt(posY / wavesurferHeight * this.filesData.length);
+        } else {
+            this.selectedFileIndex = 0
+        }
+        
     }
 
     deselectRegion(region) {
@@ -638,7 +792,7 @@ class MainController {
                         this.eventBus.trigger('resetEditableWords', currentRegion)
                     }
 
-                    if (this.isPlaying) {
+                    if (this.isPlaying && config.proofreadingAutoScroll) {
                         this.eventBus.trigger('proofReadingScrollToRegion', currentRegion)
                     }
                 } else {
@@ -1023,14 +1177,45 @@ class MainController {
     }
 
     playRegion() {
-        if (this.selectedRegion) {
-            this.selectedRegion.play();
+        if (this.playRegionClicked) {
+            this.cancelPlayRegionClick = true
+            return
         }
-        // play silence region
-        else {
-            var silence = this.calcSilenceRegion();
-            this.wavesurfer.play(silence.start, silence.end);
-        }
+    
+        this.playRegionClicked = true
+    
+        this.$timeout(() => {
+            if (this.cancelPlayRegionClick) {
+                this.cancelPlayRegionClick = false;
+                this.playRegionClicked = false;
+                return;
+            }
+
+            if (this.selectedRegion) {
+                this.selectedRegion.play()
+            }
+            // play silence region
+            else {
+                var silence = this.calcSilenceRegion()
+                this.wavesurfer.play(silence.start, silence.end)
+            }
+
+            this.cancelPlayRegionClick = false
+            this.playRegionClicked = false
+        }, 250)
+    }
+
+    playRegionFromCurrentTime() {
+        this.$timeout(() => {
+            if (this.selectedRegion) {
+                this.wavesurfer.play(this.wavesurfer.getCurrentTime(), this.selectedRegion.end)
+            }
+            // play silence region
+            else {
+                var silence = this.calcSilenceRegion()
+                this.wavesurfer.play(this.wavesurfer.getCurrentTime(), silence.end)
+            }
+        })
     }
 
     calcSilenceRegion() {
@@ -1065,10 +1250,6 @@ class MainController {
     }
 
     async save(extension, converter) {
-        try {
-            await this.dataBase.clearDB()
-        } catch (e) {
-        }
         for (var i = 0; i < this.filesData.length; i++) {
             var current = this.filesData[i];
             if (current.data) {
@@ -1080,11 +1261,14 @@ class MainController {
                 this.dataManager.downloadFileToClient(converter(i), filename);
             }
         }
+        this.saveToDB()
     }
 
     async saveS3() {
         try {
-            await this.dataBase.clearDB()
+            if (this.dataBase) {
+                await this.dataBase.clearDB()
+            }
         } catch (e) {
         }
         const fileNameSpl = this.filesData[0].filename.split('.')
@@ -1103,6 +1287,7 @@ class MainController {
                 }
             }
         }
+        this.saveToDB()
     }
 
     saveDiscrepancyResults() {
@@ -1270,44 +1455,105 @@ class MainController {
         }, fileIndex);
     }
 
-    loadServerMode(config) {
+    async loadDraft (draft) {
+        this.init()
+        if (this.dataBase) {
+            const dbDraft = await this.dataBase.getDraft(draft)
+            this.currentDraftId = dbDraft.id
+            this.lastDraft = formatTime(new Date(dbDraft.mtime))
+
+            this.loadFromDB(dbDraft)
+        }
+    }
+
+    async loadServer (config) {
         var self = this;
-
         if (self.wavesurfer) self.wavesurfer.destroy();
-        self.init();
-
-        this.dataManager.loadFileFromServer(config).then((res) => {
+        self.init()
+        this.dataManager.loadFileFromServer(config).then(async function (res) {
             // var uint8buf = new Uint8Array(res.audioFile);
             // self.wavesurfer.loadBlob(new Blob([uint8buf]));
             self.wavesurfer.loadBlob(res.audioFile);
-            self.audioFileName = res.audioFileName;
-            res.segmentFiles.forEach(x => x.data = parseTextFormats(x.filename, x.data, this, config.parserOptions))
+
+            const urlArr = config.audio.url.split('/')
+            const audioFileName = urlArr[urlArr.length - 1]
+            self.audioFileName = audioFileName
+            res.segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
             self.filesData = res.segmentFiles;
+
+            if (config.enableDrafts && this.dataBase) {
+                const serverDraft = await self.dataBase.createDraft({
+                    mediaFile: {
+                        name: audioFileName,
+                        data: res.audioFile,
+                        url: config.audio.url
+                    },
+                    files: self.filesData,
+                    draftType: 1
+                })
+                self.currentDraftId = serverDraft
+                self.lastDraft = formatTime(new Date())
+            }
         })
     }
 
+    async loadServerMode(config) {
+        if (config.audio && config.audio.url) {
+            const fileDrafts = await this.dataBase.checkDraftUrl(config.audio.url)
+            if (fileDrafts && fileDrafts.length && config.enableDrafts) {
+                Swal.fire({
+                    title: 'Select draft',
+                    text: "Looks like you has a draft for this file.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Select draft'
+                  }).then(async (result) => {
+                    if (result.value) {
+                        if (this.dataBase) {
+                            const drafts = await this.dataBase.getDrafts(1)
+                            const modalInstance = this.$uibModal.open(loadDraftModal(this, drafts))
+                            modalInstance.result.then(async (res) => {
+                                if (res) {
+                                    if (this.wavesurfer) this.wavesurfer.destroy();
+                                    this.loadDraft(res)
+                                } else {
+                                    this.loadServer(config)
+                                }
+                            });
+                        }
+                    } else {
+                        this.loadServer(config)
+                    }
+                  })
+            } else {
+                this.loadServer(config)
+            }
+        }
+    }
+
     loadClientMode() {
-        var self = this;
-        var modalInstance = this.$uibModal.open(loadingModal(this));
+        const modalInstance = this.$uibModal.open(loadingModal(this))
 
         modalInstance.result.then((res) => {
             if (res) {
-                if (self.wavesurfer) self.wavesurfer.destroy();
-                self.init();
+                if (this.wavesurfer) this.wavesurfer.destroy();
+                this.init();
                 parseAndLoadAudio(this, res);
             }
         });
     }
 
-    async loadFromDB(res) {
-        const mediaFile = res[0]
-        const files = res[1]
-
+    async loadFromDB (res) {
+        const mediaFile = res.mediaFile
+        const files = res.files
+        
         if (files && files.length) {
             this.filesData = files.map((f) => {
                 return {
-                    filename: f.fileName,
-                    data: f.fileData
+                    filename: f.filename,
+                    data: f.data
                 }
             })
         } else {
@@ -1315,16 +1561,16 @@ class MainController {
         }
 
         if (mediaFile) {
-            this.audioFileName = mediaFile.fileName
+            this.audioFileName = mediaFile.name
             if (!mediaFile.isVideo) {
-                this.wavesurfer.loadBlob(mediaFile.fileData)
+                this.wavesurfer.loadBlob(mediaFile.data)
             } else {
-                const fileResult = await this.readVideoFile(mediaFile.fileData)
+                const fileResult = await this.readVideoFile(mediaFile.data)
                 this.videoPlayer = videojs('video-js')
-                this.videoPlayer.ready(() => {
-                    var fileUrl = URL.createObjectURL(mediaFile.fileData);
-                    var fileType = mediaFile.fileData.type;
-                    this.src({type: fileType, src: fileUrl});
+                this.videoPlayer.ready(function () {
+                    var fileUrl = URL.createObjectURL(mediaFile.data);
+                    var fileType = mediaFile.data.type;
+                    this.src({ type: fileType, src: fileUrl });
                     this.load();
                     this.muted(true)
                 })
@@ -1442,7 +1688,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', '$timeout', '$interval'];
+    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', '$timeout', '$interval'];
 export {
     MainController
 }
