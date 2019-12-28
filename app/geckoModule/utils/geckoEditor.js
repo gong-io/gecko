@@ -256,6 +256,49 @@ class GeckoEdtior {
             e.preventDefault()
         }
 
+        const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+        const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
+        const isDownCtrl = isMacMeta || isOtherControl
+
+        if (isDownCtrl && !e.shiftKey && !e.altKey && (e.which === 37 || e.which === 39)) {
+            const selection = document.getSelection()
+            const ancestorNode = this.findNodeAncestor(selection.focusNode)
+            const range = document.createRange()
+            let nodeTo
+            if (e.which === 37) {
+                if (this.isText(ancestorNode)) {
+                    if (ancestorNode.previousSibling && ancestorNode.previousSibling.previousSibling) {
+                        nodeTo = ancestorNode.previousSibling.previousSibling.firstChild
+                    }
+                } else {
+                    if (ancestorNode.previousSibling) {
+                        nodeTo = ancestorNode.previousSibling.firstChild
+                    }
+                }
+            } else if (e.which === 39) {
+                if (this.isText(ancestorNode)) {
+                    if (ancestorNode.nextSibling && ancestorNode.nextSibling.previousSibling) {
+                        nodeTo = ancestorNode.nextSibling.nextSibling.firstChild
+                    }
+                } else {
+                    if (ancestorNode.nextSibling) {
+                        nodeTo = ancestorNode.nextSibling.firstChild
+                    }
+                }
+            }
+
+            if (nodeTo) {
+                range.selectNode(nodeTo)
+                range.collapse()
+                selection.removeAllRanges()
+                selection.addRange(range)
+            }
+
+            e.preventDefault()
+            e.stopPropagation()
+            return
+        }
+
         if (e.which === 8 || e.which === 46 || e.which === 32) {
             if (this.isAllSelected() || this.checkLastSymbol()) {
                 this.cleanEditor()

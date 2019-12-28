@@ -1599,6 +1599,14 @@ class MainController {
         this.wavesurfer.seekTo((time + offset) / this.wavesurfer.getDuration());
     }
 
+    jumpNextWord () {
+        
+    }
+
+    jumpPreviousWord () {
+        
+    }
+
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
         const currentRegion = this.currentRegions[regionIndex];
         const words = currentRegion.data.words;

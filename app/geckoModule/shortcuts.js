@@ -126,6 +126,18 @@ class Shortcuts {
                 hk.handler(e)
             })
         })
+
+        hotkeys.filter = (e) => {
+            if (e.target.tagName === 'EDITABLE-WORDS') {
+                const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+                const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
+                const isDownCtrl = isMacMeta || isOtherControl
+                if (isDownCtrl && !e.shiftKey && !e.altKey && (e.which === 37 || e.which === 39)) {
+                    return false
+                }
+            }
+            return true
+        }
     }
 
     playPauseHandler (e) {

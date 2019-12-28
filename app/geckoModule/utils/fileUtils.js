@@ -124,14 +124,16 @@ export const parseAndLoadAudio = async (context, res) => {
             })
             context.wavesurfer.loadDecodedBuffer(fileResult);
         }
-        console.log(res.segmentsFiles)
-        const draft = await context.dataBase.createDraft({
-            mediaFile,
-            files: context.filesData,
-            timeStamp: getCurrentTimeStamp(),
-            draftType: 0
-        })
-        context.currentDraftId = draft
-        context.lastDraft = formatTime(new Date())
+
+        if (context.dataBase) {
+            const draft = await context.dataBase.createDraft({
+                mediaFile,
+                files: context.filesData,
+                timeStamp: getCurrentTimeStamp(),
+                draftType: 0
+            })
+            context.currentDraftId = draft
+            context.lastDraft = formatTime(new Date())
+        }
     }
 }
