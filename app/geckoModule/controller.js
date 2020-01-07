@@ -1120,6 +1120,11 @@ class MainController {
         })
 
         this.updateView();
+
+        this.$timeout(() => {
+            this.setAllRegions()
+            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
+        })
     }
 
     __deleteRegion(region) {
