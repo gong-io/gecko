@@ -1066,8 +1066,8 @@ class MainController {
     }
 
     splitSegment() {
-        let region = this.selectedRegion;
-        if (!region) return;
+        let region = this.getCurrentRegion(this.selectedFileIndex);
+        if (!region || region.data.isDummy) return;
         let time = this.wavesurfer.getCurrentTime();
 
         let first = copyRegion(region);
