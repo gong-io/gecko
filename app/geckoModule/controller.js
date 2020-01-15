@@ -1473,7 +1473,7 @@ class MainController {
 
     async loadServerMode(config) {
         if (config.audio && config.audio.url) {
-            const fileDrafts = await this.dataBase.checkDraftUrl(config.audio.url)
+            const fileDrafts = this.dataBase ? await this.dataBase.checkDraftUrl(config.audio.url) : null
             if (fileDrafts && fileDrafts.length && config.enableDrafts) {
                 Swal.fire({
                     title: 'Select draft',
