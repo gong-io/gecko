@@ -131,6 +131,8 @@ class MainController {
         this.isRegionClicked = false;
 
         this.allRegions = []
+
+        this.cursorRegion = null
     }
 
     setConstants() {
@@ -1066,8 +1068,9 @@ class MainController {
     }
 
     splitSegment() {
-        let region = this.getCurrentRegion(this.selectedFileIndex);
-        if (!region || region.data.isDummy) return;
+        let region = this.selectedRegion;
+        const cursorRegion = this.getCurrentRegion(this.selectedFileIndex)
+        if (!region || region.data.isDummy || region !== cursorRegion) return;
         let time = this.wavesurfer.getCurrentTime();
 
         let first = copyRegion(region);
@@ -1107,7 +1110,8 @@ class MainController {
     }
 
     deleteRegionAction(region) {
-        if (!region) return;
+        const cursorRegion = this.getCurrentRegion(this.selectedFileIndex)
+        if (!region || cursorRegion !== region) return;
 
         this.historyService.undoStack.push([region.id]);
         this.historyService.regionsHistory[region.id].push(null);
