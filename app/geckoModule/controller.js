@@ -1444,6 +1444,7 @@ class MainController {
         var self = this;
         if (self.wavesurfer) self.wavesurfer.destroy();
         self.init()
+        self.loader = true
         this.dataManager.loadFileFromServer(config).then(async function (res) {
             // var uint8buf = new Uint8Array(res.audioFile);
             // self.wavesurfer.loadBlob(new Blob([uint8buf]));
