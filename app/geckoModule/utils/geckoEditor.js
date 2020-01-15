@@ -52,9 +52,23 @@ class GeckoEdtior {
         }
     }
 
-    cleanEditor () {
-        const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: ''})
-        document.execCommand('insertHTML', false, html)
+    cleanEditor (allSelected = false) {
+        if (!allSelected) {
+            if (this.element.firstChild) {
+                this.element.firstChild.textContent = ''
+                const selection = window.getSelection()
+                const range = document.createRange()
+                range.selectNode(this.element.firstChild)
+                range.collapse()
+
+                selection.removeAllRanges()
+                selection.addRange(range)
+            }
+        } else {
+            const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: ''})
+            document.execCommand('insertHTML', false, html)
+        }
+        
     }
 
     isBackwardsSelection (startNode, endNode) {
@@ -250,6 +264,15 @@ class GeckoEdtior {
         selection.addRange(range)
     }
 
+    setSelectionToNodeEnd (node) {
+        const range = document.createRange()
+        const selection = window.getSelection()
+        range.selectNodeContents(node)
+        range.collapse()
+        selection.removeAllRanges()
+        selection.addRange(range)
+    }
+
     keydownEvent (e) {
         if (e.which === 13 || e.which === 27) {
             this.element.blur()
@@ -257,8 +280,8 @@ class GeckoEdtior {
         }
 
         if (e.which === 8 || e.which === 46 || e.which === 32) {
-            if (this.isAllSelected() || this.checkLastSymbol()) {
-                this.cleanEditor()
+            if ((e.which === 8 || e.which === 46) && (this.isAllSelected() || this.checkLastSymbol())) {
+                this.cleanEditor(this.isAllSelected())
                 e.preventDefault()
                 return
             } else {
@@ -338,6 +361,10 @@ class GeckoEdtior {
                         e.preventDefault()
                     } 
                     return
+                } else if (e.which === 32 && selection.focusNode === this.element && selection.isCollapsed) {
+                    /* input first space in empty editable */
+                    e.preventDefault()
+                    return
                 }
 
                 /* selection between two text nodes */
@@ -376,6 +403,19 @@ class GeckoEdtior {
             } else {
                 const selection = document.getSelection()
                 const ancestorNode = this.findNodeAncestor(selection.focusNode)
+                if (selection.focusNode === this.element && selection.isCollapsed) {
+                    /* input first char in empty editable */
+                    const firstSpan = this.element.firstChild
+                    firstSpan.textContent = `${e.key}`
+                    const range = document.createRange()
+                    const selection = window.getSelection()
+                    range.selectNodeContents(firstSpan)
+                    range.collapse()
+                    selection.removeAllRanges()
+                    selection.addRange(range)
+                    e.preventDefault()
+                    return
+                }
                 if (selection.isCollapsed) {
                     if (this.isSpace(ancestorNode)) {
                         const nodeTo = ancestorNode.nextSibling
@@ -546,14 +586,14 @@ class GeckoEdtior {
         const selection = window.getSelection()
         const selectionStr = selection.toString().trim()
         const contentStr = this.element.textContent.replace(/\n\n/g, ' ').replace(/\n/g, '')
-        if (selectionStr === contentStr) {
+        if (selectionStr === contentStr && !selection.isCollapsed) {
             return true
         }
         return false
     }
 
     checkLastSymbol () {
-        if (this.element.textContent.trim().length === 1 || this.element.textContent.trim().length === 0) {
+        if (this.element.textContent.length === 1 || this.element.textContent.length === 0) {
             return true
         }
 
