@@ -42,6 +42,8 @@ export default (parent) => {
                 ];
                 parent.audioFileName = 'demo.mp3';
                 parent.init();
+                parent.loader = true
+                $uibModalInstance.close(false);
                 const res = await parent.dataManager.loadFileFromServer({
                     audio: {
                         url: 'https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3'
@@ -63,7 +65,6 @@ export default (parent) => {
 
                 parent.wavesurfer.loadBlob(res.audioFile);
                 $scope.isLoading = false
-                $uibModalInstance.close(false);
             };
 
             $scope.loadDraft = async () => {

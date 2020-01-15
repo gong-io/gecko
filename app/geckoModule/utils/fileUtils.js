@@ -90,6 +90,7 @@ export const parseAndLoadAudio = async (context, res) => {
         self.wavesurfer.load(res.call_from_url.url);
         parseAndLoadText(context, res);
     } else {
+        context.loader = true
         const fileResult = await readMediaFile(context, res.audio)
         parseAndLoadText(context, res)
         let mediaFile
@@ -121,7 +122,7 @@ export const parseAndLoadAudio = async (context, res) => {
             })
             context.wavesurfer.loadDecodedBuffer(fileResult);
         }
-        console.log(res.segmentsFiles)
+
         const draft = await context.dataBase.createDraft({
             mediaFile,
             files: context.filesData,
