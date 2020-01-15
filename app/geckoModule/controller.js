@@ -799,7 +799,9 @@ class MainController {
             this.currentRegions[i] = currentRegion
         }
 
-        this.$scope.$$postDigest(this.updateSelectedWordInFiles.bind(this));
+        this.$timeout(() => {
+            this.updateSelectedWordInFiles()
+        })
     }
 
     getCurrentRegion(fileIndex) {
