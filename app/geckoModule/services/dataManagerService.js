@@ -101,7 +101,7 @@ class dataManager {
             res.audioFile = response.data;
             res.audioFileName = config.audio.fileName;
 
-        },  (e) => {
+        }, (e) => {
             // called asynchronously if an error occurs
             // or server returns response with an error status.
             Swal.fire({
@@ -138,6 +138,13 @@ class dataManager {
                     addedFile.s3Subfolder = ctmSubfolder
                 }
                 res.segmentFiles.push(addedFile);
+            }, (e) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Loading the file has failed, open console for more details',
+                    text: e.error
+                })
+                console.error('Segment file loading error', e)
             }))
         })
 
