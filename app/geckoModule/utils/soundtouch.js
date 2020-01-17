@@ -365,11 +365,11 @@
         fillOutputBuffer: function(numFrames) {
             while (this.outputBuffer.frameCount < numFrames) {
                 // TODO hardcoded buffer size
-                var numInputFrames = (8192 * 2) - this.inputBuffer.frameCount;
+                var numInputFrames = (512 * 2) - this.inputBuffer.frameCount;
     
                 this.fillInputBuffer(numInputFrames);
     
-                if (this.inputBuffer.frameCount < (8192 * 2)) {
+                if (this.inputBuffer.frameCount < (512 * 2)) {
                     break;
                     // TODO flush pipe
                 }
@@ -390,7 +390,7 @@
             return numFramesExtracted;
         },
         handleSampleData: function(e) {
-            this.extract(e.data, 4096);
+            this.extract(e.data, 8192);
         },
         clear: function() {
             // TODO yuck
