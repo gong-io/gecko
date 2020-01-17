@@ -390,7 +390,7 @@
             return numFramesExtracted;
         },
         handleSampleData: function(e) {
-            this.extract(e.data, 8192);
+            this.extract(e.data, 4096);
         },
         clear: function() {
             // TODO yuck
