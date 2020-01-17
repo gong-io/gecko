@@ -178,10 +178,8 @@ class MainController {
         })
 
         this.eventBus.on('editableFocus', (editableRegion, fileIndex) => {
-            this.selectedRegion = editableRegion
             this.selectedFileIndex = fileIndex
             this.seek(editableRegion.start, 'right')
-            //this.eventBus.trigger('proofReadingScroll', editableRegion, fileIndex)
         })
 
         document.onkeydown = (e) => {
