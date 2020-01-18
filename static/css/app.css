@@ -271,3 +271,7 @@ input.volume-slider[type="range"]{
     margin-top: 6px;
     outline: none;
 }
+
+.region-context-menu__button {
+    cursor: pointer;
+}

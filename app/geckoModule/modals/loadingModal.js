@@ -34,7 +34,7 @@ export default (parent) => {
                 $scope.isLoading = true
                 const demoFile = {
                     filename: 'demo.json',
-                    data: parent.handleTextFormats('demo.json', JSON.stringify(demoJson))
+                    data: parent.handleTextFormats('demo.json', JSON.stringify(demoJson))[0]
                 }
 
                 parent.filesData = [

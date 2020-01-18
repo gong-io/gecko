@@ -48,15 +48,6 @@ export default () => {
                 document.execCommand('selectAll',false,null)
             })
 
-            element.bind('keydown keypress', (e) => {
-                if (e.which === 13 || e.which === 27) {
-                    this.blur();
-                    e.preventDefault();
-                }
-
-                e.stopPropagation()
-            });
-
             element.bind('paste', (e) => {
                 if (e && e.originalEvent) {
                     const clipboardData = e.originalEvent.clipboardData
@@ -74,28 +65,12 @@ export default () => {
                 const isAlt = e.altKey
                 const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
                 const isDownCtrl = isMacMeta || isOtherControl
-                const systemKeys = [ 65, 88, 67, 86, 90, 89] // a, x, c, v, z, y
-                if (isDownCtrl || isAlt) {
-                    if (e.which === 32) {
-                        this.blur()
-                        scope.keysMapping({keys: 'space'})
-                        e.preventDefault()
-                        e.stopPropagation()
-                        return
-                    }
-                }
-
-                if (isDownCtrl && e.which !== 91 && e.which !== 17) { // not a only ctrl button
-                    if (systemKeys.includes(e.which)) {
-                        return
-                    }
-                    this.blur()
-                    scope.keysMapping({keys: e.key, which: e.which})
+                if (e.which === 27 || e.which === 13 && !isDownCtrl && !isAlt) {
+                    element.blur()
                     e.preventDefault()
                     e.stopPropagation()
                     return
                 }
-
             })
         }
     };

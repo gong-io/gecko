@@ -64,7 +64,7 @@ export const parse = (data, $parent) => {
 
     $parent.ctmData.push(words);
 
-    return monologues;
+    return [ monologues ];
 }
 
 export const convert = (app, fileIndex) => {
