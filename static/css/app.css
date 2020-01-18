@@ -271,3 +271,7 @@ input.volume-slider[type="range"]{
     margin-top: 6px;
     outline: none;
 }
+
+.tooltip.gecko-zoom-tooltip .tooltip-arrow {
+    display: none;
+  }

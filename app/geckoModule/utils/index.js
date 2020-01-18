@@ -1,4 +1,5 @@
 import geckoEditor from './geckoEditor'
+import ZoomTooltip from './zoomTooltip'
 import { parseAndLoadAudio } from './fileUtils'
 import './soundtouch'
 
@@ -158,4 +159,4 @@ export const sortLegend = (legend) => {
     );
 }
 
-export { geckoEditor, parseAndLoadAudio }
+export { geckoEditor, parseAndLoadAudio, ZoomTooltip }

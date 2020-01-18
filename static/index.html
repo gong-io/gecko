@@ -130,11 +130,13 @@
         </div>
 
         <div class="col-md-7">
-            <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
+            <input id="zoomSlider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
                    max="{{ ctrl.maxZoom }}"
                    style="width: 100%" 
                    tooltip-placement="top"
-                    uib-tooltip="Zoom level: {{ ctrl.zoomLevel }}"/>
+                    uib-tooltip="Zoom level: {{ ctrl.zoomLevel }}"
+                    tooltip-class="gecko-zoom-tooltip"
+                    tooltip-is-open="ctrl.zoomTooltipOpen"/>
         </div>
 
         <div class="col-md-1">
