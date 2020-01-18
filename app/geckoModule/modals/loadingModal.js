@@ -1,6 +1,8 @@
 import Swal from 'sweetalert2'
 
 import { ZOOM } from '../constants'
+import loadDraftModal from './loadDraftModal'
+import { formatTime } from '../utils'
 
 var demoJson = require('../../../samples/demo.json')
 
@@ -14,13 +16,16 @@ export default (parent) => {
             $scope.draftAvailable = false
             $scope.isLoading = false
             $scope.newSegmentFiles = [undefined]
-
-            const draftCounts = await parent.dataBase.getCounts()
-            if (draftCounts) {
-                parent.$timeout(() => {
-                    $scope.draftAvailable = true
-                })
-            } 
+            
+            if (parent.config.enableDrafts && parent.dataBase) {
+                const draftCounts = await parent.dataBase.getCounts(0)
+                if (draftCounts) {
+                    parent.$timeout(() => {
+                        $scope.draftAvailable = true
+                    })
+                }
+            }
+ 
             $scope.runDemo = async () => {
                 if ($scope.isLoading) {
                     return
@@ -29,16 +34,12 @@ export default (parent) => {
                 $scope.isLoading = true
                 const demoFile = {
                     filename: 'demo.json',
-                    data: parent.handleTextFormats('demo.json', JSON.stringify(demoJson))
+                    data: parent.handleTextFormats('demo.json', JSON.stringify(demoJson))[0]
                 }
 
                 parent.filesData = [
                     demoFile
                 ];
-                await parent.dataBase.addFile({
-                    fileName: demoFile.filename,
-                    fileData: demoFile.data
-                })
                 parent.audioFileName = 'demo.mp3';
                 parent.init();
                 const res = await parent.dataManager.loadFileFromServer({
@@ -47,29 +48,38 @@ export default (parent) => {
                     },
                     ctms: []
                 })
-                parent.dataBase.addMediaFile({
-                    fileName: parent.audioFileName,
-                    fileData: res.audioFile
-                })
+                if (parent.config.enableDrafts && parent.dataBase) {
+                    const demoDraft = await parent.dataBase.createDraft({
+                        mediaFile: {
+                            name: 'demo.mp3',
+                            data: res.audioFile
+                        },
+                        files: parent.filesData,
+                        draftType: 0
+                    })
+                    parent.currentDraftId = demoDraft
+                    parent.lastDraft = formatTime(new Date())
+                }
+
                 parent.wavesurfer.loadBlob(res.audioFile);
                 $scope.isLoading = false
                 $uibModalInstance.close(false);
             };
 
             $scope.loadDraft = async () => {
-                if ($scope.isLoading) {
-                    return
+                // $uibModalInstance.close(false)
+                // parent.loadDraft()
+                if (parent.dataBase) {
+                    const drafts = await parent.dataBase.getDrafts(0)
+                    const modalInstance = parent.$uibModal.open(loadDraftModal(parent, drafts))
+                    modalInstance.result.then(async (res) => {
+                        if (res) {
+                            $uibModalInstance.close(false)
+                            parent.loadDraft(res)
+                        }
+                    });
                 }
-
-                parent.init()
-                const audio = parent.dataBase.getLastMediaFile()
-                const files = parent.dataBase.getFiles()
-                $scope.isLoading = true
-                const res = await Promise.all([ audio, files ])
-                $scope.isLoading = false
-                parent.loadFromDB(res)
-
-                $uibModalInstance.close(false);
+                           
             };
 
             $scope.ok = () => {

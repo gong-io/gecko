@@ -1,5 +1,7 @@
 import videojs from 'video.js'
 
+import { getCurrentTimeStamp, formatTime } from './index.js'
+
 export const readTextFile = (context, file, cb) => {
     // check for empty file object
     if (Object.keys(file).length === 0 && file.constructor === Object) {
@@ -63,10 +65,6 @@ export const parseAndLoadText = (context, res) => {
         const file = { filename: res.segmentsFiles[i].name, data: parsedData }
         context.filesData.push(file);
         context.fileSpeakerColors = parsedColors
-        await context.dataBase.addFile({
-            fileName: file.filename,
-            fileData: file.data
-        })
         i++;
         if (i < res.segmentsFiles.length) {
             readTextFile(context, res.segmentsFiles[i], cb);
@@ -91,38 +89,51 @@ export const parseAndLoadText = (context, res) => {
 
 export const parseAndLoadAudio = async (context, res) => {
     if (res.call_from_url) {
-        context.audioFileName = res.call_from_url.id;
-        context.wavesurfer.load(res.call_from_url.url);
+        self.audioFileName = res.call_from_url.id;
+        self.wavesurfer.load(res.call_from_url.url);
         parseAndLoadText(context, res);
     } else {
         const fileResult = await readMediaFile(context, res.audio)
-        parseAndLoadText(context, res);
-        await context.dataBase.clearDB()
+        parseAndLoadText(context, res)
+        let mediaFile
         if (!context.videoMode) {
-            context.dataBase.addMediaFile({
-                fileName: context.audioFileName,
-                fileData: fileResult
-            })
+            mediaFile = {
+                name: context.audioFileName,
+                data: fileResult,
+                url: null
+            }
             try {
                 context.wavesurfer.loadBlob(fileResult);
             } catch (e) {
                 console.log('error', e)
             }
         } else {
-            context.dataBase.addMediaFile({
-                fileName: context.audioFileName,
-                fileData: res.audio,
-                isVideo: true
-            })
+            mediaFile = {
+                name: context.audioFileName,
+                data: res.audio,
+                isVideo: true,
+                url: null
+            }
             context.videoPlayer = videojs('video-js')
-            context.videoPlayer.ready(() => {
-                const fileUrl = URL.createObjectURL(res.audio);
-                const fileType = res.audio.type;
-                context.videoPlayer.src({ type: fileType, src: fileUrl });
-                context.videoPlayer.load();
-                context.videoPlayer.muted(true)
+            context.videoPlayer.ready(function () {
+                var fileUrl = URL.createObjectURL(res.audio);
+                var fileType = res.audio.type;
+                this.src({ type: fileType, src: fileUrl });
+                this.load();
+                this.muted(true)
             })
             context.wavesurfer.loadDecodedBuffer(fileResult);
+        }
+
+        if (context.dataBase) {
+            const draft = await context.dataBase.createDraft({
+                mediaFile,
+                files: context.filesData,
+                timeStamp: getCurrentTimeStamp(),
+                draftType: 0
+            })
+            context.currentDraftId = draft
+            context.lastDraft = formatTime(new Date())
         }
     }
 }

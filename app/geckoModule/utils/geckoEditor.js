@@ -52,9 +52,23 @@ class GeckoEdtior {
         }
     }
 
-    cleanEditor () {
-        const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: ''})
-        document.execCommand('insertHTML', false, html)
+    cleanEditor (allSelected = false) {
+        if (!allSelected) {
+            if (this.element.firstChild) {
+                this.element.firstChild.textContent = ''
+                const selection = window.getSelection()
+                const range = document.createRange()
+                range.selectNode(this.element.firstChild)
+                range.collapse()
+
+                selection.removeAllRanges()
+                selection.addRange(range)
+            }
+        } else {
+            const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: ''})
+            document.execCommand('insertHTML', false, html)
+        }
+        
     }
 
     isBackwardsSelection (startNode, endNode) {
@@ -134,7 +148,7 @@ class GeckoEdtior {
         const newRange = document.createRange()
         const nextWord = lastNode.nextSibling
 
-        if (rangeOffset && !text.trim().length) {
+        if (rangeOffset && text && !text.trim().length) {
             firstNode.textContent = `${firstNode.textContent.substring(0, rangeOffset)}`
             newRange.setStart(lastNode.firstChild, lastNode.textContent.length)
         } else {
@@ -145,9 +159,11 @@ class GeckoEdtior {
             lastNode.remove()
             nextWord.remove()
 
-            if (text.trim().length) {
+            if (text && text.trim().length) {
                 newRange.setStart(firstNode.firstChild, text ? rangeOffset + text.length : rangeOffset)
-            } else {
+            } else if (!text) {
+                newRange.setStart(firstNode.firstChild, rangeOffset)
+            }else {
                 const previousSpace = firstNode.previousSibling
                 newRange.setStart(previousSpace.firstChild, previousSpace.textContent.length)
             }
@@ -236,22 +252,86 @@ class GeckoEdtior {
         selection.addRange(range)
     }
 
+    insertTextInsideTextNode (node, text) {
+        node.textContent = '\u200B'
+
+        const range = document.createRange()
+        range.selectNode(node.firstChild)
+        range.collapse()
+
+        const selection = window.getSelection()
+        selection.removeAllRanges()
+        selection.addRange(range)
+    }
+
+    setSelectionToNodeEnd (node) {
+        const range = document.createRange()
+        const selection = window.getSelection()
+        range.selectNodeContents(node)
+        range.collapse()
+        selection.removeAllRanges()
+        selection.addRange(range)
+    }
+
     keydownEvent (e) {
         if (e.which === 13 || e.which === 27) {
             this.element.blur()
             e.preventDefault()
         }
 
+        const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+        const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
+        const isDownCtrl = isMacMeta || isOtherControl
+
+        if (isDownCtrl && !e.shiftKey && !e.altKey && (e.which === 37 || e.which === 39)) {
+            const selection = document.getSelection()
+            const ancestorNode = this.findNodeAncestor(selection.focusNode)
+            const range = document.createRange()
+            let nodeTo
+            if (e.which === 37) {
+                if (this.isText(ancestorNode)) {
+                    if (ancestorNode.previousSibling && ancestorNode.previousSibling.previousSibling) {
+                        nodeTo = ancestorNode.previousSibling.previousSibling.firstChild
+                    }
+                } else {
+                    if (ancestorNode.previousSibling) {
+                        nodeTo = ancestorNode.previousSibling.firstChild
+                    }
+                }
+            } else if (e.which === 39) {
+                if (this.isText(ancestorNode)) {
+                    if (ancestorNode.nextSibling && ancestorNode.nextSibling.previousSibling) {
+                        nodeTo = ancestorNode.nextSibling.nextSibling.firstChild
+                    }
+                } else {
+                    if (ancestorNode.nextSibling) {
+                        nodeTo = ancestorNode.nextSibling.firstChild
+                    }
+                }
+            }
+
+            if (nodeTo) {
+                range.selectNode(nodeTo)
+                range.collapse()
+                selection.removeAllRanges()
+                selection.addRange(range)
+            }
+
+            e.preventDefault()
+            e.stopPropagation()
+            return
+        }
+
         if (e.which === 8 || e.which === 46 || e.which === 32) {
-            if (this.isAllSelected() || this.checkLastSymbol()) {
-                this.cleanEditor()
+            if ((e.which === 8 || e.which === 46) && (this.isAllSelected() || this.checkLastSymbol())) {
+                this.cleanEditor(this.isAllSelected())
                 e.preventDefault()
                 return
             } else {
                 const selection = document.getSelection()
                 const ancestorNode = this.findNodeAncestor(selection.focusNode)
                 if (e.which === 8 && this.isSpace(ancestorNode) && selection.isCollapsed) {
-                    /* deleting a space, cursor is in word start position */
+                    /* deleting a space, cursor is in word start position, backspace pressed */
                     const previousWord = ancestorNode.previousSibling
                     const nextWord = ancestorNode.nextSibling
                     const previousWordText = previousWord.textContent
@@ -269,8 +349,15 @@ class GeckoEdtior {
 
                     e.preventDefault()
                     return
+                } else if (e.which === 46 && this.isSpace(ancestorNode) && selection.isCollapsed) {
+                    /* deleting a last char, cursor is in word start position, delete pressed */
+                    if (ancestorNode.nextSibling.textContent.replace('\u200B', '').length === 1) {
+                        this.insertTextInsideTextNode(ancestorNode.nextSibling, null)
+                        e.preventDefault()
+                    }
+                    return
                 } else if (e.which === 46 && this.isText(ancestorNode) && selection.isCollapsed) {
-                    /* deleting a space, cursor is in word end position */
+                    /* deleting a space, cursor is in word end position, delete pressed */
                     if (selection.focusOffset === ancestorNode.textContent.length) {
                         const previousWord = ancestorNode
                         const nextSpace = ancestorNode.nextSibling
@@ -291,6 +378,36 @@ class GeckoEdtior {
                         e.preventDefault()
                         return
                     }
+                } else if (e.which === 8 && this.isText(ancestorNode) && selection.isCollapsed) {
+                    /* deleting a last character, cursor is in word end position, delete pressed */
+                    if (ancestorNode.textContent.replace('\u200B', '').length === 1) {
+                        this.insertTextInsideTextNode(ancestorNode, null)
+                        e.preventDefault()
+                    } else if (ancestorNode.textContent.replace('\u200B', '').length === 0) {
+                        const selection = document.getSelection()
+                        const range = document.createRange()
+
+                        const previousSpace = ancestorNode.previousSibling
+                        if (previousSpace) {
+                            const previousWord = previousSpace.previousSibling
+                            const previousWordText = previousWord.textContent
+
+                            ancestorNode.remove()
+                            previousSpace.remove()
+
+                            selection.removeAllRanges()
+
+                            range.setStart(previousWord.firstChild, previousWordText.length)
+                            range.setStart(previousWord.firstChild, previousWordText.length)
+                            selection.addRange(range)
+                        }
+                        e.preventDefault()
+                    } 
+                    return
+                } else if (e.which === 32 && selection.focusNode === this.element && selection.isCollapsed) {
+                    /* input first space in empty editable */
+                    e.preventDefault()
+                    return
                 }
 
                 /* selection between two text nodes */
@@ -313,6 +430,9 @@ class GeckoEdtior {
                 } else if (this.isSpace(startNode)) {
                     this.insertTextInsideSpace(startNode, e.which === 32 ? ' ' : null)
                     e.preventDefault()
+                } else if (!selection.isCollapsed && selection.toString().replace('\u200B', '').length === startNode.textContent.replace('\u200B', '').length) {
+                    this.insertTextInsideTextNode(startNode, e.which === 32 ? ' ' : null)
+                    e.preventDefault()
                 }
             }
         }
@@ -326,6 +446,19 @@ class GeckoEdtior {
             } else {
                 const selection = document.getSelection()
                 const ancestorNode = this.findNodeAncestor(selection.focusNode)
+                if (selection.focusNode === this.element && selection.isCollapsed) {
+                    /* input first char in empty editable */
+                    const firstSpan = this.element.firstChild
+                    firstSpan.textContent = `${e.key}`
+                    const range = document.createRange()
+                    const selection = window.getSelection()
+                    range.selectNodeContents(firstSpan)
+                    range.collapse()
+                    selection.removeAllRanges()
+                    selection.addRange(range)
+                    e.preventDefault()
+                    return
+                }
                 if (selection.isCollapsed) {
                     if (this.isSpace(ancestorNode)) {
                         const nodeTo = ancestorNode.nextSibling
@@ -337,6 +470,16 @@ class GeckoEdtior {
                         range.setStart(nodeTo.firstChild, 1)
                         selection.addRange(range)
     
+                        e.preventDefault()
+                    } else if (ancestorNode.textContent.length === 0) {
+                        const nodeTo = ancestorNode
+                        nodeTo.textContent = `${e.key}`
+
+                        const range = document.createRange()
+                        selection.removeAllRanges()
+                        range.setStart(nodeTo.firstChild, 1)
+                        selection.addRange(range)
+
                         e.preventDefault()
                     }
                 } else {
@@ -486,14 +629,14 @@ class GeckoEdtior {
         const selection = window.getSelection()
         const selectionStr = selection.toString().trim()
         const contentStr = this.element.textContent.replace(/\n\n/g, ' ').replace(/\n/g, '')
-        if (selectionStr === contentStr) {
+        if (selectionStr === contentStr && !selection.isCollapsed) {
             return true
         }
         return false
     }
 
     checkLastSymbol () {
-        if (this.element.textContent.trim().length === 1 || this.element.textContent.trim().length === 0) {
+        if (this.element.textContent.length === 1 || this.element.textContent.length === 0) {
             return true
         }
 
@@ -543,7 +686,7 @@ class GeckoEdtior {
         }
         const updatedWords = []
         spans.forEach(span => {
-            const wordText = span.textContent.trim()
+            const wordText = span.textContent.trim().replace('\u200B', '')
             const wordUuid = span.getAttribute('word-uuid')
             const wordSelected = span.classList.contains('selected-word')
             if (wordText.length) {

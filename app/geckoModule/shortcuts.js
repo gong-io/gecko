@@ -12,6 +12,10 @@ class Shortcuts {
         const digitsRegularString = digits.map((d, idx) => `alt+${idx + 1}`).join(',')
         this.hotkeysDesc = [
             {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>S</kbd>' : '<kbd>Ctrl</kbd>+<kbd>S</kbd>',
+                desc: 'Save a draft'
+            },
+            {
                 keyDesc: this.isMac ? '<kbd>Alt</kbd>+<kbd>Space</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Space</kbd>',
                 desc: 'Play/pause'
             },
@@ -40,8 +44,12 @@ class Shortcuts {
                 desc: 'Undo'
             },
             {
-                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>...<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>9</kbd>',
-                desc: 'Select annotation'
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>1</kbd>...<kbd>Ctrl</kbd>+<kbd>9</kbd>',
+                desc: 'Select fixed label'
+            },
+            {
+                keyDesc: '<kbd>Alt</kbd>+<kbd>1</kbd>...<kbd>Alt</kbd>+<kbd>9</kbd>',
+                desc: 'Select non-fixed label'
             },
             {
                 keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Click</kbd> on a word' : '<kbd>Ctrl</kbd>+<kbd>Click</kbd> on a word',
@@ -90,6 +98,10 @@ class Shortcuts {
                 keys: 'ctrl+z,command+z'
             },
             {
+                handler: (e) => this.saveHandler(e),
+                keys: 'ctrl+s,command+s'
+            },
+            {
                 handler: (e) => this.deleteRegionHandler(e),
                 keys: 'ctrl+backspace,ctrl+delete,command+backspace,command+delete'
             },
@@ -114,6 +126,18 @@ class Shortcuts {
                 hk.handler(e)
             })
         })
+
+        hotkeys.filter = (e) => {
+            if (e.target.tagName === 'EDITABLE-WORDS') {
+                const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
+                const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
+                const isDownCtrl = isMacMeta || isOtherControl
+                if (isDownCtrl && !e.shiftKey && !e.altKey && (e.which === 37 || e.which === 39)) {
+                    return false
+                }
+            }
+            return true
+        }
     }
 
     playPauseHandler (e) {
@@ -149,6 +173,11 @@ class Shortcuts {
 
     undoHandler (e) {
         this.app.historyService.undo(this.app)
+    }
+
+    saveHandler (e) {
+        this.app.saveToDB()
+        e.preventDefault()
     }
 
     digitHandler (e, isRegular = false) {
