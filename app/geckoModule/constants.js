@@ -30,6 +30,8 @@ export const SPEAKER_COLORS = [
 
 export const UNKNOWN_SPEAKER = "<NA>";
 
+export const EMPTY_TEXT = "<NA>";
+
 export const SPEAKERS_SEPARATOR = "+";
 
 export const NO_CONFIDENCE = -1;
