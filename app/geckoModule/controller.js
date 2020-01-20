@@ -22,7 +22,6 @@ import {
     sortDict,
     copyRegion,
     parseAndLoadAudio,
-    formatTime,
     ZoomTooltip,
     prepareLegend,
     formatTime
