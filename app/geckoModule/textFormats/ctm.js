@@ -17,12 +17,14 @@ export const parse = (data, $parent) => {
             confidence = undefined;
         }
 
+        const text = cells[4] !== constants.EMPTY_TEXT ? cells[4] : ''
+ 
         return {
             speaker: {id: cells[0].split('_')[0]},
             segment_id: parseInt(cells[0].split('_')[1]),
             start: start,
             end: end,
-            text: cells[4],
+            text,
             confidence: confidence
         }
     });
@@ -64,7 +66,7 @@ export const parse = (data, $parent) => {
 
     $parent.ctmData.push(words);
 
-    return monologues;
+    return [ monologues ];
 }
 
 export const convert = (app, fileIndex) => {
@@ -77,7 +79,7 @@ export const convert = (app, fileIndex) => {
 
         region.data.words.forEach((word) => {
             let confidence = word.confidence || constants.NO_CONFIDENCE;
-            output.push(`${speaker}_${segment_id.toString().padStart(5, '0')}_audio 1 ${word.start.toFixed(2).padStart(8, '0')} ${(word.end - word.start).toFixed(2)} ${word.text} ${confidence.toFixed(2)}`)
+            output.push(`${speaker}_${segment_id.toString().padStart(5, '0')}_audio 1 ${word.start.toFixed(2).padStart(8, '0')} ${(word.end - word.start).toFixed(2)} ${word.text.length ? word.text : constants.EMPTY_TEXT} ${confidence.toFixed(2)}`)
         });
 
         segment_id++;

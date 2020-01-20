@@ -1,3 +1,5 @@
+import { EMPTY_TEXT } from '../constants'
+
 export const parse = (data, $parent, parserOptions) => {
     const options = parserOptions.srt
 
@@ -28,13 +30,13 @@ export const parse = (data, $parent, parserOptions) => {
         const ret = {}
         const timeStr = block[1]
         if (block.length === 4) {
-            ret.text = block[3]
+            ret.text = block[3] !== EMPTY_TEXT ? block[3] : ''
             const idStr = block[2].replace('(', '').replace(')', '')
             const spl = idStr.split('_')
             ret.speaker = { id: spl[0] }
             ret.segment_id = spl[1]
         } else {
-            ret.text = block[2]
+            ret.text = block[2] !== EMPTY_TEXT ? block[2] : ''
             ret.speaker = { id: '' }
         }
 
@@ -92,7 +94,7 @@ export const parse = (data, $parent, parserOptions) => {
 
     $parent.ctmData.push(words);
 
-    return monologues;
+    return [ monologues ];
 }
 
 export const convert = (app, fileIndex, parserOptions) => {
@@ -117,7 +119,7 @@ export const convert = (app, fileIndex, parserOptions) => {
                 let segment = `${segment_id}\n`
                 segment += `${toHHMMSS(word.start)},${getFract(word.start)} --> ${toHHMMSS(word.end)},${getFract(word.end)}\n`
                 segment += `(${speaker}_${region_id.toString().padStart(5, '0')}_audio)\n`
-                segment +=`${word.text}\n`
+                segment +=`${word.text.length ? word.text : EMPTY_TEXT}\n`
                 segment +=`\n`
                 output.push(segment)
                 segment_id++;
@@ -129,7 +131,8 @@ export const convert = (app, fileIndex, parserOptions) => {
             let segment = `${segment_id}\n`
             segment += `${toHHMMSS(region.start)},${getFract(region.start)} --> ${toHHMMSS(region.end)},${getFract(region.end)}\n`
             const wordText = region.data.words.map((w) => w.text)
-            segment += `${wordText.join(' ')}\n`
+            const fullText = wordText.join(' ')
+            segment += `${fullText.length ? fullText : EMPTY_TEXT}\n`
             segment +=`\n`
             output.push(segment)
             segment_id++

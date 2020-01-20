@@ -297,6 +297,10 @@ input.volume-slider[type="range"]{
     outline: none;
 }
 
+.region-context-menu__button {
+    cursor: pointer;
+}
+
 .uib-position-measure {
   display: block !important;
   visibility: hidden !important;

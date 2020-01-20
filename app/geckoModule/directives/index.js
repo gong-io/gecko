@@ -4,6 +4,7 @@ import { playPartDirective } from './playPartDirective'
 import editableDirective from './editable'
 import { Checklist } from './checkedListDirective.js'
 import fileRead from './fileReadDirective.js'
+import contextMenu from './contextMenu.js'
 
 export { 
     editableWordsDirective,
@@ -11,5 +12,6 @@ export {
     playPartDirective,
     editableDirective,
     Checklist,
-    fileRead 
+    fileRead,
+    contextMenu
 }

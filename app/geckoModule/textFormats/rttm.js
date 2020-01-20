@@ -14,7 +14,7 @@ export const parse = (data) => {
         monologues.push({speaker: {id: speaker}, start: start, end: end, words: []});
     }
 
-    return monologues;
+    return [ monologues ];
 }
 
 export const convert = (app, fileIndex) => {
