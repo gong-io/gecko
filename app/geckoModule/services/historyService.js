@@ -67,6 +67,7 @@ class HistoryService {
         context.updateView()
         context.eventBus.trigger('rebuildProofReading')
         context.$scope.$evalAsync();
+        context.cursorRegion = context.getCurrentRegion(context.selectedFileIndex)
     }
 }
 

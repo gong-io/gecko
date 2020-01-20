@@ -36,12 +36,11 @@ export default (parent) => {
                     filename: 'demo.json',
                     data: parent.handleTextFormats('demo.json', JSON.stringify(demoJson))[0]
                 }
-
+                parent.init()
                 parent.filesData = [
                     demoFile
                 ];
                 parent.audioFileName = 'demo.mp3';
-                parent.init();
                 const res = await parent.dataManager.loadFileFromServer({
                     audio: {
                         url: 'https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3'
