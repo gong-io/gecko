@@ -1351,12 +1351,12 @@ class MainController {
         return ret;
     }
 
-    speakerChanged(speaker, isFromContext = false) {
+    speakerChanged(speaker, isFromContext = false, event = null) {
         var self = this;
         const currentRegion = isFromContext ? self.contextMenuRegion : self.selectedRegion
 
         if (isFromContext && !this.contextMenuRegion) {
-            this.fillRegion(speaker)
+            this.fillRegion(speaker, event)
             return
         }
 
@@ -1737,10 +1737,18 @@ class MainController {
         }, this.contextMenuFileIndex)
     }
 
-    fillRegion (speaker) {
+    fillRegion (speaker, event) {
         if (this.contextMenuNextRegion || this.contextMenuPrevRegion) {
             const start = this.contextMenuPrevRegion ? this.contextMenuPrevRegion.end : 0
             const end = this.contextMenuNextRegion ? this.contextMenuNextRegion.start : this.wavesurfer.getDuration()
+            const length = end - start
+            if (length < constants.MINIMUM_LENGTH) {
+                if (event) {
+                    event.preventDefault()
+                }
+                this.toaster.pop('warning', 'The segment you\'re trying to create is too small')
+                return
+            }
             const newRegion = this.wavesurfer.addRegion({
                 start,
                 end,
@@ -1759,7 +1767,7 @@ class MainController {
     }
 
     contextMenuSpeakerClicked (speaker, event) {
-        this.speakerChanged(speaker, true)
+        this.speakerChanged(speaker, true, event)
         event.stopPropagation()
     }
 
