@@ -274,4 +274,8 @@ input.volume-slider[type="range"]{
 
 .tooltip.gecko-zoom-tooltip .tooltip-arrow {
     display: none;
-  }
+}
+
+.region-context-menu__button {
+    cursor: pointer;
+}

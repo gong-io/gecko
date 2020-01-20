@@ -22,9 +22,10 @@ import {
     sortDict,
     copyRegion,
     parseAndLoadAudio,
-    sortLegend,
     formatTime,
-    ZoomTooltip
+    ZoomTooltip,
+    prepareLegend,
+    formatTime
 } from './utils'
 
 import {
@@ -138,6 +139,8 @@ class MainController {
         this.isRegionClicked = false;
 
         this.allRegions = []
+
+        this.cursorRegion = null
     }
 
     setConstants() {
@@ -197,6 +200,10 @@ class MainController {
                     document.activeElement.blur();
                 }
                 return;
+            }
+
+            if (/^[0-9]$/i.test(e.key) && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault()
             }
 
             // this.shortcuts.checkKeys(e)
@@ -536,13 +543,15 @@ class MainController {
                 region.element.style.background = 'repeating-linear-gradient(135deg, rgb(128, 128, 128) 20px, rgb(180, 180, 180) 40px) rgb(128, 128, 128)'
             }
         } else if (region.data.speaker.length === 1) {
-            region.color = this.filesData[region.data.fileIndex].legend[region.data.speaker[0]];
-
+            const legendSpeaker = this.filesData[region.data.fileIndex].legend.find(s => s.value === region.data.speaker[0])
+            region.color = legendSpeaker.color
         } else {
             let line_width = 20;
 
-            let colors = region.data.speaker.map((s, i) =>
-                `${this.filesData[region.data.fileIndex].legend[s]} ${(i + 1) * line_width}px`
+            let colors = region.data.speaker.map((speaker, i) => {
+                const legendSpeaker = this.filesData[region.data.fileIndex].legend.find(s => s.value === speaker)
+                return `${legendSpeaker.color} ${(i + 1) * line_width}px`
+            }
             ).join(',');
 
             region.element.style.background =
@@ -806,7 +815,9 @@ class MainController {
             this.currentRegions[i] = currentRegion
         }
 
-        this.$scope.$$postDigest(this.updateSelectedWordInFiles.bind(this));
+        this.$timeout(() => {
+            this.updateSelectedWordInFiles()
+        })
     }
 
     getCurrentRegion(fileIndex) {
@@ -954,15 +965,33 @@ class MainController {
     createSpeakerLegends() {
         var self = this;
 
+        let defaultSpeakers = []
+        if (this.fileSpeakerColors) {
+            defaultSpeakers = constants.defaultSpeakers.map(ds => {
+                if (this.fileSpeakerColors[ds.value]) {
+                    return {
+                        ...ds,
+                        color: this.fileSpeakerColors[ds.value]
+                    }
+                }
+                return ds
+            })
+        } else {
+            defaultSpeakers = constants.defaultSpeakers
+        }
+
         // First aggregate all speakers, overwrite if "color" field is presented anywhere.
         // We set the same speaker for different files with the same color this way,
         // // determined by the last "color" field or one of the colors in the list
-        let speakersColors = Object.assign({}, constants.defaultSpeakers);
+        let speakersColors = defaultSpeakers.map(ds => {
+            return {
+                ...ds,
+                isDefault: true
+            }
+        })
 
         self.filesData.forEach(fileData => {
-            let colorIndex = 0;
-
-            fileData.legend = Object.assign({}, constants.defaultSpeakers);
+            fileData.legend = [ ...speakersColors ]
 
             fileData.data.forEach(monologue => {
                 if (!monologue.speaker.id) return;
@@ -980,29 +1009,27 @@ class MainController {
                 if (speakers.length === 1) {
                     // forcefully set the color of the speaker
                     if (monologue.speaker.color) {
-                        speakersColors[speakerId] = monologue.speaker.color;
+                        const foundSpeaker = speakersColors.find(sc => sc.value === speakerId)
+                        if (foundSpeaker) {
+                            foundSpeaker.color = monologue.speaker.color
+                        }
                     }
                 }
 
                 speakers.forEach(s => {
-
+                    const found = fileData.legend.find(sc => sc.value === s)
                     // Encounter the speaker id for the first time (among all files)
-                    if (!(s in speakersColors)) {
-                        speakersColors[s] = constants.SPEAKER_COLORS[colorIndex];
-                        colorIndex = (colorIndex + 1) % constants.SPEAKER_COLORS.length;
+                    if (!found) {
+                        const newSpeaker = {
+                            value: s,
+                            color : this.fileSpeakerColors && this.fileSpeakerColors[s] ? this.fileSpeakerColors[s] : null
+                        }
+                        fileData.legend.push(newSpeaker)
                     }
-                    fileData.legend[s] = undefined;
                 });
             })
 
-            fileData.legend = sortLegend(fileData.legend);
-        });
-
-        // Set the actual colors for each speaker
-        self.filesData.forEach(fileData => {
-            Object.keys(fileData.legend).forEach(speaker => {
-                fileData.legend[speaker] = speakersColors[speaker];
-            });
+            fileData.legend = prepareLegend(fileData.legend)
         });
     }
 
@@ -1074,7 +1101,8 @@ class MainController {
 
     splitSegment() {
         let region = this.selectedRegion;
-        if (!region) return;
+        const cursorRegion = this.getCurrentRegion(this.selectedFileIndex)
+        if (!region || region.data.isDummy || region !== cursorRegion) return;
         let time = this.wavesurfer.getCurrentTime();
 
         let first = copyRegion(region);
@@ -1114,7 +1142,8 @@ class MainController {
     }
 
     deleteRegionAction(region) {
-        if (!region) return;
+        const cursorRegion = this.getCurrentRegion(this.selectedFileIndex)
+        if (!region || cursorRegion !== region) return;
 
         this.historyService.undoStack.push([region.id]);
         this.historyService.regionsHistory[region.id].push(null);
@@ -1127,6 +1156,11 @@ class MainController {
         })
 
         this.updateView();
+
+        this.$timeout(() => {
+            this.setAllRegions()
+            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
+        })
     }
 
     __deleteRegion(region) {
@@ -1321,11 +1355,12 @@ class MainController {
         return ret;
     }
 
-    speakerChanged(speaker) {
+    speakerChanged(speaker, isFromContext = false) {
         var self = this;
+        const currentRegion = isFromContext ? self.contextMenuRegion : self.selectedRegion
 
-        var speakers = self.selectedRegion.data.speaker;
-        var idx = speakers.indexOf(speaker);
+        var speakers = currentRegion.data.speaker
+        var idx = speakers.indexOf(speaker.value);
 
         // Is currently selected
         if (idx > -1) {
@@ -1334,32 +1369,33 @@ class MainController {
 
         // Is newly selected
         else {
-            speakers.push(speaker);
+            speakers.push(speaker.value);
         }
 
-        this.historyService.addHistory(self.selectedRegion);
-        this.historyService.undoStack.push([self.selectedRegion.id]);
+        this.historyService.addHistory(currentRegion);
+        this.historyService.undoStack.push([currentRegion.id]);
 
-        this.regionUpdated(self.selectedRegion);
+        this.regionUpdated(currentRegion);
 
         this.eventBus.trigger('geckoChanged', {
             event: 'speakerChanged',
-            data: speaker
+            data: speaker.value
         })
 
         this.$timeout(() => {
             this.setAllRegions()
-            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
+            this.eventBus.trigger('rebuildProofReading', currentRegion, isFromContext ? this.contextMenuFileIndex : this.selectedFileIndex)
         })
     }
 
-    speakerNameChanged(oldText, newText) {
+    speakerNameChanged(speaker, oldText, newText) {
         let self = this;
 
         // Check that there is no duplicate speaker.
-        if (self.filesData[self.selectedFileIndex].legend[newText] !== undefined) return false;
+        const found = self.filesData[self.selectedFileIndex].legend.find((s) => s.value === speaker.value && s !== speaker)
+        if (found || !speaker.value.length) return false
 
-        self.updateLegend(self.selectedFileIndex, oldText, newText);
+        self.updateLegend(self.selectedFileIndex);
 
         let changedRegions = [];
         self.iterateRegions(region => {
@@ -1382,12 +1418,14 @@ class MainController {
     }
 
     updateLegend(fileIndex, oldSpeaker, newSpeaker) {
-        let self = this;
-        let fileData = self.filesData[fileIndex];
-
-        fileData.legend[newSpeaker] = fileData.legend[oldSpeaker];
-        delete fileData.legend[oldSpeaker];
-        fileData.legend = sortLegend(fileData.legend);
+        let fileData = this.filesData[fileIndex]
+        if (oldSpeaker && newSpeaker) {
+            const found = fileData.legend.find(s => s.value === oldSpeaker)
+            if (found) {
+                found.value = newSpeaker
+            }
+        }
+        fileData.legend = prepareLegend(fileData.legend)
     }
 
     newSpeakerKeyUp(e) {
@@ -1397,20 +1435,20 @@ class MainController {
     }
 
     addSpeaker() {
-        // var speakerNameElement = document.getElementById('newSpeakerName');
+        let legend = this.filesData[this.selectedFileIndex].legend
 
-        let legend = this.filesData[this.selectedFileIndex].legend;
+        if (this.newSpeakerName === '' || legend.find(s => s.value === this.newSpeakerName)) return
 
-        if (this.newSpeakerName === '' || this.newSpeakerName in legend) return;
+        const firstDefaultIndex = legend.findIndex(s => s.isDefault)
+        const regularSpeakers = legend.slice(0, firstDefaultIndex)
+        legend.push({
+            value: this.newSpeakerName,
+            color: constants.SPEAKER_COLORS[regularSpeakers.length % constants.SPEAKER_COLORS.length]
+        })
 
-        // Add speaker to legend and assign random color
-        const amountOfSpeakers = Object.keys(legend).length - Object.keys(constants.defaultSpeakers).length;
+        this.filesData[this.selectedFileIndex].legend = prepareLegend(legend)
 
-        legend[this.newSpeakerName] = constants.SPEAKER_COLORS[amountOfSpeakers];
-
-        this.filesData[this.selectedFileIndex].legend = sortLegend(legend);
-
-        this.newSpeakerName = '';
+        this.newSpeakerName = ''
     }
 
 // WARNING: Does not work well. after resize there's a dragging problem for regions
@@ -1580,6 +1618,14 @@ class MainController {
         this.wavesurfer.seekTo((time + offset) / this.wavesurfer.getDuration());
     }
 
+    jumpNextWord () {
+        
+    }
+
+    jumpPreviousWord () {
+        
+    }
+
     editableKeysMapping(regionIndex, wordIndex, keys, which) {
         const currentRegion = this.currentRegions[regionIndex];
         const words = currentRegion.data.words;
@@ -1652,6 +1698,24 @@ class MainController {
     updateZoomTooltip (newVal) {
         if (newVal) {
             this.zoomTooltip.update()
+        }
+    }
+
+    setContextMenuRegion (regionId) {
+        if (!regionId) {
+            this.contextMenuRegion = null
+            this.contextMenuFileIndex = null
+            return
+        }
+        for (let i = 0; i < this.filesData.length; i++) {
+            this.iterateRegions((r) => {
+                if (r.id === regionId) {
+                    this.$timeout(() => {
+                        this.contextMenuRegion = r
+                        this.contextMenuFileIndex = i
+                    })
+                }
+            }, i)
         }
     }
 }

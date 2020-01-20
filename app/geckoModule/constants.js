@@ -30,11 +30,13 @@ export const SPEAKER_COLORS = [
 
 export const UNKNOWN_SPEAKER = "<NA>";
 
+export const EMPTY_TEXT = "<NA>";
+
 export const SPEAKERS_SEPARATOR = "+";
 
 export const NO_CONFIDENCE = -1;
 
-var speakers = {
+/* var speakers = {
     '[crosstalk]': "#e1c7ff",
     '[dialtone]': "#e1c7ff",
     '[music]': "#e1c7ff",
@@ -44,9 +46,21 @@ var speakers = {
     '[laughter]': "#e1c7ff",
     '[bubble]': "#e1c7ff",
     '[recording]': "#e1c7ff"
-};
+}; */
 
 export const UNKNOWN_SPEAKER_COLOR = '#808080';
+
+const speakers = [
+    { display: '[noise]', value: '[noise]', shortcut: 1, color: '#e1c7ff'},
+    { display: '[crosstalk]', value: '[crosstalk]', shortcut: 2, color: '#e1c7ff'},
+    { display: '[bubble]', value: '[bubble]', shortcut: 3, color: '#e1c7ff'},
+    { display: '[laughter]', value: '[laughter]', shortcut: 4, color: '#e1c7ff'},
+    { display: '[music]', value: '[music]', shortcut: 5, color: '#e1c7ff'},
+    { display: '[recording]', value: '[recording]', shortcut: 6, color: '#e1c7ff'},
+    { display: '[dialtone]', value: '[dialtone]', shortcut: 7, color: '#e1c7ff'},
+    { display: '[foreign]', value: '[foreign]', shortcut: 8, color: '#e1c7ff'},
+    { display: '[beep]', value: '[beep]', shortcut: 9, color: '#e1c7ff'}
+]
 
 export const defaultSpeakers = speakers;
 
