@@ -93,6 +93,7 @@ export const parseAndLoadAudio = async (context, res) => {
         self.wavesurfer.load(res.call_from_url.url);
         parseAndLoadText(context, res);
     } else {
+        context.loader = true
         const fileResult = await readMediaFile(context, res.audio)
         parseAndLoadText(context, res)
         let mediaFile
