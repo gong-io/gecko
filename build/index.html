@@ -515,12 +515,11 @@
 
 <ul id="regionContextMenu" class="dropdown-menu" role='menu'> 
     <li ng-repeat="speaker in ctrl.filesData[ctrl.contextMenuFileIndex].legend">
-        <a class="region-context-menu__button" ng-click="ctrl.speakerChanged(speaker, true);$event.stopPropagation()">
+        <a class="region-context-menu__button" ng-click="ctrl.contextMenuSpeakerClicked(speaker, $event)">
             <input type="checkbox"
                     value="{{speaker.display}}"
                     ng-checked="ctrl.contextMenuRegion.data.speaker.indexOf(speaker.value) > -1"
-                    ng-disabled="!ctrl.contextMenuRegion"
-                    ng-click="ctrl.speakerChanged(speaker, true);$event.stopPropagation()"
+                    ng-click="ctrl.contextMenuSpeakerClicked(speaker, $event)"
                     style="margin-bottom: 0px">
             <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.{{ speaker.display }}</span>
             <span title="{{speaker.value}}" class="speaker-legend" ng-if="!speaker.isDefault">{{ speaker.value }}</span>
