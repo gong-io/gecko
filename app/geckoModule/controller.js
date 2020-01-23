@@ -764,18 +764,22 @@ class MainController {
         }
     }
 
-    calcCurrentFileIndex(e) {
+    calcCurrentFileIndex(e, isFromContext = false) {
         var scrollBarHeight = 20;
         var wavesurferHeight = this.wavesurfer.getHeight() - scrollBarHeight;
 
         // vertical click location
         var posY = e.pageY - e.target.offsetTop;
-        if (this.filesData.length > 1) {
-            this.selectedFileIndex = parseInt(posY / wavesurferHeight * this.filesData.length);
+
+        if (isFromContext) {
+            this.contextMenuFileIndex = parseInt(posY / wavesurferHeight * this.filesData.length)
         } else {
-            this.selectedFileIndex = 0
+            if (this.filesData.length > 1) {
+                this.selectedFileIndex = parseInt(posY / wavesurferHeight * this.filesData.length)
+            } else {
+                this.selectedFileIndex = 0
+            }
         }
-        
     }
 
     deselectRegion(region) {
@@ -1354,9 +1358,14 @@ class MainController {
         return ret;
     }
 
-    speakerChanged(speaker, isFromContext = false) {
+    speakerChanged(speaker, isFromContext = false, event = null) {
         var self = this;
         const currentRegion = isFromContext ? self.contextMenuRegion : self.selectedRegion
+
+        if (isFromContext && !this.contextMenuRegion) {
+            this.fillRegion(speaker, event)
+            return
+        }
 
         var speakers = currentRegion.data.speaker
         var idx = speakers.indexOf(speaker.value);
@@ -1703,20 +1712,79 @@ class MainController {
     setContextMenuRegion (regionId) {
         if (!regionId) {
             this.contextMenuRegion = null
-            this.contextMenuFileIndex = null
             return
         }
+
+        this.contextMenuNextRegion = null
+        this.contextMenuPrevRegion = null
         for (let i = 0; i < this.filesData.length; i++) {
             this.iterateRegions((r) => {
                 if (r.id === regionId) {
                     this.$timeout(() => {
                         this.contextMenuRegion = r
-                        this.contextMenuFileIndex = i
                     })
                 }
             }, i)
         }
     }
+
+    setContextMenuRegions (eventX) {
+        this.contextMenuPrevRegion = null
+        this.contextMenuNextRegion = null
+
+        const wavesurferWidth = this.wavesurfer.drawer.width
+        const duration = this.wavesurfer.getDuration()
+        const perc = (eventX / wavesurferWidth)
+        const time = perc * duration
+
+        this.iterateRegions((r) => {
+            const next = this.getRegion(r.next)
+            if (!r.prev && time < r.start) {
+                this.contextMenuNextRegion = r
+            } else if (!r.next && time > r.end){
+                this.contextMenuPrevRegion = r
+            } else if (next && r.end < time && next.start > time) {
+                this.contextMenuNextRegion = next
+                this.contextMenuPrevRegion = r
+            }
+        }, this.contextMenuFileIndex)
+    }
+
+    fillRegion (speaker, event) {
+        if (this.contextMenuNextRegion || this.contextMenuPrevRegion) {
+            const start = this.contextMenuPrevRegion ? this.contextMenuPrevRegion.end : 0
+            const end = this.contextMenuNextRegion ? this.contextMenuNextRegion.start : this.wavesurfer.getDuration()
+            const length = end - start
+            if (length < constants.MINIMUM_LENGTH) {
+                if (event) {
+                    event.preventDefault()
+                }
+                this.toaster.pop('warning', 'The segment you\'re trying to create is too small')
+                return
+            }
+            const newRegion = this.wavesurfer.addRegion({
+                start,
+                end,
+                data: {
+                    initFinished: true,
+                    fileIndex: this.contextMenuFileIndex,
+                    speaker: [speaker.value],
+                    words: [{start, end, text: '', uuid: uuidv4()}]
+                },
+                drag: false,
+                minLength: constants.MINIMUM_LENGTH
+            })
+            this.historyService.undoStack.push([newRegion.id])
+            this.contextMenuRegion = newRegion
+        }
+    }
+
+    contextMenuSpeakerClicked (speaker, event) {
+        this.speakerChanged(speaker, true, event)
+        event.stopPropagation()
+    }
+
+    
 }
 
 MainController

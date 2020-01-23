@@ -1,6 +1,6 @@
 import { DomUtils } from '../utils/index.js'
 
-export default () => {
+export default ($timeout) => {
     return {
         restrict: 'A',
         scope: {
@@ -18,6 +18,13 @@ export default () => {
               });
               $(iElement).bind('contextmenu', function(event) {
                 event.preventDefault();
+                ul.css({
+                  position: "fixed",
+                  display: "block",
+                  left: event.clientX + 'px',
+                  top: event.clientY + 'px'
+                });
+                last = event.timeStamp;
                 if (event.target && event.target.tagName === 'REGION') {
                     ul.css({
                       position: "fixed",
@@ -35,8 +42,14 @@ export default () => {
                     last = event.timeStamp;
                     scope.app.setContextMenuRegion(event.target.getAttribute('data-id'))
                 } else {
+                    const realX = event.clientX + event.target.scrollLeft
+                    scope.app.setContextMenuRegions(realX)
                     scope.app.setContextMenuRegion()
                 }
+
+                $timeout(() => {
+                  scope.app.calcCurrentFileIndex(event, true)
+                })
                 DomUtils.disableScroll()
               });
 
