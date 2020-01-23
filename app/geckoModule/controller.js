@@ -22,6 +22,7 @@ import {
     sortDict,
     copyRegion,
     parseAndLoadAudio,
+    ZoomTooltip,
     prepareLegend,
     formatTime
 } from './utils'
@@ -51,6 +52,12 @@ class MainController {
         this.discrepancyService = discrepancyService
         this.historyService = historyService
         this.config = config
+
+        this.zoomTooltipOpen = false
+
+        this.zoomTooltip = new ZoomTooltip(this)
+
+        this.$scope.$watch(() => this.zoomTooltipOpen, this.updateZoomTooltip.bind(this))
     }
 
     async loadApp(config) {
@@ -1684,6 +1691,12 @@ class MainController {
             }
         } else {
             this.eventBus.trigger('proofReadingScrollToSelected')
+        }
+    }
+
+    updateZoomTooltip (newVal) {
+        if (newVal) {
+            this.zoomTooltip.update()
         }
     }
 

@@ -17,6 +17,7 @@ export default (parent) => {
     parent.$scope.$watch(() => parent.zoomLevel, (newVal) => {
         if (newVal) {
             parent.wavesurfer.zoom(parent.zoomLevel)
+            parent.zoomTooltip.update()
         }
     })
 
