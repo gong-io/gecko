@@ -188,6 +188,9 @@ class MainController {
 
         this.eventBus.on('editableFocus', (editableRegion, fileIndex) => {
             this.selectedFileIndex = fileIndex
+            if (this.proofReadingView) {
+                this.seek(editableRegion.start, 'right')
+            }
         })
 
         document.onkeydown = (e) => {
