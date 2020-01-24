@@ -282,6 +282,7 @@ class GeckoEdtior {
         const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
         const isOtherControl = window.navigator.platform !== 'MacIntel' && e.ctrlKey
         const isDownCtrl = isMacMeta || isOtherControl
+        const isPrintableKey = e.key.length === 1
 
         if (isDownCtrl && !e.shiftKey && !e.altKey && (e.which === 37 || e.which === 39)) {
             const selection = document.getSelection()
@@ -437,7 +438,7 @@ class GeckoEdtior {
             }
         }
 
-        if (/^[a-z0-9]$/i.test(e.key) && !this.isDownCtrl(e)) {
+        if (isPrintableKey && !this.isDownCtrl(e)) {
             if (this.isAllSelected()) {
                 const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: e.key})
                 document.execCommand('insertHTML', false, html)
