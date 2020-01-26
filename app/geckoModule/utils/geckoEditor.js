@@ -532,7 +532,6 @@ class GeckoEdtior {
                         range.collapse()
                         selection.removeAllRanges()
                         selection.addRange(range)
-                        document.execCommand('insertText', false, text)
                         e.preventDefault()
                         return
                     }
