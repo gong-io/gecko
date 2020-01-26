@@ -523,6 +523,20 @@ class GeckoEdtior {
                 } else {
                     const selection = document.getSelection()
                     const ancestorNode = this.findNodeAncestor(selection.focusNode)
+                    if (selection.focusNode === this.element && selection.isCollapsed) {
+                        /* paste in empty editable */
+                        const firstSpan = this.element.firstChild
+                        firstSpan.textContent = `${text}`
+                        const range = document.createRange()
+                        range.selectNodeContents(firstSpan)
+                        range.collapse()
+                        selection.removeAllRanges()
+                        selection.addRange(range)
+                        document.execCommand('insertText', false, text)
+                        e.preventDefault()
+                        return
+                    }
+
                     if (selection.isCollapsed) {
                         if (this.isSpace(ancestorNode)) {
                             const nodeTo = ancestorNode.nextSibling
