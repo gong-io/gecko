@@ -1,5 +1,7 @@
 import geckoEditor from './geckoEditor'
+import ZoomTooltip from './zoomTooltip'
 import { parseAndLoadAudio } from './fileUtils'
+import DomUtils from './domUtils'
 
 import * as constants from '../constants'
 
@@ -144,17 +146,46 @@ export const splitPunctuation = (text) => {
 }
 
 export const sortLegend = (legend) => {
-    return sortDict(legend, undefined, (a, b) => {
-            if (a in constants.defaultSpeakers && !(b in constants.defaultSpeakers)) {
-                return 1;
-            }
-            if (b in constants.defaultSpeakers && !(a in constants.defaultSpeakers)) {
-                return -1;
-            }
-
-            return a < b ? -1 : 1;
+    return legend.sort((a, b) => {
+        if (a.isDefault && !b.isDefault) {
+            return 1
+        } else if (!a.isDefault && b.isDefault) {
+            return -1
+        } else {
+            return 0
         }
-    );
+    })
 }
 
-export { geckoEditor, parseAndLoadAudio }
+export const splitLegendSpeakers = (legend) => {
+    const firstDefaultIndex = legend.findIndex(s => s.isDefault)
+    const regularSpeakers = legend.slice(0, firstDefaultIndex)
+    const defaultSpeakers = legend.slice(firstDefaultIndex, legend.length)
+    return {
+        regularSpeakers,
+        defaultSpeakers   
+    }
+}
+
+export const prepareLegend = (fileDataLegend) => {
+    const legend = sortLegend(fileDataLegend)
+    let { regularSpeakers, defaultSpeakers } = splitLegendSpeakers(legend)
+    regularSpeakers = regularSpeakers.sort((a, b) => {
+        if (a.value.toLowerCase() > b.value.toLowerCase()) {
+            return 1
+        } else if (a.value.toLowerCase() < b.value.toLowerCase()) {
+            return -1
+        } else {
+            return 0
+        }
+    }).map((rs, index) => {
+        return {
+            ...rs,
+            shortcut: index + 1,
+            color: rs.color ? rs.color : constants.SPEAKER_COLORS[index % constants.SPEAKER_COLORS.length]
+        }
+    })
+    return [ ...regularSpeakers, ...defaultSpeakers ]
+}
+
+export { geckoEditor, parseAndLoadAudio, ZoomTooltip, DomUtils }

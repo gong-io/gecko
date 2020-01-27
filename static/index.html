@@ -117,7 +117,7 @@
     </div>
 </div>
 <!--<div style="resize:vertical;overflow-y:auto" ng-mousemove="ctrl.resizeWavesurfer($event)">-->
-<div id="waveform" ng-show="!ctrl.proofReadingView"></div>
+<div id="waveform" ng-show="!ctrl.proofReadingView" context-menu="regionContextMenu" app="ctrl"></div>
 <!--<div style="height:10px"></div>-->
 <!--</div>-->
 <div id="timeline" ng-show="!ctrl.proofReadingView">
@@ -130,11 +130,13 @@
         </div>
 
         <div class="col-md-7">
-            <input id="slider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
+            <input id="zoomSlider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
                    max="{{ ctrl.maxZoom }}"
                    style="width: 100%" 
                    tooltip-placement="top"
-                    uib-tooltip="Zoom level: {{ ctrl.zoomLevel }}"/>
+                    uib-tooltip="Zoom level: {{ ctrl.zoomLevel }}"
+                    tooltip-class="gecko-zoom-tooltip"
+                    tooltip-is-open="ctrl.zoomTooltipOpen"/>
         </div>
 
         <div class="col-md-1">
@@ -185,7 +187,7 @@
 
             <button class="btn btn-default" ng-click="ctrl.zoomIntoRegion()"
                     title="Zoom to Segment"
-                    ng-disabled="!ctrl.selectedRegion">
+                    ng-disabled="!ctrl.selectedRegion || ctrl.proofReadingView">
                     <i class="glyphicon glyphicon-zoom-in"></i>
             </button>
 
@@ -213,13 +215,13 @@
 
             <button class="btn btn-default" ng-click="ctrl.splitSegment()"
                     title="Split Segment"
-                    ng-disabled="!ctrl.selectedRegion">
+                    ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion != ctrl.cursorRegion">
                 <i class="glyphicon glyphicon-scissors"></i>
             </button>
 
             <button class="btn btn-default" ng-click="ctrl.deleteRegionAction(ctrl.selectedRegion)"
                     title="Delete Segment"
-                    ng-disabled="!ctrl.selectedRegion">
+                    ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion != ctrl.cursorRegion">
                 <i class="glyphicon glyphicon-trash"></i>
             </button>
 
@@ -360,26 +362,27 @@
                     </div>
                     <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy">
                         <div class="form-group">
-                            <label class="annotation-label" style="background-color:{{ color + 80 }};"
-                                   ng-repeat="(speaker,color) in ctrl.filesData[ctrl.selectedFileIndex].legend">
+                            <label class="annotation-label" style="background-color:{{ speaker.color + 80 }};"
+                                   ng-repeat="speaker in ctrl.filesData[ctrl.selectedFileIndex].legend">
 
                                 <input type="checkbox"
-                                       value="{{speaker}}"
-                                       ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker) > -1"
+                                       value="{{speaker.display}}"
+                                       ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker.value) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
                                        ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy""
                                 style="margin-bottom: 0px">
-                                <span editable
-                                      changed="ctrl.speakerNameChanged(oldText,newText)"
-                                      ng-model="speaker"
-                                      title="{{speaker}}"
+                                <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.{{ speaker.display }}</span>
+                                <span ng-if="!speaker.isDefault" editable
+                                      changed="ctrl.speakerNameChanged(speaker, oldText,newText)"
+                                      ng-model="speaker.value"
+                                      title="{{speaker.value}}"
                                 class="speaker-legend">
                                 </span>
                                 <div class="pull-right">
                                     <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
-                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker]"></play-part>
-                                    <input type="color" ng-model="color" class="pull-right"
-                                           ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker, color)"/>
+                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>
+                                    <input type="color" ng-model="speaker.color" class="pull-right"
+                                           ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker.value, speaker.color)"/>
                                 </div>
                             </label>
                         </div>
@@ -509,6 +512,20 @@
         </div>
     </div>
 </div>
+
+<ul id="regionContextMenu" class="dropdown-menu" role='menu'> 
+    <li ng-repeat="speaker in ctrl.filesData[ctrl.contextMenuFileIndex].legend">
+        <a class="region-context-menu__button" ng-click="ctrl.contextMenuSpeakerClicked(speaker, $event)">
+            <input type="checkbox"
+                    value="{{speaker.display}}"
+                    ng-checked="ctrl.contextMenuRegion.data.speaker.indexOf(speaker.value) > -1"
+                    ng-click="ctrl.contextMenuSpeakerClicked(speaker, $event)"
+                    style="margin-bottom: 0px">
+            <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.{{ speaker.display }}</span>
+            <span title="{{speaker.value}}" class="speaker-legend" ng-if="!speaker.isDefault">{{ speaker.value }}</span>
+        </a>
+    </li>
+  </ul>
 
 <!--<script type="text/ng-template" id="selectAudioModal.html">-->
 <!--   -->

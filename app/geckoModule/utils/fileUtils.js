@@ -60,8 +60,11 @@ export const parseAndLoadText = (context, res) => {
 
     // force recursion in order to keep the order of the files
     const cb = async (data) => {
-        const file = {filename: res.segmentsFiles[i].name, data}
+        const parsedData = Array.isArray(data) ? data[0] : data
+        const parsedColors = Array.isArray(data) && data.length > 1 ? data[1] : null
+        const file = { filename: res.segmentsFiles[i].name, data: parsedData }
         context.filesData.push(file);
+        context.fileSpeakerColors = parsedColors
         i++;
         if (i < res.segmentsFiles.length) {
             readTextFile(context, res.segmentsFiles[i], cb);
@@ -90,6 +93,7 @@ export const parseAndLoadAudio = async (context, res) => {
         self.wavesurfer.load(res.call_from_url.url);
         parseAndLoadText(context, res);
     } else {
+        context.loader = true
         const fileResult = await readMediaFile(context, res.audio)
         parseAndLoadText(context, res)
         let mediaFile

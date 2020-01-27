@@ -12,5 +12,5 @@ export const parse = (data) => {
 
     }
 
-    return monologues;
+    return [ monologues ];
 }
