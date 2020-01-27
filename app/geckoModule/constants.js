@@ -86,3 +86,5 @@ export const TOLERANCE = 0.00001;
 export const DEFAULT_GAIN = 1
 export const MIN_GAIN = 0
 export const MAX_GAIN = 2
+
+export const OLATS_BUFFER_SIZE = 4096

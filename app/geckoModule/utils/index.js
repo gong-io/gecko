@@ -1,6 +1,5 @@
 import geckoEditor from './geckoEditor'
 import { parseAndLoadAudio } from './fileUtils'
-import './soundtouch'
 
 import * as constants from '../constants'
 
