@@ -1,13 +1,14 @@
 
 export default (parent) => {
-    parent.seekingPos = ~~(parent.wavesurfer.backend.getPlayedPercents() * parent.length)
-    parent.st.tempo = parent.wavesurfer.getPlaybackRate()
-    parent.wavesurfer.backend.disconnectFilters()
+    parent.buffOla.position = ~~(parent.wavesurfer.backend.getPlayedPercents() * parent.length)
+    parent.buffOla.alpha = 1 / parent.wavesurfer.getPlaybackRate()
 
-    if (parent.st.tempo === 1) {
+    parent.wavesurfer.backend.disconnectFilters()
+    
+    if (parent.wavesurfer.getPlaybackRate() === 1) {
         parent.wavesurfer.backend.setFilters([parent.gainNode])
     } else {
-        parent.wavesurfer.backend.setFilters([parent.soundtouchNode, parent.gainNode])
+        parent.wavesurfer.backend.setFilters([parent.olatsNode, parent.gainNode])
     }
 
     parent.isPlaying = true

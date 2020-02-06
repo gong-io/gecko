@@ -1,5 +1,5 @@
 export default (parent) => {
-    parent.soundtouchNode && parent.soundtouchNode.disconnect()
+    parent.olatsNode && parent.olatsNode.disconnect()
     parent.isPlaying = false
     parent.$scope.$evalAsync()
 }

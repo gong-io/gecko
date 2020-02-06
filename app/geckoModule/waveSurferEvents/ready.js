@@ -1,4 +1,4 @@
-import '../utils/soundtouch.js'
+import BufferedOLA from '../utils/buffered-ola'
 
 import { secondsToMinutes } from '../utils'
 import * as constants from '../constants'
@@ -83,40 +83,18 @@ export default (parent) => {
 
     parent.handleCtm()
 
-    parent.st = new soundtouch.SoundTouch(parent.wavesurfer.backend.ac.sampleRate)
-    var buffer = parent.wavesurfer.backend.buffer
-    var channels = buffer.numberOfChannels
-    var l = buffer.getChannelData(0)
-    var r = channels > 1 ? buffer.getChannelData(1) : l
-    parent.length = buffer.length
-    parent.seekingPos = null
-    var seekingDiff = 0
+    parent.length = parent.wavesurfer.backend.buffer.length
 
-    var source = {
-        extract: (target, numFrames, position) => {
-            if (parent.seekingPos != null) {
-                seekingDiff = parent.seekingPos - position;
-                parent.seekingPos = null
-            }
-
-            position += seekingDiff;
-
-            for (var i = 0; i < numFrames; i++) {
-                target[i * 2] = l[i + position]
-                target[i * 2 + 1] = r[i + position]
-            }
-
-            return Math.min(numFrames, parent.length - position)
-        }
+    parent.olatsNode = parent.wavesurfer.backend.ac.createScriptProcessor(constants.OLATS_BUFFER_SIZE, 2)
+    parent.olatsNode.onaudioprocess = function(e) {
+        parent.buffOla.process(e.outputBuffer)
     }
 
-    parent.soundtouchNode = null
+    parent.buffOla = new BufferedOLA(constants.OLATS_BUFFER_SIZE)
+    parent.buffOla.set_audio_buffer(parent.wavesurfer.backend.buffer)
 
     parent.gainNode = parent.wavesurfer.backend.ac.createGain()
     parent.gainNode.gain.value = parent.currentGainProc / 100
-
-    var filter = new soundtouch.SimpleFilter(source, parent.st)
-    parent.soundtouchNode = soundtouch.getWebAudioNode(parent.wavesurfer.backend.ac, filter)
 
     parent.wavesurfer.on('play', () => play(parent))
 

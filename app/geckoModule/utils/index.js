@@ -2,7 +2,6 @@ import geckoEditor from './geckoEditor'
 import ZoomTooltip from './zoomTooltip'
 import { parseAndLoadAudio, parseServerResponse } from './fileUtils'
 import DomUtils from './domUtils'
-import './soundtouch'
 
 import * as constants from '../constants'
 
