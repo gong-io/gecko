@@ -1,6 +1,6 @@
 import geckoEditor from './geckoEditor'
 import ZoomTooltip from './zoomTooltip'
-import { parseAndLoadAudio } from './fileUtils'
+import { parseAndLoadAudio, parseServerResponse } from './fileUtils'
 import DomUtils from './domUtils'
 import './soundtouch'
 
@@ -189,4 +189,4 @@ export const prepareLegend = (fileDataLegend) => {
     return [ ...regularSpeakers, ...defaultSpeakers ]
 }
 
-export { geckoEditor, parseAndLoadAudio, ZoomTooltip, DomUtils }
+export { geckoEditor, parseAndLoadAudio, parseServerResponse, ZoomTooltip, DomUtils }

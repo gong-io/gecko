@@ -11,8 +11,7 @@ export const readTextFile = (context, file, cb) => {
     var reader = new FileReader()
 
     reader.onload = (e) => {
-        const result = context.handleTextFormats(file.name, e.target.result)
-        cb(result)
+        cb(e.target.result)
     };
 
     reader.readAsText(file)
@@ -53,18 +52,35 @@ export const readMediaFile = async (context, file) => {
     })
 }
 
+export const parseServerResponse = (context, serverConfig, res) => {
+    context.filesData = []
+    context.wavesurfer.loadBlob(res.audioFile)
+
+    const urlArr = serverConfig.audio.url.split('/')
+    const audioFileName = urlArr[urlArr.length - 1]
+    context.audioFileName = audioFileName
+    res.segmentFiles.forEach((x) => {
+        parseFileData(context, x.filename, x.data)
+    })
+}
+
+const parseFileData = (context, fileName, fileData) => {
+    const data = context.handleTextFormats(fileName, fileData)
+    const parsedData = Array.isArray(data) ? data[0] : data
+    const parsedColors = Array.isArray(data) && data.length > 1 ? data[1] : null
+    const file = { filename: fileName, data: parsedData }
+    context.filesData.push(file)
+    context.fileSpeakerColors = parsedColors
+}
+
 export const parseAndLoadText = (context, res) => {
     context.filesData = []
 
     var i = 0;
 
     // force recursion in order to keep the order of the files
-    const cb = async (data) => {
-        const parsedData = Array.isArray(data) ? data[0] : data
-        const parsedColors = Array.isArray(data) && data.length > 1 ? data[1] : null
-        const file = { filename: res.segmentsFiles[i].name, data: parsedData }
-        context.filesData.push(file);
-        context.fileSpeakerColors = parsedColors
+    const cb = async (fileData) => {
+        parseFileData(context, res.segmentsFiles[i].name, fileData)
         i++;
         if (i < res.segmentsFiles.length) {
             readTextFile(context, res.segmentsFiles[i], cb);

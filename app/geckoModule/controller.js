@@ -22,6 +22,7 @@ import {
     sortDict,
     copyRegion,
     parseAndLoadAudio,
+    parseServerResponse,
     ZoomTooltip,
     prepareLegend,
     formatTime
@@ -72,7 +73,7 @@ class MainController {
         }
 
         const audio = urlParams.get('audio')
-        let formats = ['rttm', 'tsv', 'json', 'ctm']
+        let formats = ['rttm', 'tsv', 'json', 'ctm', 'srt']
         formats = formats.map((f) => {
             if (urlParams.get(f)) {
                 return {
@@ -96,14 +97,18 @@ class MainController {
             }
 
             if (formats.length) {
+                serverConfig.ctms = []
                 formats.forEach(f => {
-                    const fileName = f.url.split('/').pop().split('.')[0]
-                    serverConfig.ctms = [
-                        {
-                            url: f.url,
-                            fileName: fileName + '.' + f.format
-                        }
-                    ]
+                    const fileUrls = f.url.split(';')
+                    fileUrls.forEach((fUrl) => {
+                        const fileName = fUrl.split('/').pop().split('.')[0]
+                        serverConfig.ctms.push(
+                            {
+                                url: fUrl,
+                                fileName: fileName + '.' + f.format
+                            }
+                        )
+                    })
                 })
             }
         }
@@ -1496,16 +1501,8 @@ class MainController {
         if (self.wavesurfer) self.wavesurfer.destroy();
         self.init()
         self.loader = true
-        this.dataManager.loadFileFromServer(config).then(async function (res) {
-            // var uint8buf = new Uint8Array(res.audioFile);
-            // self.wavesurfer.loadBlob(new Blob([uint8buf]));
-            self.wavesurfer.loadBlob(res.audioFile);
-
-            const urlArr = config.audio.url.split('/')
-            const audioFileName = urlArr[urlArr.length - 1]
-            self.audioFileName = audioFileName
-            res.segmentFiles.forEach(x => x.data = self.handleTextFormats(x.filename, x.data));
-            self.filesData = res.segmentFiles;
+        this.dataManager.loadFileFromServer(config).then(async (res) => {
+            parseServerResponse(this, config, res)
 
             if (config.enableDrafts && this.dataBase) {
                 const serverDraft = await self.dataBase.createDraft({
