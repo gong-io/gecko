@@ -124,6 +124,14 @@ module.exports = class s3proxy extends EventEmitter {
 
   get(req, res) {
     const stream = this.createReadStream(req);
+    const noCacheExt = ['ctm', 'json', 'rttm', 'srt', 'tsv']
+    const fileName = req.url.split('/').pop()
+    const fileExt = fileName.split('.').pop()
+    if (noCacheExt.includes(fileExt)) {
+      res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+      res.header('Expires', '-1');
+      res.header('Pragma', 'no-cache');
+    }
     stream.addHeaderEventListener(res);
     return stream;
   }
