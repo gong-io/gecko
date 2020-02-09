@@ -60,15 +60,18 @@ export const parseServerResponse = (context, serverConfig, res) => {
     const audioFileName = urlArr[urlArr.length - 1]
     context.audioFileName = audioFileName
     res.segmentFiles.forEach((x) => {
-        parseFileData(context, x.filename, x.data)
+        parseFileData(context, x.filename, x.data, x.s3Subfolder)
     })
 }
 
-const parseFileData = (context, fileName, fileData) => {
+const parseFileData = (context, fileName, fileData, fileS3Subfolder = null) => {
     const data = context.handleTextFormats(fileName, fileData)
     const parsedData = Array.isArray(data) ? data[0] : data
     const parsedColors = Array.isArray(data) && data.length > 1 ? data[1] : null
     const file = { filename: fileName, data: parsedData }
+    if (fileS3Subfolder) {
+        file.s3Subfolder = fileS3Subfolder
+    }
     context.filesData.push(file)
     context.fileSpeakerColors = parsedColors
 }

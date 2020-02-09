@@ -113,14 +113,14 @@ class dataManager {
         }));
 
         config.ctms.forEach((ctm) => {
-            let ctmSubfolder = null
+            let s3Subfolder = null
             /* for s3 proxy */
             if (ctm.url.includes('s3_files')) {
                 const splFiles = ctm.url.split('/s3_files/')
                 if (splFiles.length > 1) {
                     const s3Path = splFiles[1]
                     const splS3Path = s3Path.split('/')
-                    ctmSubfolder = splS3Path.slice(0, splS3Path.length - 1).join('/')
+                    s3Subfolder = splS3Path.slice(0, splS3Path.length - 1).join('/')
                 }
             }
             promises.push(this.$http({
@@ -134,8 +134,8 @@ class dataManager {
                         'Access-Control-Allow-Origin': true
                     }
                 }
-                if (ctmSubfolder) {
-                    addedFile.s3Subfolder = ctmSubfolder
+                if (s3Subfolder) {
+                    addedFile.s3Subfolder = s3Subfolder
                 }
                 res.segmentFiles.push(addedFile);
             }, (e) => {
