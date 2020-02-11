@@ -7,7 +7,7 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
         scope: {
             fileIndex: '=',
             regions: '=',
-            currentRegion: '=',
+            selectedRegion: '=',
             legend: '='
         },
         link: (scope, element, attrs) => {
@@ -56,18 +56,18 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
                     n.classList.remove('proofreading--selected')
                 })
 
-                if (!scope.currentRegion) {
+                if (!scope.selectedRegion) {
                     return
                 }
 
-                const regionElement = document.querySelector(`[data-region="${scope.currentRegion.id}"]`)
+                const regionElement = document.querySelector(`[data-region="${scope.selectedRegion.id}"]`)
                 if (regionElement) {
                     const topAncestor = findTopAncestor(regionElement)
                     topAncestor.classList.add('proofreading--selected')
                 } 
             }
 
-            scope.$watch('currentRegion', (newVal) => {
+            scope.$watch('selectedRegion', (newVal) => {
                 $timeout(() => {
                     scope.setSelected()
                 })
