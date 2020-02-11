@@ -38,7 +38,8 @@ jobs:
         git remote -v
         npm install
         webpack
+        rm .gitignore
+        git add build
         git commit -am "GitHub Action's build"
-        git push
         git subtree split --prefix build -b gh-pages
         git push -f origin gh-pages:gh-pages
