@@ -4,3 +4,4 @@ node_modules
 .idea/
 .env
 /private_samples/
+/build/
