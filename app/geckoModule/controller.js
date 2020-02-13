@@ -1693,6 +1693,11 @@ class MainController {
             for (let i = 0; i < this.filesData.length; i++) {
                 this.$timeout(() => this.eventBus.trigger('resetEditableWords', this.getCurrentRegion(i)))
             }
+            if (!this.isPlaying) {
+                this.$timeout(() => {
+                    this.wavesurfer.seekAndCenter(this.wavesurfer.getCurrentTime() / this.wavesurfer.getDuration())
+                })
+            }
         } else {
             this.eventBus.trigger('proofReadingScrollToSelected')
         }
