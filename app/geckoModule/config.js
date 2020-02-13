@@ -19,7 +19,8 @@ var config = {
     slider: "#slider",
     isServerMode: false,
     proofreadingAutoScroll: false,
-    enableDrafts: false
+    enableDrafts: false,
+    emptySectionClick: true
 }
 
 export { config }
