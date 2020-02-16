@@ -67,6 +67,12 @@ export const editableWordsDirective = ($timeout, eventBus) => {
                 })
             })
 
+            editor.on('emptyEditorClick', ({ region, event }) => {
+                $timeout(() => {
+                    eventBus.trigger('emptyEditorClick', region, event)
+                })
+            })
+
             editor.on('focus', () => {
                 eventBus.trigger('editableFocus', scope.region, scope.fileIndex)
             })

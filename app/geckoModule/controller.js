@@ -180,6 +180,14 @@ class MainController {
             e.stopPropagation()
         })
 
+        this.eventBus.on('emptyEditorClick', (region, e) => {
+            if (this.config.emptySectionClick) {
+                this.seek(region.start, 'right')
+                e.preventDefault()
+                e.stopPropagation()
+            }
+        })
+
         this.eventBus.on('regionTextChanged', (regionId) => {
             let currentRegion = this.getRegion(regionId)
             this.historyService.addHistory(currentRegion)
