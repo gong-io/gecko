@@ -852,7 +852,8 @@ class GeckoEdtior {
                 'title' : `Confidence: ${w.confidence ? w.confidence : ''}`,
                 'data-start': w.start,
                 'data-end': w.end,
-                'word-uuid': w.uuid
+                'word-uuid': w.uuid,
+                'style' : w.color ? `color: ${w.color}` : ''
             },
             w.text.length ? document.createTextNode(w.text) : document.createTextNode('')
         )
