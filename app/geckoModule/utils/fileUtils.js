@@ -52,6 +52,19 @@ export const readMediaFile = async (context, file) => {
     })
 }
 
+const addEmptyFile = (context) => {
+    var filename = context.audioFileName.substr(0, context.audioFileName.lastIndexOf('.')) + ".txt";
+    if (filename === ".txt") {
+        filename = context.audioFileName + ".txt";
+    }
+    context.filesData.push(
+        {
+            filename: filename,
+            data: []
+        }
+    );
+}
+
 export const parseServerResponse = (context, serverConfig, res) => {
     context.filesData = []
     context.wavesurfer.loadBlob(res.audioFile)
@@ -59,9 +72,14 @@ export const parseServerResponse = (context, serverConfig, res) => {
     const urlArr = serverConfig.audio.url.split('/')
     const audioFileName = urlArr[urlArr.length - 1]
     context.audioFileName = audioFileName
-    res.segmentFiles.forEach((x) => {
-        parseFileData(context, x.filename, x.data, x.s3Subfolder)
-    })
+
+    if (res.segmentFiles.length) {
+        res.segmentFiles.forEach((x) => {
+            parseFileData(context, x.filename, x.data, x.s3Subfolder)
+        })
+    } else {
+        addEmptyFile(context)
+    }
 }
 
 const parseFileData = (context, fileName, fileData, fileS3Subfolder = null) => {
@@ -93,16 +111,7 @@ export const parseAndLoadText = (context, res) => {
     if (i < res.segmentsFiles.length) {
         readTextFile(context, res.segmentsFiles[i], cb);
     } else {
-        var filename = context.audioFileName.substr(0, context.audioFileName.lastIndexOf('.')) + ".txt";
-        if (filename === ".txt") {
-            filename = context.audioFileName + ".txt";
-        }
-        context.filesData.push(
-            {
-                filename: filename,
-                data: []
-            }
-        );
+        addEmptyFile(context)
     }
 }
 

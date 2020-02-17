@@ -40,7 +40,10 @@ export const speakersFilter = () => {
 export const speakersFilterColor = () => {
     return (items, legend) => {
         if (items && items.length) {
-            const spans = items.map(s => `<span style="color: ${legend[s]};">${s}</span>`)
+            const spans = items.map(s => {
+                const legendItem = legend.find(l => l.value === s)
+                return `<span style="color: ${legendItem.color};">${s}</span>`
+            })
             return spans.join(', ')
         } else if (items && !items.length) {
             return 'No speaker'
