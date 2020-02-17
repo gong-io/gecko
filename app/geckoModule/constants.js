@@ -103,4 +103,4 @@ export const MAX_GAIN = 2
 
 export const OLATS_BUFFER_SIZE = 4096
 
-export const TRANSCRIPT_EXTENSIONS = ['json', 'ctm', 'rttm', 'srt']
+export const TRANSCRIPT_EXTENSIONS = ['json', 'ctm', 'rttm', 'srt', 'tsv']
