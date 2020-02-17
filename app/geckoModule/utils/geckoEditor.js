@@ -48,6 +48,10 @@ class GeckoEdtior {
                     const clickedWord = this.words.find(w => w.uuid === wordUuid)
                     this.trigger('wordClick', { word: clickedWord, event: e })
                 }
+            } else {
+                if (this.element.textContent.trim().length === 0) {
+                    this.trigger('emptyEditorClick', { region: this.region, event: e })
+                }
             }
         }
     }
