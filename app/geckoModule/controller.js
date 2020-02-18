@@ -180,6 +180,14 @@ class MainController {
             e.stopPropagation()
         })
 
+        this.eventBus.on('emptyEditorClick', (region, e) => {
+            if (this.config.emptySectionClick) {
+                this.seek(region.start, 'right')
+                e.preventDefault()
+                e.stopPropagation()
+            }
+        })
+
         this.eventBus.on('regionTextChanged', (regionId) => {
             let currentRegion = this.getRegion(regionId)
             this.historyService.addHistory(currentRegion)
@@ -1696,6 +1704,11 @@ class MainController {
         if (!this.proofReadingView) {
             for (let i = 0; i < this.filesData.length; i++) {
                 this.$timeout(() => this.eventBus.trigger('resetEditableWords', this.getCurrentRegion(i)))
+            }
+            if (!this.isPlaying) {
+                this.$timeout(() => {
+                    this.wavesurfer.seekAndCenter(this.wavesurfer.getCurrentTime() / this.wavesurfer.getDuration())
+                })
             }
         } else {
             this.eventBus.trigger('proofReadingScrollToSelected')
