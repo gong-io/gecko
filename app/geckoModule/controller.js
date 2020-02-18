@@ -1232,12 +1232,16 @@ class MainController {
     playRegionFromCurrentTime() {
         this.$timeout(() => {
             if (this.selectedRegion) {
-                this.wavesurfer.play(this.wavesurfer.getCurrentTime(), this.selectedRegion.end)
+                if (this.selectedRegion.end - this.wavesurfer.getCurrentTime() < 0.1) {
+                    this.selectedRegion.play()
+                } else {
+                    this.wavesurfer.play(this.wavesurfer.getCurrentTime(), this.selectedRegion.end)
+                }
             }
             // play silence region
             else {
                 var silence = this.calcSilenceRegion()
-                this.wavesurfer.play(this.wavesurfer.getCurrentTime(), silence.end)
+                this.wavesurfer.play(silence.end - this.wavesurfer.getCurrentTime() < 0.1 ? silence.start : this.wavesurfer.getCurrentTime(), silence.end)
             }
         })
     }
