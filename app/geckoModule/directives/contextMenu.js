@@ -48,7 +48,7 @@ export default ($timeout) => {
                 }
 
                 $timeout(() => {
-                  scope.app.calcCurrentFileIndex(event, true)
+                  scope.app.calcContextMenuFileIndex(event)
                 })
                 DomUtils.disableScroll()
               });
