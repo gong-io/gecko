@@ -1,0 +1,37 @@
+<div class="col-md-12">
+    <div class="row gecko-mini-player">
+        <div class="col-md-1 text-center">
+            <button type="button" class="btn btn-default" aria-label="Left Align" ng-click="playPause()">
+                <span class="glyphicon glyphicon-play" ng-show="!parent.isPlaying" aria-hidden="true"></span>
+                <span class="glyphicon glyphicon-pause" ng-show="parent.isPlaying" aria-hidden="true"></span>
+            </button>
+        </div> 
+        <div class="col-md-1">
+            {{ parent.currentTimeSeconds | toMMSS }} / {{ total | toMMSS }}
+        </div>
+        <div class="col-md-7">
+            <input ng-model="sliderModel" type="range" min="0"
+                    ng-change="changeProgress()"
+                    ng-model-options="{ updateOn: 'input change', debounce: { change: 0 } }"
+                   max="{{ total }}"
+                   style="width: 100%" 
+            />
+        </div>
+
+        <div class="col-md-1">
+            <i class="glyphicon glyphicon-volume-down glyphicon-large pull-right"></i>
+        </div>
+
+        <div class="col-md-1">
+            <input id="slider" ng-model="parent.currentGainProc" type="range" min="{{ parent.minGainProc }}"
+                    class="volume-slider"
+                    max="{{ parent.maxGainProc }}"
+                    tooltip-placement="top"
+                    uib-tooltip="Volume: {{ parent.currentGainProc }}"/>
+        </div>
+
+        <div class="col-md-1">
+            <i class="glyphicon glyphicon-volume-up glyphicon-large pull-left"></i>
+        </div>
+    </div>
+</div>

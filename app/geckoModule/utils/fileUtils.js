@@ -133,8 +133,6 @@ export const parseAndLoadAudio = async (context, res) => {
             }
             try {
                 context.wavesurfer.loadBlob(fileResult);
-                const url = window.URL.createObjectURL(fileResult)
-                context.audioTimeline.src = url
             } catch (e) {
                 console.log('error', e)
             }

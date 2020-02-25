@@ -299,3 +299,9 @@ input.volume-slider[type="range"]{
     display: flex;
     justify-content: space-between;
 }
+
+.gecko-mini-player {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+}

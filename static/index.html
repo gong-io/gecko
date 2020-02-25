@@ -125,11 +125,7 @@
 </div>
 
 <div class="row" ng-show="ctrl.ready && !ctrl.userConfig.showWaveform">
-    <div class="col-md-12">
-        <audio id="audio-timeline" style="width: 100%"
-            controls>
-        </audio>
-    </div>
+    <mini-player parent="ctrl"></mini-player>
 </div>
 
 <div class="wrapper" ng-show="ctrl.ready">
@@ -196,7 +192,7 @@
 
             <button class="btn btn-default" ng-click="ctrl.zoomIntoRegion()"
                     title="Zoom to Segment"
-                    ng-disabled="!ctrl.selectedRegion || ctrl.proofReadingView">
+                    ng-disabled="!ctrl.selectedRegion || ctrl.proofReadingView || !ctrl.userConfig.showWaveform">
                     <i class="glyphicon glyphicon-zoom-in"></i>
             </button>
 
@@ -272,6 +268,7 @@
 
             <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()" ng-if="!ctrl.userConfig.showWaveform"
                     title="Toggle waveform"
+                    style="margin-left: 1rem;"
                     ng-disabled="ctrl.proofReadingView">
                 <i class="glyphicon glyphicon-fullscreen"></i>
             </button>

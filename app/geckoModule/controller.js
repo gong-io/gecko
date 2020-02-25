@@ -189,18 +189,6 @@ class MainController {
         this.wavesurfer = initWaveSurfer();
         this.wavesurferElement = this.wavesurfer.drawer.container;
 
-        this.audioTimeline = document.getElementById('audio-timeline')
-
-        this.audioTimeline.addEventListener('play', (e) => {
-            e.preventDefault()
-            this.playPause()
-        })
-
-        this.audioTimeline.addEventListener('pause', (e) => {
-            e.preventDefault()
-            this.playPause()
-        })
-
         this.ctmData = [];
         this.ready = false;
 
@@ -1306,9 +1294,9 @@ class MainController {
     }
 
     setCurrentTime() {
-        // this.currentTimeSeconds = time;
-        this.currentTime = secondsToMinutes(this.wavesurfer.getCurrentTime());
-        this.$scope.$evalAsync();
+        this.currentTimeSeconds = this.wavesurfer.getCurrentTime()
+        this.currentTime = secondsToMinutes(this.currentTimeSeconds)
+        this.$scope.$evalAsync()
     }
 
     async save(extension, converter) {
@@ -1844,6 +1832,13 @@ class MainController {
 
     toggleWaveform () {
         this.userConfig.showWaveform = !this.userConfig.showWaveform
+        if (this.userConfig.showWaveform) {
+            if (!this.isPlaying) {
+                this.$timeout(() => {
+                    this.wavesurfer.seekAndCenter(this.wavesurfer.getCurrentTime() / this.wavesurfer.getDuration())
+                })
+            }
+        }
         this.saveUserSettings()
     }
 
