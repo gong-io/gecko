@@ -1,6 +1,6 @@
 import Swal from 'sweetalert2'
 
-import { ZOOM } from '../constants'
+import { ZOOM, TRANSCRIPT_EXTENSIONS } from '../constants'
 import loadDraftModal from './loadDraftModal'
 import { formatTime } from '../utils'
 
@@ -16,6 +16,8 @@ export default (parent) => {
             $scope.draftAvailable = false
             $scope.isLoading = false
             $scope.newSegmentFiles = [undefined]
+
+            $scope.transcriptFiles = []
             
             if (parent.config.enableDrafts && parent.dataBase) {
                 const draftCounts = await parent.dataBase.getCounts(0)
@@ -84,15 +86,6 @@ export default (parent) => {
             };
 
             $scope.ok = () => {
-                // Take only selected files
-                var segmentsFiles = [];
-                for (var i = 0; i < $scope.newSegmentFiles.length; i++) {
-                    var current = $scope.newSegmentFiles[i];
-                    if (current && current.name && current.name !== "") {
-                        segmentsFiles.push(current);
-                    }
-                }
-
                 var call_from_url;
                 if ($scope.chosen_call_id) {
                     if ($scope.chosen_call_id.length !== 1) {
@@ -106,72 +99,29 @@ export default (parent) => {
                 }
 
                 $uibModalInstance.close({
-                    audio: $scope.newAudioFile,
+                    audio: $scope.mediaFile,
                     call_from_url: call_from_url,
-                    segmentsFiles: segmentsFiles,
+                    segmentsFiles: $scope.transcriptFiles,
                     zoom: $scope.zoom
                 });
             };
 
             $scope.zoom = zoom;
 
-            $scope.selectAudio = () => {
+            $scope.selectFiles = () => {
                 inputAudio.value = "";
                 inputAudio.click();
             };
 
-            $scope.loadUrls = () => {
-                var filename = $scope.newAudioFile.name;
-                var ext = filename.substr(filename.lastIndexOf('.') + 1);
-                if (ext === 'json') {
-                    var reader = new FileReader();
-
-                    reader.onload = (e) => {
-                        $scope.$evalAsync(() => {
-                            $scope.call_urls = JSON.parse(e.target.result)
-                                .map((x) => {
-                                    var k = Object.keys(x)[0];
-                                    return {'id': k, 'url': x[k]}
-                                });
-                        });
-                    };
-
-                    reader.readAsText($scope.newAudioFile);
-                } else {
-                    $scope.$evalAsync(() => {
-                        $scope.call_urls = undefined;
-                        $scope.chosen_call_id = undefined;
-                    });
-                }
-            };
-
-
-            $scope.selectTextFile = (id) => {
-                var inputElement = document.getElementById(id);
-                inputElement.value = "";
-                inputElement.click();
+            $scope.removeMedia = () => {
+                $scope.mediaFile = null
             }
 
-            $scope.addFileSlot = () => {
-                $timeout(() => {
-                    if ($scope.newSegmentFiles[$scope.newSegmentFiles.length - 1] !== undefined) {
-                        $scope.newSegmentFiles.push(undefined);
-                    }
-                });
+            $scope.removeTranscript = (index) => {
+                $scope.transcriptFiles.splice(index, 1)
             }
 
-            $scope.handleMultiple = (extra_files) => {
-                $scope.newSegmentFiles = $scope.newSegmentFiles.concat(extra_files);
-            }
-
-            $scope.cancel = () => {
-                $uibModalInstance.dismiss('cancel');
-            };
-
-            $scope.$watch('newAudioFile', (newVal) => {
-                if (!newVal) {
-                    return
-                }
+            $scope.checkMediaFile = () => {
                 const reader = new FileReader()
                 reader.onload = (event) => {
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -192,8 +142,70 @@ export default (parent) => {
                         })
                     }
                 };
-                reader.readAsArrayBuffer(newVal)
-            })
+                reader.readAsArrayBuffer($scope.mediaFile)
+            }
+
+            $scope.handleFiles = (extrafiles) => {
+                $timeout(() => {
+                    const allFiles = [ $scope.newFile, ...extrafiles ] 
+                    const mediaFiles = []
+                    allFiles.forEach((f) => {
+                        if (f.type.includes('video') || f.type.includes('audio')) {
+                            mediaFiles.push(f)
+                        } else {
+                            const ext = f.name.split('.').pop()
+                            if (TRANSCRIPT_EXTENSIONS.includes(ext)) {
+                                const alreadyAdd = $scope.transcriptFiles.find((tf) => {
+                                    return tf.name === f.name
+                                })
+
+                                if (!alreadyAdd) {
+                                    $scope.transcriptFiles.push(f)
+                                }
+                            }
+                        }
+                    })
+
+                    if (mediaFiles.length > 1 || (mediaFiles.length === 1 && $scope.mediaFile)) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Please select only one media file'
+                        })
+                    } else if (mediaFiles.length === 1) {
+                        $scope.mediaFile = mediaFiles.pop()
+                        $scope.checkMediaFile()
+                    }
+                })
+            }
+
+            $scope.loadUrls = () => {
+                var filename = $scope.newFile.name;
+                var ext = filename.substr(filename.lastIndexOf('.') + 1);
+                if (ext === 'json') {
+                    var reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        $scope.$evalAsync(() => {
+                            $scope.call_urls = JSON.parse(e.target.result)
+                                .map((x) => {
+                                    var k = Object.keys(x)[0];
+                                    return {'id': k, 'url': x[k]}
+                                });
+                        });
+                    };
+
+                    reader.readAsText($scope.newFile);
+                } else {
+                    $scope.$evalAsync(() => {
+                        $scope.call_urls = undefined;
+                        $scope.chosen_call_id = undefined;
+                    });
+                }
+            };
+
+            $scope.cancel = () => {
+                $uibModalInstance.dismiss('cancel');
+            };
         },
         resolve: {
             zoom: () => {

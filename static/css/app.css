@@ -279,3 +279,14 @@ input.volume-slider[type="range"]{
 .region-context-menu__button {
     cursor: pointer;
 }
+
+.loading-modal__transcript-file {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.loading-modal__media-file {
+    display: flex;
+    justify-content: space-between;
+}
