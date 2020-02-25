@@ -102,3 +102,9 @@ export const MIN_GAIN = 0
 export const MAX_GAIN = 2
 
 export const OLATS_BUFFER_SIZE = 4096
+
+export const DEFAULT_USER_CONFIG = {
+    showSegmentLabeling: true,
+    showTranscriptDifferences: true,
+    showWaveform: true
+}

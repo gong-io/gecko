@@ -145,6 +145,24 @@ class MainController {
         this.allRegions = []
 
         this.cursorRegion = null
+
+        this.loadUserConfig()
+    }
+
+    loadUserConfig () {
+        let localConf = {}
+
+        try {
+            const configJSON = window.localStorage.getItem('geckoUserConfig')
+            localConf = JSON.parse(configJSON)
+        } catch (e) {
+
+        }
+
+        this.userConfig = {
+            ...constants.DEFAULT_USER_CONFIG,
+            ...localConf
+        }
     }
 
     setConstants() {
@@ -170,6 +188,18 @@ class MainController {
 
         this.wavesurfer = initWaveSurfer();
         this.wavesurferElement = this.wavesurfer.drawer.container;
+
+        this.audioTimeline = document.getElementById('audio-timeline')
+
+        this.audioTimeline.addEventListener('play', (e) => {
+            e.preventDefault()
+            this.playPause()
+        })
+
+        this.audioTimeline.addEventListener('pause', (e) => {
+            e.preventDefault()
+            this.playPause()
+        })
 
         this.ctmData = [];
         this.ready = false;
@@ -1792,6 +1822,35 @@ class MainController {
         event.stopPropagation()
     }
 
+    calculatePanelsWidth () {
+        if ((!this.discrepancies && this.userConfig.showSegmentLabeling) || (this.discrepancies && this.userConfig.showTranscriptDifferences)) {
+            this.transcriptPanelSize = parseInt(9 / this.filesData.length)
+        } else {
+            this.transcriptPanelSize = parseInt(12 / this.filesData.length)
+        }
+    }
+
+    toggleSegmentLabeling () {
+        this.userConfig.showSegmentLabeling = !this.userConfig.showSegmentLabeling
+        this.calculatePanelsWidth()
+        this.saveUserSettings()
+    }
+
+    toggleTranscriptDifferences () {
+        this.userConfig.showTranscriptDifferences = !this.userConfig.showTranscriptDifferences
+        this.calculatePanelsWidth()
+        this.saveUserSettings()
+    }
+
+    toggleWaveform () {
+        this.userConfig.showWaveform = !this.userConfig.showWaveform
+        this.saveUserSettings()
+    }
+
+    saveUserSettings () {
+        const serializedSettings = JSON.stringify(this.userConfig)
+        window.localStorage.setItem('geckoUserConfig', serializedSettings)
+    }
     
 }
 

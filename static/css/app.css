@@ -279,3 +279,12 @@ input.volume-slider[type="range"]{
 .region-context-menu__button {
     cursor: pointer;
 }
+
+
+.tooltip.gecko-segment-labeling-tooltip {
+    min-width: 150px;
+}
+
+.segment-text.stretched .panel-title {
+    margin-left: 15px;
+}

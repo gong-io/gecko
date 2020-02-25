@@ -63,7 +63,9 @@ export default (parent) => {
                     parent.lastDraft = formatTime(new Date())
                 }
 
-                parent.wavesurfer.loadBlob(res.audioFile);
+                parent.wavesurfer.loadBlob(res.audioFile)
+                const url = window.URL.createObjectURL(res.audioFile)
+                parent.audioTimeline.src = url
                 $scope.isLoading = false
             };
 

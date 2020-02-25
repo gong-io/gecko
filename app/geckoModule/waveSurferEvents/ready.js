@@ -43,7 +43,7 @@ export default (parent) => {
     //     }
     // }
 
-    parent.transcriptPanelSize = parseInt(9 / parent.filesData.length)
+    parent.calculatePanelsWidth()
 
     // select the first region
     parent.selectedFileIndex = 0
