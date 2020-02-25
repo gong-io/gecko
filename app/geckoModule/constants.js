@@ -108,3 +108,4 @@ export const DEFAULT_USER_CONFIG = {
     showTranscriptDifferences: true,
     showWaveform: true
 }
+export const TRANSCRIPT_EXTENSIONS = ['json', 'ctm', 'rttm', 'srt', 'tsv']

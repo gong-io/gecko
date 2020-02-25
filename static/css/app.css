@@ -288,3 +288,14 @@ input.volume-slider[type="range"]{
 .segment-text.stretched .panel-title {
     margin-left: 15px;
 }
+
+.loading-modal__transcript-file {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.loading-modal__media-file {
+    display: flex;
+    justify-content: space-between;
+}
