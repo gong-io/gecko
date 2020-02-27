@@ -1183,7 +1183,7 @@ class MainController {
 
     deleteRegionAction(region) {
         const cursorRegion = this.getCurrentRegion(this.selectedFileIndex)
-        if (!region || cursorRegion !== region) return;
+        if (!region || (!region.data.isDummy && (cursorRegion !== region))) return;
 
         this.historyService.undoStack.push([region.id]);
         this.historyService.regionsHistory[region.id].push(null);
@@ -1744,23 +1744,15 @@ class MainController {
         }
     }
 
-    setContextMenuRegion (regionId) {
-        if (!regionId) {
+    setContextMenuRegion (region) {
+        if (!region) {
             this.contextMenuRegion = null
             return
         }
 
         this.contextMenuNextRegion = null
         this.contextMenuPrevRegion = null
-        for (let i = 0; i < this.filesData.length; i++) {
-            this.iterateRegions((r) => {
-                if (r.id === regionId) {
-                    this.$timeout(() => {
-                        this.contextMenuRegion = r
-                    })
-                }
-            }, i)
-        }
+        this.contextMenuRegion = region
     }
 
     setContextMenuRegions (eventX) {
@@ -1773,10 +1765,13 @@ class MainController {
         const time = perc * duration
 
         this.iterateRegions((r) => {
+            if (r.data.isDummy) {
+                return
+            }
             const next = this.getRegion(r.next)
             if (!r.prev && time < r.start) {
                 this.contextMenuNextRegion = r
-            } else if (!r.next && time > r.end){
+            } else if (!r.next && time > r.end) {
                 this.contextMenuPrevRegion = r
             } else if (next && r.end < time && next.start > time) {
                 this.contextMenuNextRegion = next

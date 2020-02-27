@@ -5,11 +5,13 @@ export default (parent, region) => {
             parent.deleteRegionAction(parent.dummyRegion)
         }
         region.data.isDummy = true
+        region.element.style.zIndex = 10
         parent.dummyRegion = region
     } else if (region.data.isDummy) {
         if (parent.dummyRegion) {
             parent.deleteRegionAction(parent.dummyRegion)
         }
+        region.element.style.zIndex = 10
         parent.dummyRegion = region
     }
     var numOfFiles = parent.filesData.length;
