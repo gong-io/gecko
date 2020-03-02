@@ -47,6 +47,7 @@ Notes:
 1. Gecko will aggregate the AWS_FOLDER with the file name, do not use the object key S3 gives you, only the file name is required.
 2. You can use any annotation format available in Gecko, just replace the key of the parameter, for exemple with rttm : `http://localhost:8080/?save_mode=server&audio=http://localhost:8080/s3_files/file.mp3&rttm=http://localhost:8080/s3_files/annotation.rttm`
 3. On save, Gecko will override the annotation file and save another file with a timestamp, to maintain some kind of primitive history mechanism.
+4. You can have multiple annotation files, just aggregate them using `;` : `http://localhost:8080/?save_mode=server&audio=http://localhost:8080/s3_files/file.mp3&json=http://localhost:8080/s3_files/annotation_1.json;http://localhost:8080/s3_files/annotation_2.json`
 
 ## Deploy
 
