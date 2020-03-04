@@ -1,4 +1,4 @@
-import { detectLineEndings, setLineEndings } from '../utils'
+import { setLineEndings } from '../utils'
 
 import { parse as parseCTM, convert as convertCTM } from './ctm'
 import { parse as parseRTTM, convert as convertRTTM } from './rttm'
@@ -10,11 +10,7 @@ const parse = (filename, data, app, parserOptions, ...args) => {
     const ext = filename.substr(filename.lastIndexOf('.') + 1);
 
     if (ext !== 'json') {
-        const lineEndings = detectLineEndings(data)
-
-        if (lineEndings !== 'LF') {
-            data = setLineEndings(data, 'LF')
-        }
+        data = setLineEndings(data, 'LF')
     }
 
     switch (ext) {
