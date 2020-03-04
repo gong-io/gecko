@@ -3,7 +3,7 @@ import * as constants from '../constants'
 export const parse = (data, $parent) => {
     let monologues = [];
 
-    let lines = data.split(/\r|\n/);
+    let lines = data.split(/\n/);
     let words = lines.filter((line) => {
         return line !== '';
     }).map((line) => {

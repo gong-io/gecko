@@ -5,7 +5,7 @@ export const parse = (data, $parent, parserOptions) => {
 
     let monologues = [];
 
-    const lines = data.split(/\r|\n/);
+    const lines = data.split(/\n/);
     
     let acc = []
     const blocks = [] 
