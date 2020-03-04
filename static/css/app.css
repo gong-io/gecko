@@ -289,6 +289,10 @@ input.volume-slider[type="range"]{
     margin-left: 15px;
 }
 
+.segment-labeling.stretched .panel-title {
+    margin-left: 15px;
+}
+
 .loading-modal__transcript-file {
     display: flex;
     justify-content: space-between;

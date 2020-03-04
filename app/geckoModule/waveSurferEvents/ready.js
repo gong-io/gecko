@@ -43,8 +43,6 @@ export default (parent) => {
     //     }
     // }
 
-    parent.calculatePanelsWidth()
-
     // select the first region
     parent.selectedFileIndex = 0
     parent.selectRegion()
@@ -82,6 +80,7 @@ export default (parent) => {
     initAudioContext()
 
     parent.handleCtm()
+    parent.calculatePanelsWidth()
 
     parent.length = parent.wavesurfer.backend.buffer.length
 

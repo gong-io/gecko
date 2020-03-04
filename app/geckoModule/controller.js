@@ -1715,6 +1715,7 @@ class MainController {
 
     toggleProofReadingView() {
         this.proofReadingView = !this.proofReadingView
+
         if (!this.proofReadingView) {
             for (let i = 0; i < this.filesData.length; i++) {
                 this.$timeout(() => this.eventBus.trigger('resetEditableWords', this.getCurrentRegion(i)))
@@ -1724,9 +1725,19 @@ class MainController {
                     this.wavesurfer.seekAndCenter(this.wavesurfer.getCurrentTime() / this.wavesurfer.getDuration())
                 })
             }
+
+            this.userConfig.showWaveform = true
+            this.userConfig.showSegmentLabeling = true
+            this.userConfig.showTranscriptDifferences = true
         } else {
             this.eventBus.trigger('proofReadingScrollToSelected')
+
+            this.userConfig.showWaveform = false
+            this.userConfig.showSegmentLabeling = false
+            this.userConfig.showTranscriptDifferences = false
         }
+
+        this.calculatePanelsWidth()
     }
 
     updateZoomTooltip (newVal) {
@@ -1811,7 +1822,12 @@ class MainController {
     }
 
     calculatePanelsWidth () {
-        if ((!this.discrepancies && this.userConfig.showSegmentLabeling) || (this.discrepancies && this.userConfig.showTranscriptDifferences)) {
+        console.log('calculate!')
+        const { showSegmentLabeling, showTranscriptDifferences } = this.userConfig
+        const showDifferencesPanel = this.discrepancies && showTranscriptDifferences
+        if (showSegmentLabeling && showDifferencesPanel) {
+            this.transcriptPanelSize = parseInt(6 / this.filesData.length)
+        } else if (showSegmentLabeling || showDifferencesPanel) {
             this.transcriptPanelSize = parseInt(9 / this.filesData.length)
         } else {
             this.transcriptPanelSize = parseInt(12 / this.filesData.length)
