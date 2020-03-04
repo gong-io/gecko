@@ -1,15 +1,9 @@
 <div class="col-md-12">
     <div class="row gecko-mini-player">
-        <div class="col-md-1 text-center">
-            <button type="button" class="btn btn-default" aria-label="Left Align" ng-click="playPause()">
-                <span class="glyphicon glyphicon-play" ng-show="!parent.isPlaying" aria-hidden="true"></span>
-                <span class="glyphicon glyphicon-pause" ng-show="parent.isPlaying" aria-hidden="true"></span>
-            </button>
-        </div> 
         <div class="col-md-1">
             {{ parent.currentTimeSeconds | toMMSS }} / {{ total | toMMSS }}
         </div>
-        <div class="col-md-7">
+        <div class="col-md-8">
             <input ng-model="sliderModel" type="range" min="0"
                     ng-change="changeProgress()"
                     ng-model-options="{ updateOn: 'input change', debounce: { change: 0 } }"
