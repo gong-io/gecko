@@ -748,6 +748,8 @@ class MainController {
         this.setAllRegions()
         this.calcCurrentRegions()
         this.discrepancyService.updateSelectedDiscrepancy(this)
+
+        this.cursorRegion = this.getCurrentRegion(this.selectedFileIndex)
     }
 
     setAllRegions() {
