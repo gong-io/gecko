@@ -110,11 +110,11 @@ class GeckoEdtior {
         const timeStart = firstNode.getAttribute('data-start')
         const timeEnd = lastNode.getAttribute('data-end')
 
-        document.execCommand('delete')
-
         const newText = text ? `${firstNode.textContent.substring(0, startOffset)}${text}${lastNode.textContent.substring(range.endOffset, lastNode.textContent.length)}` : `${firstNode.textContent.substring(0, startOffset)}${lastNode.textContent.substring(range.endOffset, lastNode.textContent.length)}`
         
         if (startOffset !== 0) {
+            document.execCommand('delete')
+
             firstNode.textContent = newText
             firstNode.setAttribute('data-end', timeEnd)
             lastNode.remove()
@@ -122,15 +122,16 @@ class GeckoEdtior {
             newRange.setStart(firstNode.firstChild, text ? startOffset + text.length : startOffset)
             newRange.setStart(firstNode.firstChild, text ? startOffset + text.length : startOffset)
         } else if (endOffset !== lastNode.textContent.length) {
+            document.execCommand('delete')
+
             lastNode.textContent = text ? `${text}${lastNode.textContent}` : lastNode.textContent
             newRange.setStart(lastNode.firstChild, text ? startOffset + text.length : startOffset)
             newRange.setStart(lastNode.firstChild, text ? startOffset + text.length : startOffset)
         } else {
             if (text) {
                 const span = this.createSpan({ uuid: uuidv4(), start: timeStart, end: timeEnd, text})
-                range.insertNode(span)
-                newRange.selectNode(span)
-                newRange.collapse()
+                document.execCommand('insertHTML', false, span.outerHTML)
+                return
             } else {
                 range.deleteContents()
                 nextSpace.remove()
