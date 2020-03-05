@@ -1822,7 +1822,6 @@ class MainController {
     }
 
     calculatePanelsWidth () {
-        console.log('calculate!')
         const { showSegmentLabeling, showTranscriptDifferences } = this.userConfig
         const showDifferencesPanel = this.discrepancies && showTranscriptDifferences
         if (showSegmentLabeling && showDifferencesPanel) {
