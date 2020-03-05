@@ -3,6 +3,8 @@ import ZoomTooltip from './zoomTooltip'
 import { parseAndLoadAudio, parseServerResponse } from './fileUtils'
 import DomUtils from './domUtils'
 
+import { detectLineEndings, setLineEndings } from './line-endings'
+
 import * as constants from '../constants'
 
 export const jsonStringify = (json) => {
@@ -188,4 +190,4 @@ export const prepareLegend = (fileDataLegend) => {
     return [ ...regularSpeakers, ...defaultSpeakers ]
 }
 
-export { geckoEditor, parseAndLoadAudio, parseServerResponse, ZoomTooltip, DomUtils }
+export { geckoEditor, parseAndLoadAudio, parseServerResponse, ZoomTooltip, DomUtils, detectLineEndings, setLineEndings }
