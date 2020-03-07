@@ -49,6 +49,22 @@ Notes:
 3. On save, Gecko will override the annotation file and save another file with a timestamp, to maintain some kind of primitive history mechanism.
 4. You can have multiple annotation files, just aggregate them using `;` : `http://localhost:8080/?save_mode=server&audio=http://localhost:8080/s3_files/file.mp3&json=http://localhost:8080/s3_files/annotation_1.json;http://localhost:8080/s3_files/annotation_2.json`
 
+Example: 
+
+For an audio file and corresponding annotation file:
+`s3://example-audio-bucket/my-audio/file.mp3` 
+and 
+`s3://example-audio-bucket/my-audio/annotation.json`
+the .env file would be: 
+
+```bash
+AWS_BUCKET=example-audio-bucket
+AWS_REGION=<<<something like us-east-3>>>
+AWS_ACCESS_KEY_ID=<<<aws access key id>>>
+AWS_SECRET_ACCESS_KEY=<<<aws secret access key>>>
+AWS_FOLDER=my-audio # no leading or trailing "/"
+```
+
 ## Deploy
 
 ### Client mode
