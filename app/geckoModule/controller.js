@@ -1078,6 +1078,8 @@ class MainController {
 
         self.currentRegions = [];
 
+        const duration = self.wavesurfer.getDuration()
+
         self.filesData.forEach((fileData, fileIndex) => {
             let monologues = fileData.data;
 
@@ -1099,6 +1101,10 @@ class MainController {
 
                 var start = monologue.start;
                 var end = monologue.end;
+
+                if (start > duration) {
+                    continue
+                }
 
 
                 // check overlapping with accuracy up to 5 decimal points
@@ -1222,16 +1228,15 @@ class MainController {
 
     setPlaybackSpeed(speed) {
         this.currentPlaybackSpeed = speed;
+        this.videoPlayer && this.videoPlayer.playbackRate(speed)
         this.wavesurfer.setPlaybackRate(speed);
     }
 
     playPause() {
         if (this.isPlaying) {
             this.wavesurfer.pause()
-            this.videoPlayer && this.videoPlayer.pause()
         } else {
             this.wavesurfer.play()
-            this.videoPlayer && this.videoPlayer.play()
         }
     }
 

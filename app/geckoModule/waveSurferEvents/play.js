@@ -11,6 +11,12 @@ export default (parent) => {
         parent.wavesurfer.backend.setFilters([parent.olatsNode, parent.gainNode])
     }
 
+    if (parent.videoPlayer) {
+        const wavesurferTime = parent.wavesurfer.getCurrentTime()
+        parent.videoPlayer.currentTime(wavesurferTime)
+        parent.videoPlayer.play()
+    }
+
     parent.isPlaying = true
     parent.$scope.$evalAsync()
 }
