@@ -18,6 +18,12 @@ export default ($timeout) => {
               });
               $(iElement).bind('contextmenu', function(event) {
                 event.preventDefault();
+                const clickedRegion = scope.app.getRegion(event.target.getAttribute('data-id'))
+
+                if (clickedRegion && clickedRegion.data && clickedRegion.data.isDummy) {
+                  return
+                }
+
                 ul.css({
                   position: "fixed",
                   display: "block",
@@ -25,7 +31,7 @@ export default ($timeout) => {
                   top: event.clientY + 'px'
                 });
                 last = event.timeStamp;
-                if (event.target && event.target.tagName === 'REGION') {
+                if (clickedRegion) {
                     ul.css({
                       position: "fixed",
                       display: "block",
@@ -40,7 +46,7 @@ export default ($timeout) => {
                       })
                     }
                     last = event.timeStamp;
-                    scope.app.setContextMenuRegion(event.target.getAttribute('data-id'))
+                    scope.app.setContextMenuRegion(clickedRegion)
                 } else {
                     const realX = event.clientX + event.target.scrollLeft
                     scope.app.setContextMenuRegions(realX)

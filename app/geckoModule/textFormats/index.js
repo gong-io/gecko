@@ -1,3 +1,5 @@
+import { setLineEndings } from '../utils'
+
 import { parse as parseCTM, convert as convertCTM } from './ctm'
 import { parse as parseRTTM, convert as convertRTTM } from './rttm'
 import { parse as parseTSV, convert as convertTSV } from './tsv'
@@ -6,6 +8,10 @@ import { parse as parseSRT, convert as convertSRT } from './srt'
 
 const parse = (filename, data, app, parserOptions, ...args) => {
     const ext = filename.substr(filename.lastIndexOf('.') + 1);
+
+    if (ext !== 'json') {
+        data = setLineEndings(data, 'LF')
+    }
 
     switch (ext) {
         case 'rttm':

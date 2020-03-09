@@ -1,6 +1,6 @@
 import BufferedOLA from '../utils/buffered-ola'
 
-import { secondsToMinutes } from '../utils'
+import {secondsToMinutes} from '../utils'
 import * as constants from '../constants'
 
 import play from './play'
@@ -22,9 +22,7 @@ export default (parent) => {
     })
 
     parent.$scope.$watch(() => parent.currentGainProc, (newVal) => {
-        if (newVal) {
-            parent.gainNode.gain.value = newVal / 100
-        }
+        parent.gainNode.gain.value = newVal / 100
     })
 
     parent.createSpeakerLegends()
@@ -86,7 +84,7 @@ export default (parent) => {
     parent.length = parent.wavesurfer.backend.buffer.length
 
     parent.olatsNode = parent.wavesurfer.backend.ac.createScriptProcessor(constants.OLATS_BUFFER_SIZE, 2)
-    parent.olatsNode.onaudioprocess = function(e) {
+    parent.olatsNode.onaudioprocess = function (e) {
         parent.buffOla.process(e.outputBuffer)
     }
 
