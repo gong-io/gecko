@@ -1209,32 +1209,37 @@ class MainController {
     }
 
     playRegion() {
-        if (this.playRegionClicked) {
-            this.cancelPlayRegionClick = true
-            return
-        }
+        try {
+            if (this.playRegionClicked) {
+                this.cancelPlayRegionClick = true
+                return
+            }
+        
+            this.playRegionClicked = true
+        
+            this.$timeout(() => {
+                if (this.cancelPlayRegionClick) {
+                    this.cancelPlayRegionClick = false;
+                    this.playRegionClicked = false;
+                    return;
+                }
     
-        this.playRegionClicked = true
+                if (this.selectedRegion) {
+                    this.selectedRegion.play()
+                }
+                // play silence region
+                else {
+                    var silence = this.calcSilenceRegion()
+                    this.wavesurfer.play(silence.start, silence.end)
+                }
     
-        this.$timeout(() => {
-            if (this.cancelPlayRegionClick) {
-                this.cancelPlayRegionClick = false;
-                this.playRegionClicked = false;
-                return;
-            }
-
-            if (this.selectedRegion) {
-                this.selectedRegion.play()
-            }
-            // play silence region
-            else {
-                var silence = this.calcSilenceRegion()
-                this.wavesurfer.play(silence.start, silence.end)
-            }
-
+                this.cancelPlayRegionClick = false
+                this.playRegionClicked = false
+            }, 250)
+        } catch (e) {
             this.cancelPlayRegionClick = false
             this.playRegionClicked = false
-        }, 250)
+        }
     }
 
     playRegionFromCurrentTime() {
@@ -1258,6 +1263,12 @@ class MainController {
         var silence = {start: 0, end: null};
         var afterRegion = this.findClosestRegionToTime(this.selectedFileIndex, this.wavesurfer.getCurrentTime());
         var beforeRegion = this.findClosestRegionToTime(this.selectedFileIndex, this.wavesurfer.getCurrentTime(), true);
+
+        if (afterRegion && beforeRegion) {
+            if (beforeRegion.end > afterRegion.start) {
+                beforeRegion = this.findClosestRegionToTime(this.selectedFileIndex, beforeRegion.start, true);
+            }
+        }
 
         if (afterRegion === null) {
             silence.end = this.wavesurfer.getDuration();
