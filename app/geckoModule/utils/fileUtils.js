@@ -2,29 +2,32 @@ import videojs from 'video.js'
 
 import { getCurrentTimeStamp, formatTime } from './index.js'
 
-export const readTextFile = (context, file, cb) => {
-    // check for empty file object
-    if (Object.keys(file).length === 0 && file.constructor === Object) {
-        cb(undefined)
-        return;
-    }
-    var reader = new FileReader()
+export const readTextFile = (file) => {
+    return new Promise((resolve) => {
+        // check for empty file object
+        if (Object.keys(file).length === 0 && file.constructor === Object) {
+            resolve(undefined)
+            return;
+        }
+        var reader = new FileReader()
 
-    reader.onload = (e) => {
-        cb(e.target.result)
-    };
+        reader.onload = (e) => {
+            // cb(e.target.result)
+            resolve({ data: e.target.result, name: file.name })
+        };
 
-    reader.readAsText(file)
+        reader.readAsText(file)
+    })
 }
 
 export const readAudioFile = (file) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         resolve(file)
     })
 }
 
 export const readVideoFile = (context, file) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         context.audioFileName = file.name;
         var reader = new FileReader();
         const audioContext = new (window.AudioContext || window.webkitAudioContext)()
@@ -40,7 +43,7 @@ export const readVideoFile = (context, file) => {
 }
 
 export const readMediaFile = async (context, file) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         context.audioFileName = file.name;
         if (file.type.includes('audio')) {
             const result = await readAudioFile(file)
@@ -94,25 +97,25 @@ const parseFileData = (context, fileName, fileData, fileS3Subfolder = null) => {
     context.fileSpeakerColors = parsedColors
 }
 
-export const parseAndLoadText = (context, res) => {
+export const parseAndLoadText = async (context, res) => {
     context.filesData = []
 
-    var i = 0;
+    return new Promise(async (resolve) => {
+        const promises = res.segmentsFiles.map(async (f) => await readTextFile(f))
 
-    // force recursion in order to keep the order of the files
-    const cb = async (fileData) => {
-        parseFileData(context, res.segmentsFiles[i].name, fileData)
-        i++;
-        if (i < res.segmentsFiles.length) {
-            readTextFile(context, res.segmentsFiles[i], cb);
+        if (!promises.length) {
+            addEmptyFile(context)
+            resolve()
         }
-    }
 
-    if (i < res.segmentsFiles.length) {
-        readTextFile(context, res.segmentsFiles[i], cb);
-    } else {
-        addEmptyFile(context)
-    }
+        const results = await Promise.all(promises)
+        results.forEach(r => {
+            if (r) {
+                parseFileData(context, r.name, r.data)
+            }
+        })
+        resolve()
+    })
 }
 
 export const parseAndLoadAudio = async (context, res) => {
@@ -123,7 +126,7 @@ export const parseAndLoadAudio = async (context, res) => {
     } else {
         context.loader = true
         const fileResult = await readMediaFile(context, res.audio)
-        parseAndLoadText(context, res)
+        await parseAndLoadText(context, res)
         let mediaFile
         if (!context.videoMode) {
             mediaFile = {
