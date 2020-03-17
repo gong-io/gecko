@@ -65,7 +65,7 @@ export default (parent) => {
                     parent.lastDraft = formatTime(new Date())
                 }
 
-                parent.wavesurfer.loadBlob(res.audioFile);
+                parent.wavesurfer.loadBlob(res.audioFile)
                 $scope.isLoading = false
             };
 

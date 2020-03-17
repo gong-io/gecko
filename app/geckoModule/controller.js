@@ -145,6 +145,24 @@ class MainController {
         this.allRegions = []
 
         this.cursorRegion = null
+
+        this.loadUserConfig()
+    }
+
+    loadUserConfig () {
+        let localConf = {}
+
+        try {
+            const configJSON = window.localStorage.getItem('geckoUserConfig')
+            localConf = JSON.parse(configJSON)
+        } catch (e) {
+
+        }
+
+        this.userConfig = {
+            ...constants.DEFAULT_USER_CONFIG,
+            ...localConf
+        }
     }
 
     setConstants() {
@@ -1310,9 +1328,9 @@ class MainController {
     }
 
     setCurrentTime() {
-        // this.currentTimeSeconds = time;
-        this.currentTime = secondsToMinutes(this.wavesurfer.getCurrentTime());
-        this.$scope.$evalAsync();
+        this.currentTimeSeconds = this.wavesurfer.getCurrentTime()
+        this.currentTime = secondsToMinutes(this.currentTimeSeconds)
+        this.$scope.$evalAsync()
     }
 
     async save(extension, converter) {
@@ -1731,6 +1749,7 @@ class MainController {
 
     toggleProofReadingView() {
         this.proofReadingView = !this.proofReadingView
+
         if (!this.proofReadingView) {
             for (let i = 0; i < this.filesData.length; i++) {
                 this.$timeout(() => this.eventBus.trigger('resetEditableWords', this.getCurrentRegion(i)))
@@ -1740,9 +1759,19 @@ class MainController {
                     this.wavesurfer.seekAndCenter(this.wavesurfer.getCurrentTime() / this.wavesurfer.getDuration())
                 })
             }
+
+            this.userConfig.showWaveform = true
+            this.userConfig.showSegmentLabeling = true
+            this.userConfig.showTranscriptDifferences = true
         } else {
             this.eventBus.trigger('proofReadingScrollToSelected')
+
+            this.userConfig.showWaveform = false
+            this.userConfig.showSegmentLabeling = false
+            this.userConfig.showTranscriptDifferences = false
         }
+
+        this.calculatePanelsWidth()
     }
 
     updateZoomTooltip (newVal) {
@@ -1821,6 +1850,46 @@ class MainController {
         event.stopPropagation()
     }
 
+    calculatePanelsWidth () {
+        const { showSegmentLabeling, showTranscriptDifferences } = this.userConfig
+        const showDifferencesPanel = this.discrepancies && showTranscriptDifferences
+        if (showSegmentLabeling && showDifferencesPanel) {
+            this.transcriptPanelSize = parseInt(6 / this.filesData.length)
+        } else if (showSegmentLabeling || showDifferencesPanel) {
+            this.transcriptPanelSize = parseInt(9 / this.filesData.length)
+        } else {
+            this.transcriptPanelSize = parseInt(12 / this.filesData.length)
+        }
+    }
+
+    toggleSegmentLabeling () {
+        this.userConfig.showSegmentLabeling = !this.userConfig.showSegmentLabeling
+        this.calculatePanelsWidth()
+        this.saveUserSettings()
+    }
+
+    toggleTranscriptDifferences () {
+        this.userConfig.showTranscriptDifferences = !this.userConfig.showTranscriptDifferences
+        this.calculatePanelsWidth()
+        this.saveUserSettings()
+    }
+
+    toggleWaveform () {
+        this.userConfig.showWaveform = !this.userConfig.showWaveform
+        if (this.userConfig.showWaveform) {
+            if (!this.isPlaying) {
+                this.$timeout(() => {
+                    this.wavesurfer.seekAndCenter(this.wavesurfer.getCurrentTime() / this.wavesurfer.getDuration())
+                })
+            }
+        }
+        this.saveUserSettings()
+    }
+
+    saveUserSettings () {
+        const serializedSettings = JSON.stringify(this.userConfig)
+        window.localStorage.setItem('geckoUserConfig', serializedSettings)
+    }
     
 }
 

@@ -117,14 +117,19 @@
     </div>
 </div>
 <!--<div style="resize:vertical;overflow-y:auto" ng-mousemove="ctrl.resizeWavesurfer($event)">-->
-<div id="waveform" ng-show="!ctrl.proofReadingView" context-menu="regionContextMenu" app="ctrl"></div>
+<div id="waveform" ng-show="ctrl.userConfig.showWaveform" context-menu="regionContextMenu" app="ctrl"></div>
 <!--<div style="height:10px"></div>-->
 <!--</div>-->
-<div id="timeline" ng-show="!ctrl.proofReadingView">
+<div id="timeline" ng-show="ctrl.userConfig.showWaveform">
 
 </div>
+
+<div class="row" ng-show="ctrl.ready && !ctrl.userConfig.showWaveform">
+    <mini-player parent="ctrl"></mini-player>
+</div>
+
 <div class="wrapper" ng-show="ctrl.ready">
-    <div id="zoom" class="row" style="margin-bottom: 2em; margin-top: 1em;" ng-show="!ctrl.proofReadingView">
+    <div id="zoom" class="row" style="margin-bottom: 2em; margin-top: 1em;" ng-show="ctrl.userConfig.showWaveform">
         <div class="col-md-1">
             <i class="glyphicon glyphicon-zoom-out glyphicon-large pull-right"></i>
         </div>
@@ -164,7 +169,7 @@
         </div>
     </div>
 
-    <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram"></div>
+    <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram && ctrl.userConfig.showWaveform"></div>
 
     <div id="file-data" style="text-align:center">
     </div>
@@ -187,7 +192,7 @@
 
             <button class="btn btn-default" ng-click="ctrl.zoomIntoRegion()"
                     title="Zoom to Segment"
-                    ng-disabled="!ctrl.selectedRegion || ctrl.proofReadingView">
+                    ng-disabled="!ctrl.selectedRegion || ctrl.proofReadingView || !ctrl.userConfig.showWaveform">
                     <i class="glyphicon glyphicon-zoom-in"></i>
             </button>
 
@@ -254,10 +259,22 @@
                 <i class="glyphicon glyphicon-list-alt"></i>
                 Toggle Proofreading View
             </button>
+
+            <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()" ng-if="ctrl.userConfig.showWaveform"
+                    title="Toggle waveform">
+                <i class="glyphicon glyphicon-resize-small"></i>
+            </button>
+
+            <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()" ng-if="!ctrl.userConfig.showWaveform"
+                    title="Toggle waveform"
+                    style="margin-left: 1rem;">
+                <i class="glyphicon glyphicon-fullscreen"></i>
+            </button>
+
         </div>
     </div>
 
-    <div class="row" style="margin-top: 1em; margin-bottom: 1em;">
+    <div class="row" style="margin-top: 1em; margin-bottom: 1em; position: relative;">
         <!--        <div class="col col-md-3" ng-hide="ctrl.discrepancies">-->
         <!--            <div class="panel panel-default">-->
         <!--                <div class="panel-heading">-->
@@ -339,13 +356,25 @@
 
         <!--            </div>-->
         <!--        </div>-->
+        
+        <div class="" style="position: absolute; z-index: 1;" ng-if="!ctrl.userConfig.showSegmentLabeling">
+            <button type="button" class="btn btn-primary btn-sm" tooltip-placement="right" tooltip-class="gecko-segment-labeling-tooltip"
+            uib-tooltip="Segment Labeling" ng-click="ctrl.toggleSegmentLabeling()">
+                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+            </button>
+        </div>
 
-        <div class="col col-md-3 segment-labeling" ng-if="!ctrl.discrepancies">
+        <div class="col col-md-3 segment-labeling" 
+        ng-if="ctrl.userConfig.showSegmentLabeling"
+        ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
             <div class="panel panel-default">
-                <div class="panel-heading">
+                <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="panel-title">
                         Segment Labeling
                     </h3>
+                    <button type="button" class="btn btn-primary btn-sm" ng-click="ctrl.toggleSegmentLabeling()">
+                        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                    </button>
                 </div>
                 <div class="panel-body">
                     <div ng-show="ctrl.selectedRegion">
@@ -403,12 +432,24 @@
             </div>
         </div>
 
-        <div class="col col-lg-3 col-md-6 segment-text" ng-if="ctrl.discrepancies">
+        <div class="" style="position: absolute; z-index: 1;" ng-style="!ctrl.userConfig.showSegmentLabeling && { 'top' : '32px' }" ng-if="ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences">
+            <button type="button" class="btn btn-info btn-sm" tooltip-placement="right" tooltip-class="gecko-segment-labeling-tooltip"
+            uib-tooltip="Transcript differences" ng-click="ctrl.toggleTranscriptDifferences()">
+                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+            </button>
+        </div>
+
+        <div class="col col-lg-3 col-md-6 segment-text"
+         ng-if="ctrl.discrepancies && ctrl.userConfig.showTranscriptDifferences"
+         ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
             <div class="panel panel-default">
-                <div class="panel-heading">
+                <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="panel-title">
                         Transcript differences
                     </h3>
+                    <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTranscriptDifferences()">
+                        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                    </button>
                 </div>
                 <div class="panel-body">
                     <div>
@@ -469,7 +510,8 @@
 
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
              ng-repeat="file in ctrl.filesData track by $index"
-             ng-show="!ctrl.proofReadingView">
+             ng-show="!ctrl.proofReadingView"
+             ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
             <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
@@ -492,6 +534,7 @@
         </div>
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
              ng-show="ctrl.proofReadingView"
+             ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}"
              ng-repeat="file in ctrl.filesData track by $index">
              <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading">

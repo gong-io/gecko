@@ -61,6 +61,12 @@ export const toTrusted = ($sce) =>{
 
 export const toMMSS = () =>{
     return (seconds) => {
-        return new Date(seconds * 1000).toISOString().substr(14, 5)
+        return seconds ? new Date(seconds * 1000).toISOString().substr(14, 5) : '00:00'
+    }
+}
+
+export const secondsToFixed = () =>{
+    return (seconds) => {
+        return seconds ? seconds.split('.')[0] : '00:00'
     }
 }

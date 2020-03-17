@@ -41,8 +41,6 @@ export default (parent) => {
     //     }
     // }
 
-    parent.transcriptPanelSize = parseInt(9 / parent.filesData.length)
-
     // select the first region
     parent.selectedFileIndex = 0
     parent.selectRegion()
@@ -80,6 +78,7 @@ export default (parent) => {
     initAudioContext()
 
     parent.handleCtm()
+    parent.calculatePanelsWidth()
 
     parent.length = parent.wavesurfer.backend.buffer.length
 
