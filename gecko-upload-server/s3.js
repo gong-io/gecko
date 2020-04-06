@@ -25,7 +25,6 @@ uploadFile = (fileName, file, successCallback, failCallback) => {
         Key,
         Body: file,
         Bucket: process.env.AWS_BUCKET,
-        ACL: 'public-read'
         }, function(err, data) {
         if (err) {
             failCallback(err.message)
