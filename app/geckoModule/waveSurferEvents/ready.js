@@ -78,7 +78,7 @@ export default (parent) => {
     initAudioContext()
 
     parent.handleCtm()
-    parent.calculatePanelsWidth()
+    parent.calculatePanelsWidth(true)
 
     parent.length = parent.wavesurfer.backend.buffer.length
 

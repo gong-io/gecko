@@ -106,6 +106,7 @@ export const OLATS_BUFFER_SIZE = 4096
 export const DEFAULT_USER_CONFIG = {
     showSegmentLabeling: true,
     showTranscriptDifferences: true,
-    showWaveform: true
+    showWaveform: true,
+    showTranscriptFiles: {}
 }
 export const TRANSCRIPT_EXTENSIONS = ['json', 'ctm', 'rttm', 'srt', 'tsv']

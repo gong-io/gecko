@@ -504,41 +504,55 @@
                     </div>
                 </div>
             </div>
-
-
         </div>
 
-        <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
-             ng-repeat="file in ctrl.filesData track by $index"
-             ng-show="!ctrl.proofReadingView"
-             ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
-            <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
-                <div class="panel-heading">
-                    <h3 class="panel-title">File: {{ file.filename }}</h3>
-                </div>
-                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
-                    <p ng-if="!ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
-                        }}</b></p>
-                    <p ng-if="ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">Dummy Region</b></p>
-                    <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
-                    <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
-                    <editable-words 
-                        ng-if="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
-                        region="ctrl.currentRegions[$index]"
-                        file-index="$index"
-                        class="editable-words"
-                    >
-                    </editable-words>
+        <div ng-repeat="file in ctrl.filesData track by $index">
+            <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
+                    ng-show="!ctrl.proofReadingView"
+                    ng-if="ctrl.userConfig.showTranscriptFiles[file.filename]"
+                    ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
+                <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
+                    <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 class="panel-title">File: {{ file.filename }}</h3>
+                        <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
+                        <p ng-if="!ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
+                            }}</b></p>
+                        <p ng-if="ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">Dummy Region</b></p>
+                        <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
+                        <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
+                        <editable-words 
+                            ng-if="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
+                            region="ctrl.currentRegions[$index]"
+                            file-index="$index"
+                            class="editable-words"
+                        >
+                        </editable-words>
+                    </div>
                 </div>
             </div>
+        <div ng-if="!ctrl.userConfig.showTranscriptFiles[file.filename]" class="" style="position: absolute; z-index: 1; right: 0; top: {{$index * 32}}px">
+                <button type="button" class="btn btn-info btn-sm" tooltip-placement="left" tooltip-class="gecko-segment-labeling-tooltip"
+                uib-tooltip="Transcript of file #{{ $index + 1 }}" ng-click="ctrl.toggleTextPanel(file.filename)">
+                    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                    {{ $index + 1 }}
+                </button>
+            </div>
         </div>
+
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
-             ng-show="ctrl.proofReadingView"
+             ng-show="ctrl.proofReadingView && ctrl.userConfig.showTranscriptFiles[file.filename]"
              ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}"
              ng-repeat="file in ctrl.filesData track by $index">
              <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
-                <div class="panel-heading">
+                <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
+                    <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
+                        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                    </button>
                 </div>
                 <div class="panel-body" style="min-height:650px; max-height: 650px;overflow-y: scroll;">
                     <proof-reading-view
