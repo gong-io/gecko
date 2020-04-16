@@ -399,3 +399,53 @@ input[type=range].gecko-mini-player-range {
     background: #0d0d0d;
   }
   
+  #video-js {
+    width: 100%;
+    height: auto;
+  }
+
+  #video-js video {
+    width: 100%;
+    height: auto;
+  }
+
+  .row-eq-height {
+    justify-content: center;
+    align-items: center;
+    min-height: 370px;
+  }
+
+  .no-min-height {
+      min-height: initial;
+  }
+
+  .mb-0 {
+    margin-bottom: 0;
+  }
+
+  .pl-0 {
+    padding-left: 0;
+  }
+
+  .pr-0 {
+    padding-right: 0;
+  }
+
+  .m-0 {
+    margin: 0;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .btn-toggle-video {
+    position: absolute;
+    top: 68px; 
+    left: 0; 
+    z-index: 99;
+  }
+
+  .full-width {
+      width: 100%;
+  }

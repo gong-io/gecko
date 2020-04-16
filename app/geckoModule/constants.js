@@ -107,6 +107,7 @@ export const DEFAULT_USER_CONFIG = {
     showSegmentLabeling: true,
     showTranscriptDifferences: true,
     showWaveform: true,
-    showTranscriptFiles: {}
+    showTranscriptFiles: {},
+    showVideo: true
 }
 export const TRANSCRIPT_EXTENSIONS = ['json', 'ctm', 'rttm', 'srt', 'tsv']

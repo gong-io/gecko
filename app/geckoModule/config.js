@@ -9,7 +9,8 @@ var config = {
         autoCenterImmediately: true,
         height: '350',
         useSpectrogram: true,
-        scrollParent: true
+        scrollParent: true,
+        responsive: true
     },
     parserOptions: {
         srt: {

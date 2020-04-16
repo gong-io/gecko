@@ -1908,6 +1908,11 @@ class MainController {
         const serializedSettings = JSON.stringify(this.userConfig)
         window.localStorage.setItem('geckoUserConfig', serializedSettings)
     }
+
+    toggleVideo () {
+        this.userConfig.showVideo = !this.userConfig.showVideo
+        this.saveUserSettings()
+    }
     
 }
 
