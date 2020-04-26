@@ -11,7 +11,7 @@
 <body ng-app="speechRecognition" ng-controller="MainController as ctrl" ng-init="ctrl.loadApp({mode: 'client'})"
       ng-cloak>
 
-<nav class="navbar navbar-inverse" style="margin-bottom: 0">
+<nav class="navbar navbar-inverse mb-0">
     <div class="container">
         <div class="navbar-header">
             <img id="logo" src="<%= require('./images/Gecko.svg') %>" alt="Gecko">
@@ -105,28 +105,35 @@
     </div>
 </nav>
 
-<div style="margin:0; text-align: center;" ng-show="ctrl.loader">
+<div class="m-0 text-center" ng-show="ctrl.loader">
     <div class="lds-circle">
         <div></div>
     </div>
 </div>
 
-<div class="row" ng-show="ctrl.videoMode">
-    <div class="col-md-6 col-md-offset-3">
+<div class="row row-eq-height justify-content-center align-self-center" ng-class="{ 'no-min-height' : !ctrl.videoMode || !ctrl.userConfig.showVideo }">
+    <button type="button" class="btn btn-primary btn-sm btn-toggle-video" ng-if="ctrl.ready && ctrl.videoMode && ctrl.userConfig.showVideo" ng-click="ctrl.toggleVideo()">
+        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+    </button>
+    <div class="col-md-3" ng-show="ctrl.videoMode && ctrl.userConfig.showVideo">
         <video id="video-js" style="margin: 0 auto;"></video>
     </div>
+    <div class="btn-toggle-video" ng-if="ctrl.ready && ctrl.videoMode &&!ctrl.userConfig.showVideo">
+        <button type="button" class="btn btn-primary btn-sm" tooltip-placement="right" tooltip-class="gecko-segment-labeling-tooltip"
+        uib-tooltip="Video" ng-click="ctrl.toggleVideo()">
+            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+        </button>
+    </div>
+    <div class="col-md-{{ ctrl.videoMode && ctrl.userConfig.showVideo ? '9' : '12' }} pl-0 pr-0">
+        <div id="waveform" ng-show="ctrl.userConfig.showWaveform" context-menu="regionContextMenu" app="ctrl"></div>
+        <div id="timeline" ng-show="ctrl.userConfig.showWaveform"></div>
+        <div class="row" ng-show="ctrl.ready && !ctrl.userConfig.showWaveform">
+            <mini-player parent="ctrl"></mini-player>
+        </div>
+    </div>
 </div>
-<!--<div style="resize:vertical;overflow-y:auto" ng-mousemove="ctrl.resizeWavesurfer($event)">-->
-<div id="waveform" ng-show="ctrl.userConfig.showWaveform" context-menu="regionContextMenu" app="ctrl"></div>
-<!--<div style="height:10px"></div>-->
-<!--</div>-->
-<div id="timeline" ng-show="ctrl.userConfig.showWaveform">
 
-</div>
 
-<div class="row" ng-show="ctrl.ready && !ctrl.userConfig.showWaveform">
-    <mini-player parent="ctrl"></mini-player>
-</div>
 
 <div class="wrapper" ng-show="ctrl.ready">
     <div id="zoom" class="row" style="margin-bottom: 2em; margin-top: 1em;" ng-show="ctrl.userConfig.showWaveform">
@@ -137,7 +144,7 @@
         <div class="col-md-7">
             <input id="zoomSlider" ng-model="ctrl.zoomLevel" ng-model-options="{ debounce: 200 }" type="range" min="1"
                    max="{{ ctrl.maxZoom }}"
-                   style="width: 100%" 
+                   class="full-width"
                    tooltip-placement="top"
                     uib-tooltip="Zoom level: {{ ctrl.zoomLevel }}"
                     tooltip-class="gecko-zoom-tooltip"
@@ -154,11 +161,10 @@
 
         <div class="col-md-1">
             <input id="slider" ng-model="ctrl.currentGainProc" type="range" min="{{ ctrl.minGainProc }}"
-                    class="volume-slider"
+                    class="volume-slider full-width"
                     max="{{ ctrl.maxGainProc }}"
                     tooltip-placement="top"
-                    uib-tooltip="Volume: {{ ctrl.currentGainProc }}"
-                    style="width: 100%"/>
+                    uib-tooltip="Volume: {{ ctrl.currentGainProc }}"/>
             <!--            <div class="text-center">-->
             <!--                <b>Zoom level:</b> {{ ctrl.zoomLevel }}-->
             <!--            </div>-->
@@ -171,10 +177,10 @@
 
     <div id="wavespectrogram" ng-show="ctrl.ready && ctrl.showSpectrogram && ctrl.userConfig.showWaveform"></div>
 
-    <div id="file-data" style="text-align:center">
+    <div id="file-data" class="text-center">
     </div>
 
-    <div class="row" style="text-align: center; margin-bottom: 2em; margin-top: 2em">
+    <div class="row text-center" style="margin-bottom: 2em; margin-top: 2em">
         <div class="col-md-12">
             <button class="btn btn-primary" ng-show="!ctrl.isPlaying" ng-click="ctrl.playPause()">
                 <i class="glyphicon glyphicon-play"></i>
@@ -399,7 +405,7 @@
                                        ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker.value) > -1"
                                        ng-click="ctrl.speakerChanged(speaker)"
                                        ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy""
-                                style="margin-bottom: 0px">
+                                       class="mb-0">
                                 <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.{{ speaker.display }}</span>
                                 <span ng-if="!speaker.isDefault" editable
                                       changed="ctrl.speakerNameChanged(speaker, oldText,newText)"
@@ -504,41 +510,55 @@
                     </div>
                 </div>
             </div>
-
-
         </div>
 
-        <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
-             ng-repeat="file in ctrl.filesData track by $index"
-             ng-show="!ctrl.proofReadingView"
-             ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
-            <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
-                <div class="panel-heading">
-                    <h3 class="panel-title">File: {{ file.filename }}</h3>
-                </div>
-                <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
-                    <p ng-if="!ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
-                        }}</b></p>
-                    <p ng-if="ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">Dummy Region</b></p>
-                    <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
-                    <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
-                    <editable-words 
-                        ng-if="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
-                        region="ctrl.currentRegions[$index]"
-                        file-index="$index"
-                        class="editable-words"
-                    >
-                    </editable-words>
+        <div ng-repeat="file in ctrl.filesData track by $index">
+            <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
+                    ng-show="!ctrl.proofReadingView"
+                    ng-if="ctrl.userConfig.showTranscriptFiles[file.filename]"
+                    ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
+                <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
+                    <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 class="panel-title">File: {{ file.filename }}</h3>
+                        <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
+                            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <div class="panel-body" style="min-height:350px; max-height: 350px;overflow-y: scroll;">
+                        <p ng-if="!ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">{{ ctrl.currentRegions[$index].data.speaker | speakersFilter
+                            }}</b></p>
+                        <p ng-if="ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">Dummy Region</b></p>
+                        <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
+                        <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
+                        <editable-words 
+                            ng-if="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
+                            region="ctrl.currentRegions[$index]"
+                            file-index="$index"
+                            class="editable-words"
+                        >
+                        </editable-words>
+                    </div>
                 </div>
             </div>
+        <div ng-if="!ctrl.userConfig.showTranscriptFiles[file.filename]" class="" style="position: absolute; z-index: 1; right: 0; top: {{$index * 32}}px">
+                <button type="button" class="btn btn-info btn-sm" tooltip-placement="left" tooltip-class="gecko-segment-labeling-tooltip"
+                uib-tooltip="Transcript of file #{{ $index + 1 }}" ng-click="ctrl.toggleTextPanel(file.filename)">
+                    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                    {{ $index + 1 }}
+                </button>
+            </div>
         </div>
+
         <div class="col col-md-{{ctrl.transcriptPanelSize}} segment-text"
-             ng-show="ctrl.proofReadingView"
+             ng-show="ctrl.proofReadingView && ctrl.userConfig.showTranscriptFiles[file.filename]"
              ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}"
              ng-repeat="file in ctrl.filesData track by $index">
              <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
-                <div class="panel-heading">
+                <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
+                    <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
+                        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                    </button>
                 </div>
                 <div class="panel-body" style="min-height:650px; max-height: 650px;overflow-y: scroll;">
                     <proof-reading-view

@@ -1850,16 +1850,34 @@ class MainController {
         event.stopPropagation()
     }
 
-    calculatePanelsWidth () {
-        const { showSegmentLabeling, showTranscriptDifferences } = this.userConfig
+    calculatePanelsWidth (initial = false) {
+        if (initial) {
+            this.filesData.forEach(fd => {
+                if (this.userConfig.showTranscriptFiles[fd.filename] !== false && this.userConfig.showTranscriptFiles[fd.filename] !== true) {
+                    this.userConfig.showTranscriptFiles[fd.filename] = true
+                }
+            })
+        }   
+
+        const { showSegmentLabeling, showTranscriptDifferences, showTranscriptFiles } = this.userConfig
         const showDifferencesPanel = this.discrepancies && showTranscriptDifferences
+        const shownPanels = this.filesData.filter(fd => showTranscriptFiles[fd.filename])
         if (showSegmentLabeling && showDifferencesPanel) {
-            this.transcriptPanelSize = parseInt(6 / this.filesData.length)
+            this.transcriptPanelSize = parseInt(6 / shownPanels.length)
         } else if (showSegmentLabeling || showDifferencesPanel) {
-            this.transcriptPanelSize = parseInt(9 / this.filesData.length)
+            this.transcriptPanelSize = parseInt(9 / shownPanels.length)
         } else {
-            this.transcriptPanelSize = parseInt(12 / this.filesData.length)
+            this.transcriptPanelSize = parseInt(12 / shownPanels.length)
+        }     
+    }
+
+    toggleTextPanel (filename) {
+        this.userConfig.showTranscriptFiles[filename] = !this.userConfig.showTranscriptFiles[filename]
+        for (let i = 0; i < this.filesData.length; i++) {
+            this.$timeout(() => this.eventBus.trigger('resetEditableWords', this.getCurrentRegion(i)))
         }
+        this.calculatePanelsWidth()
+        this.saveUserSettings()
     }
 
     toggleSegmentLabeling () {
@@ -1889,6 +1907,11 @@ class MainController {
     saveUserSettings () {
         const serializedSettings = JSON.stringify(this.userConfig)
         window.localStorage.setItem('geckoUserConfig', serializedSettings)
+    }
+
+    toggleVideo () {
+        this.userConfig.showVideo = !this.userConfig.showVideo
+        this.saveUserSettings()
     }
     
 }

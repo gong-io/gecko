@@ -34,7 +34,6 @@ export const readVideoFile = (context, file) => {
         reader.onload = () => {
             var videoFileAsBuffer = reader.result
             audioContext.decodeAudioData(videoFileAsBuffer).then((decodedAudioData) => {
-                context.videoMode = true
                 resolve(decodedAudioData)
             })
         }
@@ -49,6 +48,7 @@ export const readMediaFile = async (context, file) => {
             const result = await readAudioFile(file)
             resolve(result)
         } else if (file.type.includes('video')) {
+            context.videoMode = true
             const result = await readVideoFile(context, file)
             resolve(result)
         }
