@@ -822,12 +822,12 @@ class GeckoEdtior {
         this.cleanDOM()
         const frag = document.createDocumentFragment()
         if (words) {
-            words.forEach((w, index) => {
-                frag.appendChild(this.createSpan(w, index))
-                if (index < words.length - 1) {
+            for (let i = 0, l = words.length; i < l; i++) {
+                frag.appendChild(this.createSpan(words[i], i))
+                if (i < l - 1) {
                     frag.appendChild(this.createSpace())
                 }
-            })
+            }
         }
         this.element.appendChild(frag)
     }

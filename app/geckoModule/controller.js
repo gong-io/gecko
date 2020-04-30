@@ -979,8 +979,9 @@ class MainController {
             regions = sortDict(regions, 'start');
         }
 
-        Object.keys(regions).forEach(function (key) {
-            var region = regions[key];
+        for(const key in regions) {
+            const region = regions[key];
+
             if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
                 return;
             }
@@ -989,7 +990,7 @@ class MainController {
             // }
 
             func(region)
-        })
+        }
     }
 
     findClosestRegionToTime(fileIndex, time, before) {
