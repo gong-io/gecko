@@ -15,11 +15,11 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
 
             scope.rebuildProofReading = (selectedRegion, fileIndex) => {
                 if (scope.fileIndex === fileIndex || (!fileIndex && fileIndex !== 0)) {
-                    scope.regions.forEach((merged) => {
-                        merged.forEach((r) => {
-                            eventBus.trigger('resetEditableWords', r)
-                        })
-                    })
+                    for (let i = 0, l = scope.regions.length; i < l; i++) {
+                        for (let j = 0, lMerged = scope.regions[i].length; j < lMerged; j++) {
+                            eventBus.trigger('resetEditableWords', scope.regions[i][j])
+                        }
+                    }
                 }
             }
 

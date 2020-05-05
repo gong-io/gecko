@@ -977,19 +977,21 @@ class MainController {
 
         if (sort) {
             regions = sortDict(regions, 'start');
-        }
-
-        for(const key in regions) {
-            const region = regions[key];
-
-            if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
-                return;
+            /* iterate regions as Map */
+            for (var [key, region] of regions) {
+                if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
+                    return;
+                }
+                func(region)
             }
-            // if (speaker !== undefined && region.data.speaker !== speaker) {
-            //     return;
-            // }
-
-            func(region)
+        } else {
+            for (const key in regions) {
+                const region = regions[key];
+                if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
+                    return;
+                }
+                func(region)
+            }
         }
     }
 
