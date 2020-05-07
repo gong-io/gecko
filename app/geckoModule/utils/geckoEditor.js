@@ -673,6 +673,7 @@ class GeckoEdtior {
     }
 
     setRegion (region) {
+        // console.log('set reg')
         if (region && region.data.words) {
             this.region = region
             this.setWords(region.data.words)
@@ -683,9 +684,9 @@ class GeckoEdtior {
         this.originalWords = []
         this.cleanDOM()
         if (words) {
-            this.originalWords = words.slice()
-            this.previousState = words.slice()
-            this.words = words.slice()
+            this.originalWords = JSON.parse(JSON.stringify(words))
+            this.previousState = JSON.parse(JSON.stringify(words))
+            this.words = JSON.parse(JSON.stringify(words))
             this.formDOM(words)
         }
     }

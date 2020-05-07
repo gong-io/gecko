@@ -9,7 +9,8 @@ export const editableWordsDirective = ($timeout, eventBus) => {
         scope: {
             fileIndex: '=',
             region: '=',
-            proofReading: '='
+            proofReading: '=',
+            control: '='
         },
         link: (scope, element, attrs) => {
             const editor = new GeckoEditor(element[0], scope.fileIndex)
@@ -26,38 +27,17 @@ export const editableWordsDirective = ($timeout, eventBus) => {
                 }
             }
 
-            eventBus.on('resetEditableWords', (region, uuid) => {
+            scope.resetEditableWords = (uuid) =>{
                 if (uuid && uuid === editableUuid) {
                     return
                 }
-
-                if (scope.region) {
-                    if (!region || (region && region.id === scope.region.id)) {
-                        editor.setRegion(scope.region)
-                    }
-                }
+                editor.setRegion(scope.region)
                 checkIsEmpty()
-            }, editableUuid)
+            }
 
-            eventBus.on('cleanEditableDOM', (fileIndex) => {
-                if (scope.proofReading) {
-                    return
-                }
-                if (fileIndex == scope.fileIndex) {
-                    editor.reset()
-                }
-            }, editableUuid)
-
-            editor.on('wordsUpdated', (newWords, previousWords) => {
-                $timeout(() => {
-                    scope.region.data.words = newWords
-                    if(!angular.equals(newWords, previousWords)) {
-                        $timeout(() => {
-                            eventBus.trigger('regionTextChanged', scope.region.id)
-                            eventBus.trigger('resetEditableWords', scope.region, editableUuid)
-                        })
-                    }
-                })
+            editor.on('wordsUpdated', (newWords) => {
+                scope.region.data.words = newWords
+                eventBus.trigger('regionTextChanged', scope.region.id)
                 checkIsEmpty()
             })
 
@@ -80,6 +60,19 @@ export const editableWordsDirective = ($timeout, eventBus) => {
             scope.$on('$destroy', () => {
                 eventBus.removeListener(editableUuid)
                 editor.destroy()
+            })
+            if (scope.proofReading) {
+                scope.control.editableWords.set(scope.region.id, scope)
+            } else {
+                scope.control.editableWords.set('main', scope)
+            }
+
+            scope.$watch('region', (newVal, oldVal) => {
+                if (newVal && oldVal && newVal.id === oldVal.id) {
+                    return
+                }
+                editor.setRegion(scope.region)
+                checkIsEmpty()
             })
         } 
     }

@@ -59,7 +59,8 @@ class HistoryService {
             } else {
                 context.wavesurfer.regions.list[regionId].update(copyRegion(history[history.length - 1]));
                 if (needUpdateEditable && context.selectedRegion && context.selectedRegion.id === regionId) {
-                    context.$timeout(() => context.eventBus.trigger('resetEditableWords', { id: regionId }))
+                    context.$timeout(() => context.resetEditableWords(regionId))
+                    context.resetEditableWords('main')
                 }
             }
         }

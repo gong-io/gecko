@@ -531,10 +531,11 @@
                         <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
                         <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
                         <editable-words 
-                            ng-if="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
+                            ng-show="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
                             region="ctrl.currentRegions[$index]"
                             file-index="$index"
                             class="editable-words"
+                            control="ctrl"
                         >
                         </editable-words>
                     </div>

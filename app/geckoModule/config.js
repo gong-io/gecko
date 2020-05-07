@@ -14,7 +14,7 @@ var config = {
     },
     parserOptions: {
         srt: {
-            groupWords: true
+            groupWords: false
         }
     },
     slider: "#slider",

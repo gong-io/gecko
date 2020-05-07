@@ -8,7 +8,8 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
             fileIndex: '=',
             regions: '=',
             selectedRegion: '=',
-            legend: '='
+            legend: '=',
+            control: '='
         },
         link: (scope, element, attrs) => {
             scope.isReady = false
@@ -17,7 +18,7 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
                 if (scope.fileIndex === fileIndex || (!fileIndex && fileIndex !== 0)) {
                     for (let i = 0, l = scope.regions.length; i < l; i++) {
                         for (let j = 0, lMerged = scope.regions[i].length; j < lMerged; j++) {
-                            eventBus.trigger('resetEditableWords', scope.regions[i][j])
+                            scope.control.resetEditableWords(scope.regions[i][j])
                         }
                     }
                 }

@@ -146,6 +146,8 @@ class MainController {
 
         this.cursorRegion = null
 
+        this.editableWords = new Map()
+
         this.loadUserConfig()
     }
 
@@ -210,6 +212,8 @@ class MainController {
             let currentRegion = this.getRegion(regionId)
             this.historyService.addHistory(currentRegion)
             this.historyService.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
+
+            this.resetEditableWords(currentRegion)
 
             this.eventBus.trigger('geckoChanged', {
                 event: 'regionTextChanged',
@@ -853,24 +857,29 @@ class MainController {
         }
     }
 
+    resetEditableWords (region, uuid) {
+        if (!region) {
+            return
+        }
+        const toReset = this.editableWords.get(region.id ? region.id : region)
+        toReset && toReset.resetEditableWords(uuid)
+    }
+
     calcCurrentRegions() {
         for (let i = 0; i < this.filesData.length; i++) {
             const currentRegion = this.getCurrentRegion(i);
             if (currentRegion && currentRegion !== this.currentRegions[i]) {
                 if (this.proofReadingView) {
                     if (currentRegion !== this.selectedRegion) {
-                        this.eventBus.trigger('resetEditableWords', currentRegion)
+                        this.resetEditableWords(currentRegion)
                     }
 
                     if (this.isPlaying && config.proofreadingAutoScroll) {
                         this.eventBus.trigger('proofReadingScrollToRegion', currentRegion)
                     }
                 } else {
-                    this.eventBus.trigger('resetEditableWords', currentRegion)
+                    this.resetEditableWords(currentRegion)
                 }
-
-            } else if (!currentRegion) {
-                this.eventBus.trigger('cleanEditableDOM', i)
             }
             this.currentRegions[i] = currentRegion
         }
@@ -1165,7 +1174,7 @@ class MainController {
 
             self.currentRegions.push(undefined);
         })
-
+        this.eventBus.trigger('rebuildProofReading')
     }
 
     splitSegment() {
@@ -1228,7 +1237,7 @@ class MainController {
 
         this.$timeout(() => {
             this.setAllRegions()
-            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
+            // this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
         })
     }
 
@@ -1755,7 +1764,7 @@ class MainController {
 
         if (!this.proofReadingView) {
             for (let i = 0; i < this.filesData.length; i++) {
-                this.$timeout(() => this.eventBus.trigger('resetEditableWords', this.getCurrentRegion(i)))
+                this.$timeout(() => this.resetEditableWords(this.getCurrentRegion(i)))
             }
             if (!this.isPlaying) {
                 this.$timeout(() => {
@@ -1877,7 +1886,7 @@ class MainController {
     toggleTextPanel (filename) {
         this.userConfig.showTranscriptFiles[filename] = !this.userConfig.showTranscriptFiles[filename]
         for (let i = 0; i < this.filesData.length; i++) {
-            this.$timeout(() => this.eventBus.trigger('resetEditableWords', this.getCurrentRegion(i)))
+            this.$timeout(() => this.resetEditableWords(this.getCurrentRegion(i)))
         }
         this.calculatePanelsWidth()
         this.saveUserSettings()

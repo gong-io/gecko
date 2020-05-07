@@ -7,11 +7,13 @@
         </div>
         <div class="col-md-10 proofreading__editable">
             <div ng-repeat="r in merged track by r.id" data-region="{{r.id}}">
+                {{r.id}}
                 <editable-words
                     region="r"
                     file-index="fileIndex"
                     class="editable-words"
                     proof-reading="true"
+                    control="control"
                 >
                 </editable-words>
             </div>
