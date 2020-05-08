@@ -61,10 +61,16 @@ export const editableWordsDirective = ($timeout, eventBus) => {
                 eventBus.removeListener(editableUuid)
                 editor.destroy()
             })
+
             if (scope.proofReading) {
                 scope.control.editableWords.set(scope.region.id, scope)
             } else {
-                scope.control.editableWords.set('main', scope)
+                scope.control.editableWords.set(`main_${scope.fileIndex}`, scope)
+            }
+
+            if (scope.region) {
+                editor.setRegion(scope.region)
+                checkIsEmpty()
             }
 
             scope.$watch('region', (newVal, oldVal) => {

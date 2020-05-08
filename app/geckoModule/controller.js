@@ -33,8 +33,24 @@ import {
     shortcutsModal
 } from './modals'
 
+var hash = function(s) {
+    /* Simple hash function. */
+    var a = 1, c = 0, h, o;
+    if (s) {
+        a = 0;
+        /*jshint plusplus:false bitwise:false*/
+        for (h = s.length - 1; h >= 0; h--) {
+            o = s.charCodeAt(h);
+            a = (a<<6&268435455) + o + (o<<14);
+            c = a & 266338304;
+            a = c!==0?a^c>>21:a;
+        }
+    }
+    return String(a);
+};
+
 class MainController {
-    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, $timeout, $interval) {
+    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, $q, $timeout, $interval) {
         this.dataManager = dataManager;
         if (config.enableDrafts) {
             this.dataBase = dataBase;
@@ -58,7 +74,35 @@ class MainController {
 
         this.zoomTooltip = new ZoomTooltip(this)
 
+        const debounce = (func, wait, immediate) => {
+            var timeout;
+            // Create a deferred object that will be resolved when we need to
+            // actually call the func
+            var deferred = $q.defer();
+            return function() {
+                var context = this, args = arguments;
+                var later = function() {
+                timeout = null;
+                if(!immediate) {
+                    deferred.resolve(func.apply(context, args));
+                    deferred = $q.defer();
+                }
+                };
+                var callNow = immediate && !timeout;
+                if ( timeout ) {
+                $timeout.cancel(timeout);
+                }
+                timeout = $timeout(later, wait);
+                if (callNow) {
+                deferred.resolve(func.apply(context,args));
+                deferred = $q.defer();
+                }
+                return deferred.promise;
+            }
+        }
+
         this.$scope.$watch(() => this.zoomTooltipOpen, this.updateZoomTooltip.bind(this))
+        this.debouncedGetCurrentRegion = debounce(this.getCurrentRegion, 200)
     }
 
     async loadApp(config) {
@@ -142,7 +186,7 @@ class MainController {
 
         this.isRegionClicked = false;
 
-        this.allRegions = []
+        this.mergedRegions = []
 
         this.cursorRegion = null
 
@@ -757,24 +801,20 @@ class MainController {
             this.seek(newRegion.start, 'right')
         }
 
-        this.$timeout(() => {
-            this.setAllRegions()
-            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
-        })
+        if (this.proofReadingView) {
+            this.setMergedRegions()
+        }
     }
 
     updateView() {
         this.selectRegion()
         this.silence = this.calcSilenceRegion()
         this.setCurrentTime()
-        this.setAllRegions()
         this.calcCurrentRegions()
         this.discrepancyService.updateSelectedDiscrepancy(this)
-
-        this.cursorRegion = this.getCurrentRegion(this.selectedFileIndex)
     }
 
-    setAllRegions() {
+    setMergedRegions() {
         for (let i = 0; i < this.filesData.length; i++) {
             const ret = []
             this.iterateRegions((r) => {
@@ -782,19 +822,24 @@ class MainController {
                     ret.push(r)
                 }
             }, i, true)
-            this.allRegions[i] = ret.reduce((acc, current) => {
+            this.mergedRegions[i] = ret.reduce((acc, current) => {
                 const last = acc[acc.length - 1]
-                if (last && last.length) {
-                    if (angular.equals(last[0].data.speaker, current.data.speaker)) {
-                        last.push(current)
+                if (last && last.regions && last.regions.length) {
+                    if (angular.equals(last.regions[0].data.speaker, current.data.speaker)) {
+                        last.regions.push(current)
                     } else {
-                        acc.push([current])
+                        acc.push({ hash: '', regions: [current] })
                     }
                 } else {
-                    acc.push([current])
+                    acc.push({ hash: '', regions: [current] })
                 }
                 return acc
             }, [])
+
+            for (let j = 0, l = this.mergedRegions[i].length; j < l; j++) {
+                const hashStr = this.mergedRegions[i][j].regions.map(r => r.id).join('-')
+                this.mergedRegions[i][j].hash = hash(hashStr)
+            }
         }
     }
 
@@ -868,6 +913,9 @@ class MainController {
     calcCurrentRegions() {
         for (let i = 0; i < this.filesData.length; i++) {
             const currentRegion = this.getCurrentRegion(i);
+            if (i === this.selectedFileIndex) {
+                this.cursorRegion = currentRegion
+            }
             if (currentRegion && currentRegion !== this.currentRegions[i]) {
                 if (this.proofReadingView) {
                     if (currentRegion !== this.selectedRegion) {
@@ -904,18 +952,23 @@ class MainController {
 
     selectRegion(region) {
         if (!region) {
-            region = this.getCurrentRegion(this.selectedFileIndex);
+            this.debouncedGetCurrentRegion(this.selectedFileIndex).then(region => {
+                this.deselectRegion();
+
+                if (!region) {
+                    return
+                }
+
+                region.element.classList.add('selected-region');
+
+                this.selectedRegion = region;
+            })
+        } else {
+            this.deselectRegion();
+            region.element.classList.add('selected-region');
+
+            this.selectedRegion = region;
         }
-
-        this.deselectRegion();
-
-        if (!region) {
-            return
-        }
-
-        region.element.classList.add('selected-region');
-
-        this.selectedRegion = region;
     }
 
     jumpRegion(next) {
@@ -989,15 +1042,15 @@ class MainController {
             /* iterate regions as Map */
             for (var [key, region] of regions) {
                 if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
-                    return;
+                    continue
                 }
                 func(region)
             }
         } else {
-            for (const key in regions) {
+            for (key in regions) {
                 const region = regions[key];
                 if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
-                    return;
+                    continue
                 }
                 func(region)
             }
@@ -1174,7 +1227,8 @@ class MainController {
 
             self.currentRegions.push(undefined);
         })
-        this.eventBus.trigger('rebuildProofReading')
+
+        this.setMergedRegions()
     }
 
     splitSegment() {
@@ -1213,10 +1267,9 @@ class MainController {
             data: [first.id, second.id, region.id]
         })
 
-        this.$timeout(() => {
-            this.setAllRegions()
-            this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
-        })
+        if (this.proofReadingView) {
+            this.setMergedRegions()
+        }
     }
 
     deleteRegionAction(region) {
@@ -1233,12 +1286,11 @@ class MainController {
             data: region
         })
 
-        this.updateView();
+        if (this.proofReadingView) {
+            this.setMergedRegions()
+        }
 
-        this.$timeout(() => {
-            this.setAllRegions()
-            // this.eventBus.trigger('rebuildProofReading', this.selectedRegion, this.selectedFileIndex)
-        })
+        this.updateView();
     }
 
     __deleteRegion(region) {
@@ -1464,10 +1516,9 @@ class MainController {
             data: speaker.value
         })
 
-        this.$timeout(() => {
-            this.setAllRegions()
-            this.eventBus.trigger('rebuildProofReading', currentRegion, isFromContext ? this.contextMenuFileIndex : this.selectedFileIndex)
-        })
+        if (this.proofReadingView) {
+            this.setMergedRegions()
+        }
     }
 
     speakerNameChanged(speaker, oldText, newText) {
@@ -1764,7 +1815,7 @@ class MainController {
 
         if (!this.proofReadingView) {
             for (let i = 0; i < this.filesData.length; i++) {
-                this.$timeout(() => this.resetEditableWords(this.getCurrentRegion(i)))
+                this.resetEditableWords(`main_${i}`)
             }
             if (!this.isPlaying) {
                 this.$timeout(() => {
@@ -1776,6 +1827,7 @@ class MainController {
             this.userConfig.showSegmentLabeling = true
             this.userConfig.showTranscriptDifferences = true
         } else {
+            this.setMergedRegions()
             this.eventBus.trigger('proofReadingScrollToSelected')
 
             this.userConfig.showWaveform = false
@@ -1929,7 +1981,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', '$timeout', '$interval'];
+    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', '$q', '$timeout', '$interval'];
 export {
     MainController
 }

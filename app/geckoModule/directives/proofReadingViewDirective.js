@@ -12,30 +12,6 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
             control: '='
         },
         link: (scope, element, attrs) => {
-            scope.isReady = false
-
-            scope.rebuildProofReading = (selectedRegion, fileIndex) => {
-                if (scope.fileIndex === fileIndex || (!fileIndex && fileIndex !== 0)) {
-                    for (let i = 0, l = scope.regions.length; i < l; i++) {
-                        for (let j = 0, lMerged = scope.regions[i].length; j < lMerged; j++) {
-                            scope.control.resetEditableWords(scope.regions[i][j])
-                        }
-                    }
-                }
-            }
-
-            scope.$watch('regions', (newVal) => {
-                if (newVal && newVal.length && !scope.isReady) {
-                    scope.rebuildProofReading()
-                    scope.isReady = true
-                }
-            })
-
-            eventBus.on('rebuildProofReading', (selectedRegion, fileIndex) => {
-                scope.rebuildProofReading(selectedRegion, fileIndex)
-                scope.setSelected()
-            })
-
             eventBus.on('proofReadingScrollToSelected', () => {
                 document.querySelectorAll('.proofreading--selected').forEach((n) => {
                     if (n) {
@@ -80,7 +56,7 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
                     const topAncestor = findTopAncestor(regionElement)
                     element[0].parentNode.scrollTop = topAncestor.offsetTop - 36
                 }
-            }) 
+            })
 
             /* eventBus.on('proofReadingScroll', (region, fileIndex) => {
                 if (fileIndex !== scope.fileIndex) {

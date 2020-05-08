@@ -29,10 +29,9 @@ export default (parent, region) => {
 
         region.data.initFinished = false;
 
-        parent.$timeout(() => {
-            parent.setAllRegions()
-            parent.eventBus.trigger('rebuildProofReading')
-        })
+        if (parent.proofReadingView) {
+            parent.setMergedRegions()
+        }
     } else {
         // fix regions if not added through drag (on drag there is no 'start')
         parent.fixRegionsOrder(region);
