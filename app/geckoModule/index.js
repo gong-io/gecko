@@ -14,8 +14,7 @@ import {
     dataManager,
     dataBase,
     DiscrepancyService,
-    HistoryService,
-    Debounce
+    HistoryService
 } from './services'
 
 import { 
@@ -47,7 +46,6 @@ geckoModule.service('discrepancyService', DiscrepancyService)
 geckoModule.service('historyService', HistoryService)
 geckoModule.service('dataManager', dataManager)
 geckoModule.service('dataBase', dataBase)
-geckoModule.service('debounceService', ['$timeout', '$q', Debounce])
 
 geckoModule.directive('editableWords', ['$timeout', 'eventBus', editableWordsDirective])
 geckoModule.directive('proofReadingView', ['$timeout', 'eventBus', proofReadingViewDirective])
