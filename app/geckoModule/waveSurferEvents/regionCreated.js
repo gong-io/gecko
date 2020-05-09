@@ -32,10 +32,9 @@ export default (parent, region) => {
         if (parent.proofReadingView) {
             parent.setMergedRegions()
         }
-    } else {
-        // fix regions if not added through drag (on drag there is no 'start')
-        parent.fixRegionsOrder(region);
 
+        parent.updateView()
+    } else {
         // when file is added by dragging, update-end will take care of history
         parent.historyService.addHistory(region);
     }
@@ -62,5 +61,4 @@ export default (parent, region) => {
     // }
 
     parent.regionUpdated(region);
-    parent.updateView();
 }

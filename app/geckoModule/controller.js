@@ -25,7 +25,8 @@ import {
     parseServerResponse,
     ZoomTooltip,
     prepareLegend,
-    formatTime
+    formatTime,
+    hash
 } from './utils'
 
 import {
@@ -33,24 +34,8 @@ import {
     shortcutsModal
 } from './modals'
 
-var hash = function(s) {
-    /* Simple hash function. */
-    var a = 1, c = 0, h, o;
-    if (s) {
-        a = 0;
-        /*jshint plusplus:false bitwise:false*/
-        for (h = s.length - 1; h >= 0; h--) {
-            o = s.charCodeAt(h);
-            a = (a<<6&268435455) + o + (o<<14);
-            c = a & 266338304;
-            a = c!==0?a^c>>21:a;
-        }
-    }
-    return String(a);
-};
-
 class MainController {
-    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, $q, $timeout, $interval) {
+    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, debounce, $timeout, $interval) {
         this.dataManager = dataManager;
         if (config.enableDrafts) {
             this.dataBase = dataBase;
@@ -74,35 +59,8 @@ class MainController {
 
         this.zoomTooltip = new ZoomTooltip(this)
 
-        const debounce = (func, wait, immediate) => {
-            var timeout;
-            // Create a deferred object that will be resolved when we need to
-            // actually call the func
-            var deferred = $q.defer();
-            return function() {
-                var context = this, args = arguments;
-                var later = function() {
-                timeout = null;
-                if(!immediate) {
-                    deferred.resolve(func.apply(context, args));
-                    deferred = $q.defer();
-                }
-                };
-                var callNow = immediate && !timeout;
-                if ( timeout ) {
-                $timeout.cancel(timeout);
-                }
-                timeout = $timeout(later, wait);
-                if (callNow) {
-                deferred.resolve(func.apply(context,args));
-                deferred = $q.defer();
-                }
-                return deferred.promise;
-            }
-        }
-
         this.$scope.$watch(() => this.zoomTooltipOpen, this.updateZoomTooltip.bind(this))
-        this.debouncedGetCurrentRegion = debounce(this.getCurrentRegion, 200)
+        this.debouncedUpdate = debounce.throttle(this.update, 200, this)
     }
 
     async loadApp(config) {
@@ -534,6 +492,48 @@ class MainController {
         })
     }
 
+    fixRegionsOrderAll () {
+        this.iterateFilesRegionsBatch((region) => {
+            if (region.data.isDummy) {
+                return
+            }
+
+            const prev = []
+            const next = []
+
+            const getRegionsPrev = (r,fileIndex) => {
+                if (r.start < region.start - 0.01 && (!prev[fileIndex] || r.start > prev[fileIndex].start) && !r.data.isDummy) {
+                    prev[fileIndex] = r
+                }
+            }
+
+            const getRegionsNext = (r, fileIndex) => {
+                if (r.end > region.end && (!next[fileIndex] || r.end < next[fileIndex].end) && !r.data.isDummy) {
+                    next[fileIndex] = r
+                }
+            }
+
+            this.iterateFilesRegionsBatch(getRegionsNext, getRegionsPrev)
+    
+            const prevRegion = prev[region.data.fileIndex]
+            const nextRegion = next[region.data.fileIndex]
+    
+            if (prevRegion) {
+                region.prev = prevRegion.id;
+                prevRegion.next = region.id;
+            } else {
+                region.prev = null;
+            }
+    
+            if (nextRegion) {
+                region.next = nextRegion.id;
+                nextRegion.prev = region.id;
+            } else {
+                region.next = null;
+            }
+        })
+    }
+
     fixRegionsOrder(region) {
         if (region.data.isDummy) {
             return
@@ -806,11 +806,93 @@ class MainController {
         }
     }
 
-    updateView() {
-        this.selectRegion()
-        this.silence = this.calcSilenceRegion()
+    update () {
+        const time = this.wavesurfer.getCurrentTime()
+        const currentRegions = []
+        const getCurrent = (r, fileIndex) => {
+            if (time >= r.start - constants.TOLERANCE && time <= r.end + constants.TOLERANCE) {
+                currentRegions[fileIndex] = r
+            }
+        }
+
+        const silenceNext = []
+        const silencePrev = []
+        const getSilenceNext = (r, fileIndex) => {
+            if (r.end > time && (!silenceNext[fileIndex] || r.end < silenceNext[fileIndex].end) && !r.data.isDummy) {
+                silenceNext[fileIndex] = r
+            }
+        }
+
+        const getSilencePrev = (r,fileIndex) => {
+            if (r.start < time - 0.01 && (!silencePrev[fileIndex] || r.start > silencePrev[fileIndex].start) && !r.data.isDummy) {
+                silencePrev[fileIndex] = r
+            }
+        }
+
+        this.iterateFilesRegionsBatch(getCurrent, getSilenceNext, getSilencePrev)
+        
+        return {
+            currentRegions,
+            silenceNext,
+            silencePrev
+        }
+    }
+
+    setCurrentRegions (currentRegions) {
+        for (let i = 0; i < this.filesData.length; i++) {
+            const currentRegion = currentRegions[i];
+            if (currentRegion && currentRegion !== this.currentRegions[i]) {
+                if (this.proofReadingView) {
+                    if (currentRegion !== this.selectedRegion) {
+                        this.resetEditableWords(currentRegion)
+                    }
+                    if (this.isPlaying && config.proofreadingAutoScroll) {
+                        this.eventBus.trigger('proofReadingScrollToRegion', currentRegion)
+                    }
+                } else {
+                    this.resetEditableWords(currentRegion)
+                }
+            }
+            this.currentRegions[i] = currentRegion
+        }
+
+        if (currentRegions) {
+            this.cursorRegion = currentRegions[this.selectedFileIndex]
+            this.selectRegion(this.cursorRegion)
+
+            this.$timeout(() => {
+                this.updateSelectedWordInFiles()
+            })
+        }
+    }
+
+    setSilence (silencePrev, silenceNext) {
+        const silence = { start: 0, end: null }
+        const afterRegion = silenceNext[this.selectedFileIndex]
+        const beforeRegion = silencePrev[this.selectedFileIndex]
+
+        if (!afterRegion) {
+            silence.end = this.wavesurfer.getDuration();
+            if (beforeRegion) {
+                silence.start = beforeRegion.end;
+            }
+        } else {
+            silence.end = afterRegion.start;
+        }
+
+        if (beforeRegion) {
+            silence.start = beforeRegion.end;
+        }
+
+        this.silence = silence
+    }
+
+    updateView () {
+        this.debouncedUpdate().then(({ currentRegions, silenceNext, silencePrev }) => {
+            this.setCurrentRegions(currentRegions)
+            this.setSilence(silencePrev, silenceNext)
+        })
         this.setCurrentTime()
-        this.calcCurrentRegions()
         this.discrepancyService.updateSelectedDiscrepancy(this)
     }
 
@@ -910,33 +992,6 @@ class MainController {
         toReset && toReset.resetEditableWords(uuid)
     }
 
-    calcCurrentRegions() {
-        for (let i = 0; i < this.filesData.length; i++) {
-            const currentRegion = this.getCurrentRegion(i);
-            if (i === this.selectedFileIndex) {
-                this.cursorRegion = currentRegion
-            }
-            if (currentRegion && currentRegion !== this.currentRegions[i]) {
-                if (this.proofReadingView) {
-                    if (currentRegion !== this.selectedRegion) {
-                        this.resetEditableWords(currentRegion)
-                    }
-
-                    if (this.isPlaying && config.proofreadingAutoScroll) {
-                        this.eventBus.trigger('proofReadingScrollToRegion', currentRegion)
-                    }
-                } else {
-                    this.resetEditableWords(currentRegion)
-                }
-            }
-            this.currentRegions[i] = currentRegion
-        }
-
-        this.$timeout(() => {
-            this.updateSelectedWordInFiles()
-        })
-    }
-
     getCurrentRegion(fileIndex) {
         let region;
 
@@ -952,23 +1007,18 @@ class MainController {
 
     selectRegion(region) {
         if (!region) {
-            this.debouncedGetCurrentRegion(this.selectedFileIndex).then(region => {
-                this.deselectRegion();
-
-                if (!region) {
-                    return
-                }
-
-                region.element.classList.add('selected-region');
-
-                this.selectedRegion = region;
-            })
-        } else {
-            this.deselectRegion();
-            region.element.classList.add('selected-region');
-
-            this.selectedRegion = region;
+            region = this.getCurrentRegion(this.selectedFileIndex);
         }
+
+        this.deselectRegion();
+
+        if (!region) {
+            return
+        }
+
+        region.element.classList.add('selected-region');
+
+        this.selectedRegion = region;
     }
 
     jumpRegion(next) {
@@ -1054,6 +1104,16 @@ class MainController {
                 }
                 func(region)
             }
+        }
+    }
+
+    iterateFilesRegionsBatch (...funcs) {
+        const regions = this.wavesurfer.regions.list
+        for (let key in regions) {
+            const region = regions[key]
+            funcs.forEach(func => {
+                func(region, region.data.fileIndex)
+            })
         }
     }
 
@@ -1227,8 +1287,9 @@ class MainController {
 
             self.currentRegions.push(undefined);
         })
-
+        this.fixRegionsOrderAll()
         this.setMergedRegions()
+        this.updateView()
     }
 
     splitSegment() {
@@ -1981,7 +2042,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', '$q', '$timeout', '$interval'];
+    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', 'debounce', '$timeout', '$interval'];
 export {
     MainController
 }

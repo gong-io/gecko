@@ -14,7 +14,8 @@ import {
     dataManager,
     dataBase,
     DiscrepancyService,
-    HistoryService
+    HistoryService,
+    Debounce
 } from './services'
 
 import { 
@@ -42,6 +43,7 @@ const geckoModule = angular.module('gecko', [ dropdown, modal, collapse, tooltip
 geckoModule.controller('MainController', MainController);
 
 geckoModule.service('eventBus', ['$timeout', EventBus])
+geckoModule.service('debounce', ['$timeout', '$q', Debounce])
 geckoModule.service('discrepancyService', DiscrepancyService)
 geckoModule.service('historyService', HistoryService)
 geckoModule.service('dataManager', dataManager)
