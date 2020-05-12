@@ -27,12 +27,20 @@ export const editableWordsDirective = ($timeout, eventBus) => {
                 }
             }
 
-            scope.resetEditableWords = (uuid) =>{
+            scope.resetEditableWords = (uuid) => {
                 if (uuid && uuid === editableUuid) {
                     return
                 }
                 editor.setRegion(scope.region)
                 checkIsEmpty()
+            }
+
+            scope.resetSelected = () => {
+                editor.resetSelected()
+            }
+
+            scope.setSelected = (uuid) => {
+                editor.setSelected(uuid)
             }
 
             editor.on('wordsUpdated', (newWords) => {

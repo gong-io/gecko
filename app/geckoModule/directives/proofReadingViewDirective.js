@@ -13,7 +13,7 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
         },
         link: (scope, element, attrs) => {
             eventBus.on('proofReadingScrollToSelected', () => {
-                document.querySelectorAll('.proofreading--selected').forEach((n) => {
+                element[0].querySelectorAll('.proofreading--selected').forEach((n) => {
                     if (n) {
                         element[0].parentNode.scrollTop = n.offsetTop - 36
                     }
@@ -37,7 +37,7 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
                     return
                 }
 
-                const regionElement = document.querySelector(`[data-region="${scope.selectedRegion.id}"]`)
+                const regionElement = element[0].querySelector(`[data-region="${scope.selectedRegion.id}"]`)
                 if (regionElement) {
                     const topAncestor = findTopAncestor(regionElement)
                     topAncestor.classList.add('proofreading--selected')
@@ -51,7 +51,7 @@ export const proofReadingViewDirective = ($timeout, eventBus) => {
             })
 
             eventBus.on('proofReadingScrollToRegion', (region) => {
-                const regionElement = document.querySelector(`[data-region="${region.id}"]`)
+                const regionElement = element[0].querySelector(`[data-region="${region.id}"]`)
                 if (regionElement) {
                     const topAncestor = findTopAncestor(regionElement)
                     element[0].parentNode.scrollTop = topAncestor.offsetTop - 36

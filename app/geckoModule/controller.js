@@ -60,7 +60,7 @@ class MainController {
         this.zoomTooltip = new ZoomTooltip(this)
 
         this.$scope.$watch(() => this.zoomTooltipOpen, this.updateZoomTooltip.bind(this))
-        this.debouncedUpdate = debounce.throttle(this.update, 200, this)
+        this.debouncedUpdate = debounce.throttle(this.update, 300, this)
     }
 
     async loadApp(config) {
@@ -149,6 +149,8 @@ class MainController {
         this.cursorRegion = null
 
         this.editableWords = new Map()
+
+        this.currentEditables = []
 
         this.loadUserConfig()
     }
@@ -501,19 +503,15 @@ class MainController {
             const prev = []
             const next = []
 
-            const getRegionsPrev = (r,fileIndex) => {
+            this.iterateFilesRegionsBatch((r, fileIndex) => {
                 if (r.start < region.start - 0.01 && (!prev[fileIndex] || r.start > prev[fileIndex].start) && !r.data.isDummy) {
                     prev[fileIndex] = r
                 }
-            }
 
-            const getRegionsNext = (r, fileIndex) => {
                 if (r.end > region.end && (!next[fileIndex] || r.end < next[fileIndex].end) && !r.data.isDummy) {
                     next[fileIndex] = r
                 }
-            }
-
-            this.iterateFilesRegionsBatch(getRegionsNext, getRegionsPrev)
+            })
     
             const prevRegion = prev[region.data.fileIndex]
             const nextRegion = next[region.data.fileIndex]
@@ -809,27 +807,22 @@ class MainController {
     update () {
         const time = this.wavesurfer.getCurrentTime()
         const currentRegions = []
-        const getCurrent = (r, fileIndex) => {
+        const silenceNext = []
+        const silencePrev = []
+
+        this.iterateFilesRegionsBatch((r, fileIndex) => {
             if (time >= r.start - constants.TOLERANCE && time <= r.end + constants.TOLERANCE) {
                 currentRegions[fileIndex] = r
             }
-        }
 
-        const silenceNext = []
-        const silencePrev = []
-        const getSilenceNext = (r, fileIndex) => {
             if (r.end > time && (!silenceNext[fileIndex] || r.end < silenceNext[fileIndex].end) && !r.data.isDummy) {
                 silenceNext[fileIndex] = r
             }
-        }
 
-        const getSilencePrev = (r,fileIndex) => {
             if (r.start < time - 0.01 && (!silencePrev[fileIndex] || r.start > silencePrev[fileIndex].start) && !r.data.isDummy) {
                 silencePrev[fileIndex] = r
             }
-        }
-
-        this.iterateFilesRegionsBatch(getCurrent, getSilenceNext, getSilencePrev)
+        })
         
         return {
             currentRegions,
@@ -1007,7 +1000,7 @@ class MainController {
 
     selectRegion(region) {
         if (!region) {
-            region = this.getCurrentRegion(this.selectedFileIndex);
+            region = this.currentRegions[this.selectedFileIndex]
         }
 
         this.deselectRegion();
@@ -1046,31 +1039,35 @@ class MainController {
     updateSelectedWordInFile(fileIndex) {
         var self = this;
 
+        this.currentEditables[fileIndex] && this.currentEditables[fileIndex].resetSelected()
+
         let time = self.wavesurfer.getCurrentTime();
 
         let region = self.currentRegions[fileIndex];
         if (!region) return;
+
+        let editable
+        if (this.proofReadingView) {
+            editable = this.editableWords.get(region.id)
+        } else {
+            editable = this.editableWords.get(`main_${fileIndex}`)
+        }
+
+        editable.resetSelected()
 
         let words = region.data.words;
         if (!words) return;
 
         words.forEach(word => {
             if (word.start <= time && word.end >= time) {
-                let newSelectedWords = document.querySelectorAll(`[word-uuid="${word.uuid}"]`)
-
-                if (newSelectedWords) {
-                    newSelectedWords.forEach(w => w.classList.add('selected-word'))
-                }
+                editable.setSelected(word.uuid)
             }
         });
+
+        this.currentEditables[fileIndex] = editable
     }
 
     updateSelectedWordInFiles() {
-        // unselect words
-        document.querySelectorAll('.selected-word').forEach((elem) => {
-            elem.classList.remove('selected-word');
-        });
-
         for (let i = 0; i < this.filesData.length; i++) {
             this.updateSelectedWordInFile(i);
         }

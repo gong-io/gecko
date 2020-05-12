@@ -11,6 +11,8 @@ class GeckoEdtior {
         this.originalWords = []
         this.previousState = []
         this.listeners = new Map()
+        this.wordsEls = new Map()
+        this.selectedWord = null
         this.init()
     }
 
@@ -819,6 +821,7 @@ class GeckoEdtior {
         while (this.element.firstChild) {
             this.element.removeChild(this.element.firstChild)
         }
+        this.wordsEls.clear()
     }
 
     formDOM (words) {
@@ -826,13 +829,26 @@ class GeckoEdtior {
         const frag = document.createDocumentFragment()
         if (words) {
             for (let i = 0, l = words.length; i < l; i++) {
-                frag.appendChild(this.createSpan(words[i], i))
+                const wordEl = this.createSpan(words[i], i)
+                this.wordsEls.set(words[i].uuid, wordEl)
+                frag.appendChild(wordEl)
                 if (i < l - 1) {
                     frag.appendChild(this.createSpace())
                 }
             }
         }
+        
         this.element.appendChild(frag)
+    }
+
+    resetSelected () {
+        this.selectedWord && this.selectedWord.classList.remove('selected-word')
+    }
+
+    setSelected (uuid) {
+        const wordEl = this.wordsEls.get(uuid)
+        wordEl.classList.add('selected-word')
+        this.selectedWord = wordEl
     }
 
     createSpan (w) {
