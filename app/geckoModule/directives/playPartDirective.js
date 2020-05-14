@@ -5,7 +5,6 @@ export const playPartDirective = (store) => {
         replace: true,
         restrict: "E",
         scope: {
-            'audioBackend': '=',
             'rep': '=representative'
         },
         templateUrl: playPartTemplate,
