@@ -1,15 +1,13 @@
 const templateUrl = require('ngtemplate-loader?requireAngular!html-loader!../templates/proofReadingViewTemplate.html')
 
-export const proofReadingViewDirective = ($timeout, eventBus) => {
+export const proofReadingViewDirective = ($timeout, eventBus, store) => {
     return {
         restrict: 'E',
         templateUrl,
         scope: {
             fileIndex: '=',
             regions: '=',
-            selectedRegion: '=',
-            legend: '=',
-            control: '='
+            selectedRegion: '='
         },
         link: (scope, element, attrs) => {
             eventBus.on('proofReadingScrollToSelected', () => {

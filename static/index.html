@@ -414,8 +414,7 @@
                                 class="speaker-legend">
                                 </span>
                                 <div class="pull-right">
-                                    <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
-                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>
+                                    <play-part representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>
                                     <input type="color" ng-model="speaker.color" class="pull-right"
                                            ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker.value, speaker.color)"/>
                                 </div>

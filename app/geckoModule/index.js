@@ -15,7 +15,8 @@ import {
     dataBase,
     DiscrepancyService,
     HistoryService,
-    Debounce
+    Debounce,
+    Store
 } from './services'
 
 import { 
@@ -44,15 +45,16 @@ geckoModule.controller('MainController', MainController);
 
 geckoModule.service('eventBus', ['$timeout', EventBus])
 geckoModule.service('debounce', ['$timeout', '$q', Debounce])
+geckoModule.service('store', Store)
 geckoModule.service('discrepancyService', DiscrepancyService)
 geckoModule.service('historyService', HistoryService)
 geckoModule.service('dataManager', dataManager)
 geckoModule.service('dataBase', dataBase)
 
-geckoModule.directive('editableWords', ['$timeout', 'eventBus', editableWordsDirective])
-geckoModule.directive('proofReadingView', ['$timeout', 'eventBus', proofReadingViewDirective])
+geckoModule.directive('editableWords', ['$timeout', 'eventBus', 'store', editableWordsDirective])
+geckoModule.directive('proofReadingView', ['$timeout', 'eventBus', 'store', proofReadingViewDirective])
 geckoModule.directive('editable', editableDirective)
-geckoModule.directive('playPart', playPartDirective)
+geckoModule.directive('playPart', ['store', playPartDirective])
 geckoModule.directive('miniPlayer', miniPlayerDirective)
 geckoModule.directive('checklistModel', Checklist)
 geckoModule.directive('fileread', fileRead)

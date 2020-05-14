@@ -35,7 +35,7 @@ import {
 } from './modals'
 
 class MainController {
-    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, debounce, $timeout, $interval) {
+    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, debounce, $timeout, $interval, $sce, store) {
         this.dataManager = dataManager;
         if (config.enableDrafts) {
             this.dataBase = dataBase;
@@ -61,6 +61,11 @@ class MainController {
 
         this.$scope.$watch(() => this.zoomTooltipOpen, this.updateZoomTooltip.bind(this))
         this.debouncedUpdate = debounce.throttle(this.update, 300, this)
+
+        this.$sce = $sce
+
+        store.setValue('control', this)
+        this.store = store
     }
 
     async loadApp(config) {
@@ -194,6 +199,7 @@ class MainController {
 
         this.wavesurfer = initWaveSurfer();
         this.wavesurferElement = this.wavesurfer.drawer.container;
+        this.store.setValue('audioBackend', this.wavesurfer.backend)
 
         this.ctmData = [];
         this.ready = false;
@@ -851,11 +857,12 @@ class MainController {
 
         if (currentRegions) {
             this.cursorRegion = currentRegions[this.selectedFileIndex]
-            this.selectRegion(this.cursorRegion)
-
-            this.$timeout(() => {
-                this.updateSelectedWordInFiles()
-            })
+            if (this.selectedRegion) {
+                this.selectedRegion.element.classList.remove('selected-region')
+            }
+            this.selectedRegion = this.cursorRegion
+            this.selectedRegion.element.classList.add('selected-region')
+            this.updateSelectedWordInFiles()
         }
     }
 
@@ -889,6 +896,24 @@ class MainController {
         this.discrepancyService.updateSelectedDiscrepancy(this)
     }
 
+
+    speakersFilterColor (items, legend) {
+        if (items && items.length) {
+            const spans = items.map(s => {
+                const legendItem = legend.find(l => l.value === s)
+                return `<span style="color: ${legendItem.color};">${s}</span>`
+            })
+            return spans.join(', ')
+        } else if (items && !items.length) {
+            return 'No speaker'
+        }
+        return ''
+    }
+
+    toMMSS (seconds) {
+        return seconds ? new Date(seconds * 1000).toISOString().substr(14, 5) : '00:00'
+    }
+
     setMergedRegions() {
         for (let i = 0; i < this.filesData.length; i++) {
             const ret = []
@@ -914,6 +939,10 @@ class MainController {
             for (let j = 0, l = this.mergedRegions[i].length; j < l; j++) {
                 const hashStr = this.mergedRegions[i][j].regions.map(r => r.id).join('-')
                 this.mergedRegions[i][j].hash = hash(hashStr)
+                const firstRegion = this.mergedRegions[i][j].regions[0]
+                const lastRegion = this.mergedRegions[i][j].regions[this.mergedRegions[i][j].regions.length - 1]
+                this.mergedRegions[i][j].speakers = this.$sce.trustAsHtml(this.speakersFilterColor(firstRegion.data.speaker, this.filesData[i].legend))
+                this.mergedRegions[i][j].timing = `${this.toMMSS(firstRegion.start)}-${this.toMMSS(lastRegion.end)}`
             }
         }
     }
@@ -982,7 +1011,7 @@ class MainController {
             return
         }
         const toReset = this.editableWords.get(region.id ? region.id : region)
-        toReset && toReset.resetEditableWords(uuid)
+        toReset && toReset.resetEditableWords()
     }
 
     getCurrentRegion(fileIndex) {
@@ -1604,6 +1633,8 @@ class MainController {
             data: [self.selectedFileIndex, oldText, newText, changedRegions]
         })
 
+        this.setMergedRegions()
+
         // notify the undo mechanism to change the legend as well as the regions
         this.historyService.undoStack.push([constants.SPEAKER_NAME_CHANGED_OPERATION_ID, self.selectedFileIndex, oldText, newText, changedRegions]);
     }
@@ -1885,8 +1916,12 @@ class MainController {
             this.userConfig.showSegmentLabeling = true
             this.userConfig.showTranscriptDifferences = true
         } else {
-            this.setMergedRegions()
+            // this.setMergedRegions()
             this.eventBus.trigger('proofReadingScrollToSelected')
+
+            this.$timeout(() => {
+                this.updateSelectedWordInFiles()
+            })
 
             this.userConfig.showWaveform = false
             this.userConfig.showSegmentLabeling = false
@@ -2039,7 +2074,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', 'debounce', '$timeout', '$interval'];
+    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', 'debounce', '$timeout', '$interval', '$sce', 'store'];
 export {
     MainController
 }

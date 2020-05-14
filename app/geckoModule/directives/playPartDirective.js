@@ -1,11 +1,10 @@
 const playPartTemplate = require('ngtemplate-loader?requireAngular!html-loader!../templates/playPart.html')
 
-export const playPartDirective = () => {
+export const playPartDirective = (store) => {
     return {
         replace: true,
         restrict: "E",
         scope: {
-            'audioContext': '=',
             'audioBackend': '=',
             'rep': '=representative'
         },
@@ -25,7 +24,8 @@ export const playPartDirective = () => {
                 a new blob with the selected area from the original blob using the
                 offlineAudioContext
                 */
-                var originalAudioBuffer = scope.audioBackend.buffer;
+               const audioBackend = store.getValue('audioBackend')
+                var originalAudioBuffer = audioBackend.buffer;
 
                 var lengthInSamples = Math.ceil((end - start) * originalAudioBuffer.sampleRate);
                 if (!window.OfflineAudioContext) {
@@ -36,7 +36,7 @@ export const playPartDirective = () => {
                     window.OfflineAudioContext = window.webkitOfflineAudioContext;
                 }
 
-                var offlineAudioContext = scope.audioBackend.ac
+                var offlineAudioContext = audioBackend.ac
 
                 var emptySegment = offlineAudioContext.createBuffer(
                     originalAudioBuffer.numberOfChannels,
@@ -73,7 +73,9 @@ export const playPartDirective = () => {
                     }
                 }
 
-                source = scope.audioContext.createBufferSource(); // creates a sound source
+                const audioContext = store.getValue('audioContext')
+
+                source = audioContext.createBufferSource(); // creates a sound source
 
                 source.addEventListener('ended', () => {
                     scope.isPlaying = false;
@@ -81,7 +83,7 @@ export const playPartDirective = () => {
                 });
 
                 source.buffer = cut(scope.rep.start, scope.rep.end); // tell the source which sound to play
-                source.connect(scope.audioContext.destination);       // connect the source to the context's destination (the speakers)
+                source.connect(audioContext.destination);       // connect the source to the context's destination (the speakers)
                 source.start(0);
                 scope.isPlaying = true;
             }

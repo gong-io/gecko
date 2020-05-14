@@ -72,6 +72,7 @@ export default (parent) => {
             })
         }
 
+        parent.store.setValue('audioContext', context)
         parent.audioContext = context
     }
 

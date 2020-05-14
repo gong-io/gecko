@@ -3,14 +3,13 @@ import angular from 'angular'
 
 import GeckoEditor from '../utils/geckoEditor'
 
-export const editableWordsDirective = ($timeout, eventBus) => {
+export const editableWordsDirective = ($timeout, eventBus, store) => {
     return {
         restrict: 'E',
         scope: {
             fileIndex: '=',
             region: '=',
-            proofReading: '=',
-            control: '='
+            proofReading: '<'
         },
         link: (scope, element, attrs) => {
             const editor = new GeckoEditor(element[0], scope.fileIndex)
@@ -28,9 +27,6 @@ export const editableWordsDirective = ($timeout, eventBus) => {
             }
 
             scope.resetEditableWords = (uuid) => {
-                if (uuid && uuid === editableUuid) {
-                    return
-                }
                 editor.setRegion(scope.region)
                 checkIsEmpty()
             }
@@ -50,9 +46,7 @@ export const editableWordsDirective = ($timeout, eventBus) => {
             })
 
             editor.on('wordClick', ({ word, event }) => {
-                $timeout(() => {
                     eventBus.trigger('wordClick', word, event)
-                })
             })
 
             editor.on('emptyEditorClick', ({ region, event }) => {
@@ -70,10 +64,12 @@ export const editableWordsDirective = ($timeout, eventBus) => {
                 editor.destroy()
             })
 
+            const control = store.getValue('control')
             if (scope.proofReading) {
-                scope.control.editableWords.set(scope.region.id, scope)
+                control.editableWords.set(scope.region.id, scope)
+                element[0].setAttribute('data-region', scope.region.id)
             } else {
-                scope.control.editableWords.set(`main_${scope.fileIndex}`, scope)
+                control.editableWords.set(`main_${scope.fileIndex}`, scope)
             }
 
             if (scope.region) {
@@ -81,13 +77,15 @@ export const editableWordsDirective = ($timeout, eventBus) => {
                 checkIsEmpty()
             }
 
-            scope.$watch('region', (newVal, oldVal) => {
-                if (newVal && oldVal && newVal.id === oldVal.id) {
-                    return
-                }
-                editor.setRegion(scope.region)
-                checkIsEmpty()
-            })
+            if (!scope.proofReading) {
+                scope.$watch('region', (newVal, oldVal) => {
+                    if (newVal && oldVal && newVal.id === oldVal.id) {
+                        return
+                    }
+                    editor.setRegion(scope.region)
+                    checkIsEmpty()
+                })
+            }
         } 
     }
 }
