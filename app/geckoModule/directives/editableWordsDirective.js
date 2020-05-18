@@ -46,7 +46,7 @@ export const editableWordsDirective = ($timeout, eventBus, store) => {
             })
 
             editor.on('wordClick', ({ word, event }) => {
-                    eventBus.trigger('wordClick', word, event)
+                eventBus.trigger('wordClick', word, event)
             })
 
             editor.on('emptyEditorClick', ({ region, event }) => {

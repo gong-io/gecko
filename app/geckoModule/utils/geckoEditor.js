@@ -843,6 +843,9 @@ class GeckoEdtior {
 
     resetSelected () {
         this.selectedWord && this.selectedWord.classList.remove('selected-word')
+        this.element.querySelectorAll('.selected-word').forEach((w) => {
+            w.classList.remove('selected-word')
+        })
     }
 
     setSelected (uuid) {

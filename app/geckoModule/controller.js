@@ -225,7 +225,7 @@ class MainController {
             this.historyService.addHistory(currentRegion)
             this.historyService.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
 
-            this.resetEditableWords(currentRegion)
+            // this.resetEditableWords(currentRegion)
 
             this.eventBus.trigger('geckoChanged', {
                 event: 'regionTextChanged',
@@ -845,14 +845,21 @@ class MainController {
             if (currentRegion && currentRegion !== this.currentRegions[i]) {
                 if (this.proofReadingView) {
                     if (currentRegion !== this.selectedRegion) {
-                        this.resetEditableWords(currentRegion)
+                        this.resetEditableWords(this.selectedRegion)
                     }
                     if (this.isPlaying && config.proofreadingAutoScroll) {
                         this.eventBus.trigger('proofReadingScrollToRegion', currentRegion)
                     }
                 } else {
-                    this.resetEditableWords(currentRegion)
+                    if (currentRegion !== this.selectedRegion) {
+                        this.resetEditableWords(this.selectedRegion)
+                    } else {
+                        this.resetEditableWords(currentRegion)
+                    }
                 }
+            } else if (currentRegion) {
+                const toReset = this.editableWords.get(currentRegion.id)
+                toReset && toReset.resetSelected()
             }
             this.currentRegions[i] = currentRegion
         }
@@ -1361,6 +1368,7 @@ class MainController {
         })
 
         this.setMergedRegions()
+        this.seek(time)
     }
 
     deleteRegionAction(region) {

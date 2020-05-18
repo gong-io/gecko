@@ -18,6 +18,13 @@ export const miniPlayerDirective = () => {
                     }
             })
 
+            scope.$watch(() => scope.parent.currentTimeSeconds,
+                (newVal) => {
+                    if (newVal) {
+                        scope.sliderModel = newVal
+                    }
+            })
+
             scope.changeProgress = (e) => {
                 scope.parent.seek(scope.sliderModel)
             }
