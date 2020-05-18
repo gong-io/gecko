@@ -103,5 +103,7 @@ export default (parent) => {
         return confirm('Confirm refresh')
     };
 
+    parent.setCurrentTime()
+
     parent.$scope.$evalAsync();
 }

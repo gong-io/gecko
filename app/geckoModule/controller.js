@@ -66,6 +66,8 @@ class MainController {
 
         store.setValue('control', this)
         this.store = store
+
+        this.timeSpan = document.getElementById('timeSpan')
     }
 
     async loadApp(config) {
@@ -603,6 +605,8 @@ class MainController {
             }
         }
 
+        self.setMergedRegions()
+
         self.regionUpdated(region);
     }
 
@@ -861,8 +865,10 @@ class MainController {
                 this.selectedRegion.element.classList.remove('selected-region')
             }
             this.selectedRegion = this.cursorRegion
-            this.selectedRegion.element.classList.add('selected-region')
-            this.updateSelectedWordInFiles()
+            this.selectedRegion && this.selectedRegion.element.classList.add('selected-region')
+            this.$timeout(() => {
+                this.updateSelectedWordInFiles()
+            })
         }
     }
 
@@ -891,8 +897,8 @@ class MainController {
         this.debouncedUpdate().then(({ currentRegions, silenceNext, silencePrev }) => {
             this.setCurrentRegions(currentRegions)
             this.setSilence(silencePrev, silenceNext)
+            this.setCurrentTime()
         })
-        this.setCurrentTime()
         this.discrepancyService.updateSelectedDiscrepancy(this)
     }
 
@@ -941,8 +947,10 @@ class MainController {
                 this.mergedRegions[i][j].hash = hash(hashStr)
                 const firstRegion = this.mergedRegions[i][j].regions[0]
                 const lastRegion = this.mergedRegions[i][j].regions[this.mergedRegions[i][j].regions.length - 1]
-                this.mergedRegions[i][j].speakers = this.$sce.trustAsHtml(this.speakersFilterColor(firstRegion.data.speaker, this.filesData[i].legend))
-                this.mergedRegions[i][j].timing = `${this.toMMSS(firstRegion.start)}-${this.toMMSS(lastRegion.end)}`
+                const speakers =  this.$sce.trustAsHtml(this.speakersFilterColor(firstRegion.data.speaker, this.filesData[i].legend))
+                const timing = `${this.toMMSS(firstRegion.start)}-${this.toMMSS(lastRegion.end)}`
+                this.mergedRegions[i][j].info = this.$sce.trustAsHtml(`<p class="proofreading__speaker">${speakers}</p>
+                                                 <p class="proofreading__timing">${timing}</p>`)
             }
         }
     }
@@ -1481,7 +1489,7 @@ class MainController {
     setCurrentTime() {
         this.currentTimeSeconds = this.wavesurfer.getCurrentTime()
         this.currentTime = secondsToMinutes(this.currentTimeSeconds)
-        this.$scope.$evalAsync()
+        this.timeSpan.textContent = `${this.currentTime} / ${this.totalTime}`
     }
 
     async save(extension, converter) {

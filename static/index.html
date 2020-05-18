@@ -38,7 +38,7 @@
                 <li class="">
                     <a>
                         <b>Time: </b>
-                        {{ ctrl.currentTime }} / {{ ctrl.totalTime }}
+                        <span id="timeSpan"></span>
                     </a>
                 </li>
                 <li class="" ng-if="ctrl.lastDraft && ctrl.config.enableDrafts">
@@ -562,10 +562,8 @@
                 </div>
                 <div class="panel-body" style="min-height:650px; max-height: 650px;overflow-y: scroll;">
                     <proof-reading-view
-                        control="ctrl"
                         regions="ctrl.mergedRegions[$index]"
                         selected-region="ctrl.selectedRegion"
-                        legend="file.legend"
                         file-index="$index"
                     >
                     </proof-reading-view>

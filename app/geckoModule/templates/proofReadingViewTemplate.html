@@ -1,16 +1,14 @@
 
 <div ng-repeat="merged in regions track by merged.hash" class="proofreading">
     <div class="row proofreading__container">
-        <div class="col-md-2 proofreading__info">
-            <p class="proofreading__speaker" ng-bind-html="merged.speakers"></p>
-            <p class="proofreading__timing" ng-bind="merged.timing"></p>
+        <div class="col-md-2 proofreading__info" ng-bind-html="merged.info">
         </div>
         <div class="col-md-10 proofreading__editable">
             <editable-words
                 region="r"
                 file-index="fileIndex"
                 class="editable-words"
-                proof-reading
+                proof-reading="true"
                 ng-repeat="r in merged.regions track by r.id"
             >
             </editable-words>
