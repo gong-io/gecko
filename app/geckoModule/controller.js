@@ -809,9 +809,7 @@ class MainController {
             this.seek(newRegion.start, 'right')
         }
 
-        if (this.proofReadingView) {
-            this.setMergedRegions()
-        }
+        this.setMergedRegions()
     }
 
     update () {
@@ -1362,9 +1360,7 @@ class MainController {
             data: [first.id, second.id, region.id]
         })
 
-        if (this.proofReadingView) {
-            this.setMergedRegions()
-        }
+        this.setMergedRegions()
     }
 
     deleteRegionAction(region) {
@@ -1381,9 +1377,7 @@ class MainController {
             data: region
         })
 
-        if (this.proofReadingView) {
-            this.setMergedRegions()
-        }
+        this.setMergedRegions()
 
         this.updateView();
     }
@@ -1611,9 +1605,7 @@ class MainController {
             data: speaker.value
         })
 
-        if (this.proofReadingView) {
-            this.setMergedRegions()
-        }
+        this.setMergedRegions()
     }
 
     speakerNameChanged(speaker, oldText, newText) {
