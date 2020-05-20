@@ -29,13 +29,12 @@ export default (parent, region) => {
 
         region.data.initFinished = false;
 
-        if (parent.proofReadingView) {
-            parent.setMergedRegions()
-        }
+        parent.setMergedRegions()
 
         parent.updateView()
     } else {
         // when file is added by dragging, update-end will take care of history
+        parent.fixRegionsOrder(region)
         parent.historyService.addHistory(region);
     }
     //TODO: creating a new word is bad if we want to keep the segment clear.
