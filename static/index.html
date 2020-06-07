@@ -49,12 +49,12 @@
                 </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li class="active">
+                <li class="active" ng-if="ctrl.saveMode != ctrl.constants.APP_MODES.EXTERNAL">
                     <a href="#" onclick="location.reload();">
                         <i class="glyphicon glyphicon-open"></i>
                         Load
                     </a></li>
-                <li class="dropdown" ng-if="!ctrl.isServerMode">
+                <li class="dropdown" ng-if="ctrl.saveMode == ctrl.constants.APP_MODES.CLIENT">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                        aria-expanded="false">
                         <i class="glyphicon glyphicon-save"></i>
@@ -80,10 +80,19 @@
                         <li role="separator" class="divider"></li>
                     </ul>
                 </li>
-                <li class="dropdown" ng-if="ctrl.isServerMode">
+                <li class="dropdown" ng-if="ctrl.saveMode == ctrl.constants.APP_MODES.SERVER">
                     <a href="#"
                        class="dropdown-toggle" role="button"
                        ng-click="ctrl.saveS3()">
+                        <i class="glyphicon glyphicon-save"></i>
+                        Save
+                    </a>
+                </li>
+
+                <li class="dropdown" ng-if="ctrl.saveMode == ctrl.constants.APP_MODES.EXTERNAL">
+                    <a href="#"
+                       class="dropdown-toggle" role="button"
+                       ng-click="ctrl.saveExternal()">
                         <i class="glyphicon glyphicon-save"></i>
                         Save
                     </a>

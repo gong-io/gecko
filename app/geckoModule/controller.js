@@ -44,7 +44,7 @@ class MainController {
         this.$scope = $scope;
         this.$timeout = $timeout
         this.$interval = $interval
-        this.isServerMode = false
+        this.saveMode = constants.APP_MODES.CLIENT
         this.proofReadingView = false
         this.shortcuts = new Shortcuts(this, constants)
         this.shortcuts.bindKeys()
@@ -53,6 +53,7 @@ class MainController {
         this.discrepancyService = discrepancyService
         this.historyService = historyService
         this.config = config
+        this.constants = constants
 
         this.zoomTooltipOpen = false
 
@@ -66,9 +67,11 @@ class MainController {
         const saveMode = urlParams.get('save_mode')
         if (saveMode) {
             if (saveMode === 'server') {
-                this.isServerMode = true
-            } else if (saveMode === 'local') {
-                this.isServerMode = false
+                this.saveMode = constants.APP_MODES.SERVER
+            } else if (saveMode === 'external') {
+                this.saveMode = constants.APP_MODES.EXTERNAL
+            } else {
+                this.saveMode = constants.APP_MODES.CLIENT
             }
         }
 
@@ -114,8 +117,31 @@ class MainController {
         }
         if (config.mode === 'server' || serverConfig) {
             this.loadServerMode(serverConfig ? serverConfig : config);
+        } else if (this.saveMode === constants.APP_MODES.EXTERNAL) {
+            if (this.wavesurfer) this.wavesurfer.destroy()
+
+            this.init()
+
+            window.document.addEventListener('loadExternal', (e) => {
+                this.loadExternalMode(e.detail)
+            } , false)
+
+            window.document.addEventListener('loadExternalAudio', (e) => {
+                this.loadExternalAudio(e.detail)
+            } , false)
+
+            window.document.addEventListener('loadExternalSegmentFiles', (e) => {
+                this.loadExternalSegmentFiles(e.detail)
+            } , false)
+
+            window.document.addEventListener('loadExternalSegmentFilesData', (e) => {
+                this.loadExternalSegmentFilesData(e.detail)
+            } , false)
+
+            const event = new CustomEvent('geckoReady', { detail: { ready: true } })
+            window.parent.document.dispatchEvent(event)
         } else {
-            this.loadClientMode();
+            this.loadClientMode()
         }
     }
 
@@ -1383,6 +1409,26 @@ class MainController {
         this.save(extension, convertTextFormats(extension, this, config.parserOptions))
     }
 
+    async saveExternal() {
+        const toSave = []
+        for (var i = 0; i < this.filesData.length; i++) {
+            var current = this.filesData[i];
+            if (current.data) {
+                const extension = current.filename.split('.').pop()
+                const converter = convertTextFormats(extension, this, config.parserOptions)
+                if (!this.checkValidRegions(i)) return;
+
+                toSave.push({
+                    data: converter(i),
+                    id: current.id
+                })
+            }
+        }
+
+        const event = new CustomEvent('geckoSave', { detail: toSave })
+        window.parent.document.dispatchEvent(event)
+    }
+
     checkValidRegions(fileIndex) {
         var self = this;
         try {
@@ -1613,6 +1659,16 @@ class MainController {
                 this.loadServer(config)
             }
         }
+    }
+
+    loadExternalMode (externalConf) {
+        var self = this;
+        if (self.wavesurfer) self.wavesurfer.destroy();
+        self.init()
+        self.loader = true
+        this.dataManager.loadFileFromServer(externalConf).then(async (res) => {
+            parseServerResponse(this, externalConf, res)
+        })
     }
 
     loadClientMode() {

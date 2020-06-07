@@ -114,38 +114,49 @@ class dataManager {
 
         config.ctms.forEach((ctm) => {
             let s3Subfolder = null
-            /* for s3 proxy */
-            if (ctm.url.includes('s3_files')) {
-                const splFiles = ctm.url.split('/s3_files/')
-                if (splFiles.length > 1) {
-                    const s3Path = splFiles[1]
-                    const splS3Path = s3Path.split('/')
-                    s3Subfolder = splS3Path.slice(0, splS3Path.length - 1).join('/')
-                }
-            }
-            promises.push(this.$http({
-                method: 'GET',
-                url: ctm.url
-            }).then((response) => {
-                const addedFile = {
-                    filename: ctm.fileName,
-                    data: response.data,
-                    headers: {
-                        'Access-Control-Allow-Origin': true
+            if (ctm.url) {
+                /* for s3 proxy */
+                if (ctm.url.includes('s3_files')) {
+                    const splFiles = ctm.url.split('/s3_files/')
+                    if (splFiles.length > 1) {
+                        const s3Path = splFiles[1]
+                        const splS3Path = s3Path.split('/')
+                        s3Subfolder = splS3Path.slice(0, splS3Path.length - 1).join('/')
                     }
                 }
-                if (s3Subfolder) {
-                    addedFile.s3Subfolder = s3Subfolder
-                }
-                res.segmentFiles.push(addedFile);
-            }, (e) => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Loading the file has failed, open console for more details',
-                    text: e.error
-                })
-                console.error('Segment file loading error', e)
-            }))
+                promises.push(this.$http({
+                    method: 'GET',
+                    url: ctm.url
+                }).then((response) => {
+                    const addedFile = {
+                        filename: ctm.fileName,
+                        data: response.data,
+                        headers: {
+                            'Access-Control-Allow-Origin': true
+                        }
+                    }
+                    if (s3Subfolder) {
+                        addedFile.s3Subfolder = s3Subfolder
+                    }
+                    res.segmentFiles.push(addedFile);
+                }, (e) => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Loading the file has failed, open console for more details',
+                        text: e.error
+                    })
+                    console.error('Segment file loading error', e)
+                }))
+            } else if (ctm.data) {
+                res.segmentFiles.push({
+                    filename: ctm.file_name,
+                    data: ctm.data,
+                    headers: {
+                        'Access-Control-Allow-Origin': true
+                    },
+                    id: ctm.id
+                });
+            }
         })
 
 

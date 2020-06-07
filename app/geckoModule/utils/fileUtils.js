@@ -78,14 +78,14 @@ export const parseServerResponse = (context, serverConfig, res) => {
 
     if (res.segmentFiles.length) {
         res.segmentFiles.forEach((x) => {
-            parseFileData(context, x.filename, x.data, x.s3Subfolder)
+            parseFileData(context, x.filename, x.data, x.s3Subfolder, x.id)
         })
     } else {
         addEmptyFile(context)
     }
 }
 
-const parseFileData = (context, fileName, fileData, fileS3Subfolder = null) => {
+const parseFileData = (context, fileName, fileData, fileS3Subfolder = null, fileId = null) => {
     const data = context.handleTextFormats(fileName, fileData)
     const parsedData = Array.isArray(data) ? data[0] : data
     const parsedColors = Array.isArray(data) && data.length > 1 ? data[1] : null
@@ -93,6 +93,11 @@ const parseFileData = (context, fileName, fileData, fileS3Subfolder = null) => {
     if (fileS3Subfolder) {
         file.s3Subfolder = fileS3Subfolder
     }
+
+    if (fileId) {
+        file.id = fileId
+    }
+
     context.filesData.push(file)
     context.fileSpeakerColors = parsedColors
 }
