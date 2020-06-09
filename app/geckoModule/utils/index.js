@@ -29,7 +29,7 @@ export const secondsToMinutes = (time) => {
 }
 
 export const sortDict = (dict, sortBy, sortFunction) => {
-    var sorted = {};
+    const sortedMap = new Map()
 
     if (sortBy !== undefined) {
         sortFunction = (a, b) => {
@@ -37,12 +37,12 @@ export const sortDict = (dict, sortBy, sortFunction) => {
         };
     }
 
-    // sort by keys if sortFunction is undefined
-    Object.keys(dict).sort(sortFunction).forEach((key) => {
-        sorted[key] = dict[key];
-    });
+    const sortedKeys = Object.keys(dict).sort(sortFunction)
+    for (let i = 0, l = sortedKeys.length; i < l; i++) {
+        sortedMap.set(sortedKeys[i], dict[sortedKeys[i]]);
+    }
 
-    return sorted;
+    return sortedMap;
 }
 
 // for debugging
@@ -188,6 +188,37 @@ export const prepareLegend = (fileDataLegend) => {
         }
     })
     return [ ...regularSpeakers, ...defaultSpeakers ]
+}
+
+export const findInArray = (arr, predicate) => {
+    for (let i = 0, l = arr.length; i < l; i++) {
+        if (predicate(arr[i])) {
+            return arr[i]
+        }
+    }
+    return null
+}
+
+export const findByUuid = (arr, uuid) => {
+    for (let i = 0, l = arr.length; i < l; i++) {
+        if (arr[i].uuid === uuid) {
+            return arr[i]
+        }
+    }
+    return null
+}
+
+export const hash = (s) => {
+    let hash = 0
+    if (s.length == 0) {
+        return hash
+    }
+    for (let i = 0; i < s.length; i++) {
+        let char = s.charCodeAt(i)
+        hash = ((hash <<5 ) - hash) + char
+        hash = hash & hash
+    }
+    return hash
 }
 
 export { geckoEditor, parseAndLoadAudio, parseServerResponse, ZoomTooltip, DomUtils, detectLineEndings, setLineEndings }

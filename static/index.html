@@ -38,7 +38,7 @@
                 <li class="">
                     <a>
                         <b>Time: </b>
-                        {{ ctrl.currentTime }} / {{ ctrl.totalTime }}
+                        <span id="timeSpan"></span>
                     </a>
                 </li>
                 <li class="" ng-if="ctrl.lastDraft && ctrl.config.enableDrafts">
@@ -423,8 +423,7 @@
                                 class="speaker-legend">
                                 </span>
                                 <div class="pull-right">
-                                    <play-part audio-context="ctrl.audioContext" audio-backend="ctrl.wavesurfer.backend"
-                                               representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>
+                                    <play-part representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>
                                     <input type="color" ng-model="speaker.color" class="pull-right"
                                            ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker.value, speaker.color)"/>
                                 </div>
@@ -540,10 +539,11 @@
                         <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
                         <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
                         <editable-words 
-                            ng-if="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
+                            ng-show="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
                             region="ctrl.currentRegions[$index]"
                             file-index="$index"
                             class="editable-words"
+                            control="ctrl"
                         >
                         </editable-words>
                     </div>
@@ -571,10 +571,8 @@
                 </div>
                 <div class="panel-body" style="min-height:650px; max-height: 650px;overflow-y: scroll;">
                     <proof-reading-view
-                        control="ctrl"
-                        regions="ctrl.allRegions[$index]"
+                        regions="ctrl.mergedRegions[$index]"
                         selected-region="ctrl.selectedRegion"
-                        legend="file.legend"
                         file-index="$index"
                     >
                     </proof-reading-view>

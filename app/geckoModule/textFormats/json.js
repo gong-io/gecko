@@ -7,7 +7,7 @@ export const parse = (data) => {
     }
 
     var monologues = data['monologues'];
-    for (var i = 0; i < monologues.length; i++) {
+    for (var i = 0, l = monologues.length; i < l; i++) {
         var monologue = monologues[i];
 
 

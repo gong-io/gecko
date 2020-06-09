@@ -72,6 +72,7 @@ export default (parent) => {
             })
         }
 
+        parent.store.setValue('audioContext', context)
         parent.audioContext = context
     }
 
@@ -101,6 +102,8 @@ export default (parent) => {
     window.onbeforeunload = (event) => {
         return confirm('Confirm refresh')
     };
+
+    parent.setCurrentTime()
 
     parent.$scope.$evalAsync();
 }
