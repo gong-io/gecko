@@ -3,13 +3,13 @@ import angular from 'angular'
 
 import GeckoEditor from '../utils/geckoEditor'
 
-export const editableWordsDirective = ($timeout, eventBus) => {
+export const editableWordsDirective = ($timeout, eventBus, store) => {
     return {
         restrict: 'E',
         scope: {
             fileIndex: '=',
             region: '=',
-            proofReading: '='
+            proofReading: '<'
         },
         link: (scope, element, attrs) => {
             const editor = new GeckoEditor(element[0], scope.fileIndex)
@@ -26,45 +26,27 @@ export const editableWordsDirective = ($timeout, eventBus) => {
                 }
             }
 
-            eventBus.on('resetEditableWords', (region, uuid) => {
-                if (uuid && uuid === editableUuid) {
-                    return
-                }
-
-                if (scope.region) {
-                    if (!region || (region && region.id === scope.region.id)) {
-                        editor.setRegion(scope.region)
-                    }
-                }
+            scope.resetEditableWords = (uuid) => {
+                editor.setRegion(scope.region)
                 checkIsEmpty()
-            }, editableUuid)
+            }
 
-            eventBus.on('cleanEditableDOM', (fileIndex) => {
-                if (scope.proofReading) {
-                    return
-                }
-                if (fileIndex == scope.fileIndex) {
-                    editor.reset()
-                }
-            }, editableUuid)
+            scope.resetSelected = () => {
+                editor.resetSelected()
+            }
 
-            editor.on('wordsUpdated', (newWords, previousWords) => {
-                $timeout(() => {
-                    scope.region.data.words = newWords
-                    if(!angular.equals(newWords, previousWords)) {
-                        $timeout(() => {
-                            eventBus.trigger('regionTextChanged', scope.region.id)
-                            eventBus.trigger('resetEditableWords', scope.region, editableUuid)
-                        })
-                    }
-                })
+            scope.setSelected = (uuid) => {
+                editor.setSelected(uuid)
+            }
+
+            editor.on('wordsUpdated', (newWords) => {
+                scope.region.data.words = newWords
+                eventBus.trigger('regionTextChanged', scope.region.id)
                 checkIsEmpty()
             })
 
             editor.on('wordClick', ({ word, event }) => {
-                $timeout(() => {
-                    eventBus.trigger('wordClick', word, event)
-                })
+                eventBus.trigger('wordClick', word, event)
             })
 
             editor.on('emptyEditorClick', ({ region, event }) => {
@@ -81,6 +63,29 @@ export const editableWordsDirective = ($timeout, eventBus) => {
                 eventBus.removeListener(editableUuid)
                 editor.destroy()
             })
+
+            const control = store.getValue('control')
+            if (scope.proofReading) {
+                control.editableWords.set(scope.region.id, scope)
+                element[0].setAttribute('data-region', scope.region.id)
+            } else {
+                control.editableWords.set(`main_${scope.fileIndex}`, scope)
+            }
+
+            if (scope.region) {
+                editor.setRegion(scope.region)
+                checkIsEmpty()
+            }
+
+            if (!scope.proofReading) {
+                scope.$watch('region', (newVal, oldVal) => {
+                    if (newVal && oldVal && newVal.id === oldVal.id) {
+                        return
+                    }
+                    editor.setRegion(scope.region)
+                    checkIsEmpty()
+                })
+            }
         } 
     }
 }

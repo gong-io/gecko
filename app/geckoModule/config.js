@@ -18,7 +18,7 @@ var config = {
         }
     },
     slider: "#slider",
-    isServerMode: false,
+    saveMode: 0,
     proofreadingAutoScroll: false,
     enableDrafts: false,
     emptySectionClick: true
