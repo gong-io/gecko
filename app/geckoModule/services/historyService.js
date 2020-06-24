@@ -59,15 +59,18 @@ class HistoryService {
             } else {
                 context.wavesurfer.regions.list[regionId].update(copyRegion(history[history.length - 1]));
                 if (needUpdateEditable && context.selectedRegion && context.selectedRegion.id === regionId) {
-                    context.$timeout(() => context.eventBus.trigger('resetEditableWords', { id: regionId }))
+                    context.$timeout(() => context.resetEditableWords(regionId))
+                    context.resetEditableWords(`main_${context.selectedFileIndex}`)
                 }
             }
         }
 
         context.updateView()
-        context.eventBus.trigger('rebuildProofReading')
         context.$scope.$evalAsync();
         context.cursorRegion = context.getCurrentRegion(context.selectedFileIndex)
+        if (context.proofReadingView) {
+            context.setMergedRegions()
+        }
     }
 }
 

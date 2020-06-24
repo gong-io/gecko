@@ -1,7 +1,9 @@
 import uuidv4 from 'uuid/v4'
 import crel from 'crel'
 
-const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1
+import { findByUuid } from './index'
+
+const spaceSpanHTML = '<span class="segment-text__space"> </span>'
 
 class GeckoEdtior {
     constructor (element) {
@@ -9,7 +11,8 @@ class GeckoEdtior {
         this.originalWords = []
         this.previousState = []
         this.listeners = new Map()
-        this.spaceSpanHTML = '<span class="segment-text__space"> </span>'
+        this.wordsEls = new Map()
+        this.selectedWord = null
         this.init()
     }
 
@@ -38,14 +41,14 @@ class GeckoEdtior {
         if (e.ctrlKey || e.metaKey) {
             if (clickedSpan && this.isText(clickedSpan)) {
                 const wordUuid = clickedSpan.getAttribute('word-uuid')
-                const clickedWord = this.words.find(w => w.uuid === wordUuid)
+                const clickedWord = findByUuid(this.words, wordUuid)
                 this.trigger('wordClick', { word: clickedWord, event: e })
             } else if (clickedSpan && this.isSpace(clickedSpan)) {
                 const range = selection.getRangeAt(0)
                 if (selection.isCollapsed && range.endOffset === clickedSpan.firstChild.textContent.length) {
                     const nextWordSpan = clickedSpan.nextSibling
                     const wordUuid = nextWordSpan.getAttribute('word-uuid')
-                    const clickedWord = this.words.find(w => w.uuid === wordUuid)
+                    const clickedWord = findByUuid(this.words, wordUuid)
                     this.trigger('wordClick', { word: clickedWord, event: e })
                 }
             } else {
@@ -523,7 +526,7 @@ class GeckoEdtior {
                 if (this.isAllSelected()) {
                     const pastedWords = text.split(' ')
                     const words = pastedWords.map((w) => this.spanHTML({ uuid: uuidv4(), start: this.region.start, end: this.region.end, text: w}))
-                    document.execCommand('insertHTML', false, words.join(this.spaceSpanHTML))
+                    document.execCommand('insertHTML', false, words.join(spaceSpanHTML))
                     e.preventDefault()
                 } else {
                     const selection = document.getSelection()
@@ -672,6 +675,7 @@ class GeckoEdtior {
     }
 
     setRegion (region) {
+        // console.log('set reg')
         if (region && region.data.words) {
             this.region = region
             this.setWords(region.data.words)
@@ -704,14 +708,15 @@ class GeckoEdtior {
             return
         }
         const updatedWords = []
-        spans.forEach(span => {
+        for (let i = 0, l = spans.length; i < l; i++) {
+            const span = spans[i]
             const wordText = span.textContent.trim().replace('\u200B', '')
             const wordUuid = span.getAttribute('word-uuid')
             const wordSelected = span.classList.contains('selected-word')
             if (wordText.length) {
                 const newWordSplited = wordText.split(' ')
-                const originalWord = this.originalWords.find((w) => w.uuid === wordUuid)
-                const word = this.words.find((w) => w.uuid === wordUuid)
+                const originalWord = findByUuid(this.originalWords, wordUuid)
+                const word = findByUuid(this.words, wordUuid)
                 if (newWordSplited.length === 1) {
                     if (word) {
                         if (originalWord && span.textContent.trim() !== originalWord.text) {
@@ -790,7 +795,7 @@ class GeckoEdtior {
                     }
                 }
             }
-        })
+        }
 
         if (!updatedWords.length) {
             this.words = [{start: this.region.start, end: this.region.end, text: ''}]
@@ -808,7 +813,7 @@ class GeckoEdtior {
             return copy
         }))
 
-        this.previousState = JSON.parse(JSON.stringify(this.words))
+        this.previousState = this.words.slice()
         this.formDOM(this.words)
     }
 
@@ -816,20 +821,37 @@ class GeckoEdtior {
         while (this.element.firstChild) {
             this.element.removeChild(this.element.firstChild)
         }
+        this.wordsEls.clear()
     }
 
     formDOM (words) {
         this.cleanDOM()
         const frag = document.createDocumentFragment()
         if (words) {
-            words.forEach((w, index) => {
-                frag.appendChild(this.createSpan(w, index))
-                if (index < words.length - 1) {
+            for (let i = 0, l = words.length; i < l; i++) {
+                const wordEl = this.createSpan(words[i], i)
+                this.wordsEls.set(words[i].uuid, wordEl)
+                frag.appendChild(wordEl)
+                if (i < l - 1) {
                     frag.appendChild(this.createSpace())
                 }
-            })
+            }
         }
+        
         this.element.appendChild(frag)
+    }
+
+    resetSelected () {
+        this.selectedWord && this.selectedWord.classList.remove('selected-word')
+        this.element.querySelectorAll('.selected-word').forEach((w) => {
+            w.classList.remove('selected-word')
+        })
+    }
+
+    setSelected (uuid) {
+        const wordEl = this.wordsEls.get(uuid)
+        wordEl.classList.add('selected-word')
+        this.selectedWord = wordEl
     }
 
     createSpan (w) {
