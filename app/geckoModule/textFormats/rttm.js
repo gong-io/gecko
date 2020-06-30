@@ -22,7 +22,7 @@ export const convert = (app, fileIndex) => {
     var data = [];
 
     app.iterateRegions((region) => {
-        data.push(`SPEAKER <NA> <NA> ${region.start.toFixed(2)} ${(region.end - region.start).toFixed(2)} <NA> <NA> ${self.formatSpeaker(region.data.speaker)} <NA> <NA>`)
+        data.push(`SPEAKER <NA> <NA> ${region.start.toFixed(2)} ${(region.end.toFixed(2) - region.start.toFixed(2)).toFixed(2)} <NA> <NA> ${self.formatSpeaker(region.data.speaker)} <NA> <NA>`)
     }, fileIndex, true);
 
     return data.join('\n');
