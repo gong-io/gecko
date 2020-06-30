@@ -38,9 +38,6 @@ class dataManager {
             const resp = await this.$http({
                 method: 'POST',
                 url:  '/upload_s3',
-                headers: {
-                    'Access-Control-Allow-Origin': true
-                },
                 data: {
                     filename: timestampedS3Filename,
                     data
@@ -51,9 +48,6 @@ class dataManager {
                 const respSecond = await this.$http({
                     method: 'POST',
                     url:  '/upload_s3',
-                    headers: {
-                        'Access-Control-Allow-Origin': true
-                    },
                     data: {
                         filename: s3Filename,
                         data
@@ -129,10 +123,7 @@ class dataManager {
             }).then((response) => {
                 const addedFile = {
                     filename: ctm.fileName,
-                    data: response.data,
-                    headers: {
-                        'Access-Control-Allow-Origin': true
-                    }
+                    data: response.data
                 }
                 if (s3Subfolder) {
                     addedFile.s3Subfolder = s3Subfolder
