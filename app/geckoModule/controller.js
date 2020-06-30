@@ -81,6 +81,9 @@ class MainController {
             }
         }
 
+        this.onlyProofreading = !!urlParams.has('OnlyProofreading');
+        // console.log('Proofreading:'+ this.onlyProofreading);
+
         const audio = urlParams.get('audio')
         let formats = ['rttm', 'tsv', 'json', 'ctm', 'srt']
         formats = formats.map((f) => {
