@@ -105,5 +105,11 @@ export default (parent) => {
 
     parent.setCurrentTime()
 
+    if(parent.onlyProofreading){
+        parent.proofReadingView = false; // toggle changes it to true
+        parent.toggleProofReadingView();
+        parent.toggleSegmentLabeling();
+    }
+
     parent.$scope.$evalAsync();
 }

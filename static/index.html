@@ -259,19 +259,21 @@
                 Toggle Spectrogram
             </button>
 
-            <button class="btn btn-default" ng-click="ctrl.toggleProofReadingView()"
+            <button class="btn btn-default" ng-click="ctrl.toggleProofReadingView()" ng-if="!ctrl.onlyProofreading"
                     title="Show/hide Proofreading View"
                     data-toggle="tooltip" data-placement="top">
                 <i class="glyphicon glyphicon-list-alt"></i>
                 Toggle Proofreading View
             </button>
 
-            <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()" ng-if="ctrl.userConfig.showWaveform"
+            <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()"
+                    ng-if="ctrl.userConfig.showWaveform&&!ctrl.onlyProofreading"
                     title="Toggle waveform">
                 <i class="glyphicon glyphicon-resize-small"></i>
             </button>
 
-            <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()" ng-if="!ctrl.userConfig.showWaveform"
+            <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()"
+                    ng-if="!ctrl.userConfig.showWaveform&&!ctrl.onlyProofreading"
                     title="Toggle waveform"
                     style="margin-left: 1rem;">
                 <i class="glyphicon glyphicon-fullscreen"></i>
