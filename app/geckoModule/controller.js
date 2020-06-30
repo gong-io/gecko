@@ -110,11 +110,11 @@ class MainController {
                 formats.forEach(f => {
                     const fileUrls = f.url.split(';')
                     fileUrls.forEach((fUrl) => {
-                        const fileName = fUrl.split('/').pop().split('.')[0]
+                        const fileName = fUrl.split('/').pop();
                         serverConfig.ctms.push(
                             {
                                 url: fUrl,
-                                fileName: fileName + '.' + f.format
+                                fileName: fileName
                             }
                         )
                     })
