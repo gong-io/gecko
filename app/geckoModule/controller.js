@@ -134,6 +134,7 @@ class MainController {
     setInitialValues() {
         this.loader = false
         this.audioFileName = null
+        this.audioFileTitle = null
         this.currentTime = '00:00'
         this.currentTimeSeconds = 0
         this.zoomLevel = constants.ZOOM
