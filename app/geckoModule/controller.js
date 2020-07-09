@@ -85,6 +85,9 @@ class MainController {
         // console.log('Proofreading:'+ this.onlyProofreading);
 
         const audio = urlParams.get('audio')
+        
+        const presignedSplited = window.location.search.split('presigned_url=')
+        const presignedUrl = presignedSplited.length === 2 ? presignedSplited[1] : null
         let formats = ['rttm', 'tsv', 'json', 'ctm', 'srt']
         formats = formats.map((f) => {
             if (urlParams.get(f)) {
@@ -124,6 +127,11 @@ class MainController {
                 })
             }
         }
+
+        if (presignedUrl) {
+            serverConfig.presignedUrl = presignedUrl
+        }
+
         if (config.mode === 'server' || serverConfig) {
             this.loadServerMode(serverConfig ? serverConfig : config);
         } else {
@@ -1544,7 +1552,11 @@ class MainController {
 
                 if (!this.checkValidRegions(i)) return;
                 try {
-                    this.dataManager.saveDataToServer(converter(i), {filename, s3Subfolder: current.s3Subfolder});
+                    if (this.serverConfig && this.serverConfig.presignedUrl) {
+                        this.dataManager.saveToPresigned(converter(i), { url: this.serverConfig.presignedUrl});
+                    } else {
+                        this.dataManager.saveDataToServer(converter(i), {filename, s3Subfolder: current.s3Subfolder});
+                    }
                 } catch (e) {
 
                 }
@@ -1738,6 +1750,7 @@ class MainController {
         if (self.wavesurfer) self.wavesurfer.destroy();
         self.init()
         self.loader = true
+        self.serverConfig = config
         this.dataManager.loadFileFromServer(config).then(async (res) => {
             parseServerResponse(this, config, res)
 

@@ -22,6 +22,40 @@ class dataManager {
         a.dispatchEvent(e);
     }
 
+    async saveToPresigned(data, { url }) {
+        console.log('presigned', url)
+        try {
+            const resp = await this.$http({
+                method: 'PUT',
+                url,
+                headers: {
+                    'Access-Control-Allow-Origin': true
+                },
+                data
+            })
+
+            if (resp && resp.status === 200) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: `File successefully uploaded`
+                })
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Upload error',
+                    text: resp.data.error
+                })
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Upload error',
+                text: e.statusText
+            })
+        }
+    }
+
     async saveDataToServer(data, { filename, s3Subfolder }) {
         const spl = filename.split('.')
         const ext = spl.pop()
