@@ -86,8 +86,6 @@ class MainController {
 
         const audio = urlParams.get('audio')
         
-        const presignedSplited = window.location.search.split('presigned_url=')
-        const presignedUrl = presignedSplited.length === 2 ? presignedSplited[1] : null
         let formats = ['rttm', 'tsv', 'json', 'ctm', 'srt']
         formats = formats.map((f) => {
             if (urlParams.get(f)) {
@@ -127,7 +125,7 @@ class MainController {
                 })
             }
         }
-
+        const presignedUrl = urlParams.get('presigned_url')
         if (presignedUrl) {
             serverConfig.presignedUrl = presignedUrl
         }
