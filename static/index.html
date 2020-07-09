@@ -30,7 +30,7 @@
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
                 <li>
-                    <a class="audio__filename" title="{{ ctrl.audioFileTitle ? ctrl.audioFileTitle : ctrl.audioFileName }}">
+                    <a class="audio__filename" title="{{ ctrl.audioFileName }}">
                         <b>Audio filename: </b>
                         {{ ctrl.audioFileName }}
                     </a>
@@ -520,7 +520,7 @@
                     ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
                 <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                     <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 class="panel-title">File: {{ file.filename }}</h3>
+                        <h3 class="panel-title transcript__filename" title="{{ file.filename }}">File: {{ file.filename }}</h3>
                         <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
                             <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                         </button>

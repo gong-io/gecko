@@ -74,8 +74,7 @@ export const parseServerResponse = (context, serverConfig, res) => {
 
     const urlArr = serverConfig.audio.url.split('/')
     const audioFileName = urlArr[urlArr.length - 1]
-    context.audioFileName = audioFileName
-    context.audioFileTitle = serverConfig.audio.url
+    context.audioFileName = audioFileName.split('?')[0]
 
     if (res.segmentFiles.length) {
         res.segmentFiles.forEach((x) => {
