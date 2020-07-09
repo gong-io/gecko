@@ -449,3 +449,17 @@ input[type=range].gecko-mini-player-range {
   .full-width {
       width: 100%;
   }
+
+.audio__filename {
+    max-width: 250px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.transcript__filename {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
