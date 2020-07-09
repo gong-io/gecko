@@ -28,9 +28,6 @@ class dataManager {
             const resp = await this.$http({
                 method: 'PUT',
                 url,
-                headers: {
-                    'Access-Control-Allow-Origin': true
-                },
                 data
             })
 
