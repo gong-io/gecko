@@ -32,8 +32,15 @@ module.exports = {
                 exclude: /node_modules/,
                 loader: 'babel-loader',
                 query: {
-                    presets: ['es2015'],
-                    plugins: ['transform-object-rest-spread']
+                    presets: [[
+                        "@babel/preset-env",
+                        {
+                          "targets": {
+                            "esmodules": true
+                          }
+                        }
+                      ]],
+                    plugins: []
                 }
             },
             {

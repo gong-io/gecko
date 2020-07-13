@@ -3,7 +3,7 @@ import { formatDate } from '../utils'
 const loadDraftModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../templates/loadDraftModal.html')
 
 export default (parent, drafts) => {
-    return {
+    const modal = {
         templateUrl: loadDraftModalTemplate,
         backdrop: 'static',
         controller: async ($scope, $uibModalInstance, $timeout) => {
@@ -46,4 +46,8 @@ export default (parent, drafts) => {
             }
         }
     }
+
+    modal.controller.$inject = ['$scope', '$uibModalInstance', '$timeout']
+
+    return modal
 }
