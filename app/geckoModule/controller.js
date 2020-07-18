@@ -221,6 +221,10 @@ class MainController {
             e.stopPropagation()
         })
 
+        this.eventBus.on('split', (word, offset, region) => {
+            this.splitSegmentByWord(word, offset, region)
+        })
+
         this.eventBus.on('emptyEditorClick', (region, e) => {
             if (this.config.emptySectionClick) {
                 this.seek(region.start, 'right')
@@ -231,15 +235,17 @@ class MainController {
 
         this.eventBus.on('regionTextChanged', (regionId) => {
             let currentRegion = this.getRegion(regionId)
-            this.historyService.addHistory(currentRegion)
-            this.historyService.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
+            if (currentRegion) {
+                this.historyService.addHistory(currentRegion)
+                this.historyService.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
 
-            // this.resetEditableWords(currentRegion)
+                // this.resetEditableWords(currentRegion)
 
-            this.eventBus.trigger('geckoChanged', {
-                event: 'regionTextChanged',
-                data: currentRegion
-            })
+                this.eventBus.trigger('geckoChanged', {
+                    event: 'regionTextChanged',
+                    data: currentRegion
+                })
+            }
         })
 
         this.eventBus.on('editableFocus', (editableRegion, fileIndex) => {
@@ -1340,6 +1346,61 @@ class MainController {
         this.updateView()
     }
 
+    splitSegmentByWord (word, offset, region) {
+        const { end, start, text } = word
+        const timeDelta = end - start
+        const wordLength = text.length
+        const percent = offset / wordLength
+        const timeOffset = percent * timeDelta
+        let time = start + timeOffset - constants.TIME_OFFSET
+
+        let first = copyRegion(region);
+        let second = copyRegion(region);
+
+        delete first.id;
+        delete second.id;
+        first.end = time;
+        second.start = time;
+
+        let words = JSON.parse(JSON.stringify(region.data.words));
+        let i;
+        for (i = 0, length = words.length; i < length; i++) {
+            if (words[i].start > time) break;
+        }
+
+        first.data.words = words.slice(0, i);
+        second.data.words = words.slice(i);
+
+        if (offset !== 0 && offset !== wordLength) {
+            const prev = first.data.words[first.data.words.length - 1]
+            prev.text = text.substr(0, offset)
+            prev.end = time
+
+            second.data.words.unshift({
+                start: start + timeOffset,
+                end,
+                uuid: uuidv4(),
+                text: text.substr(offset)
+            })
+        }
+
+        this.__deleteRegion(region);
+        first = this.wavesurfer.addRegion(first);
+        second = this.wavesurfer.addRegion(second);
+
+        //the list order matters!
+        this.historyService.undoStack.push([first.id, second.id, region.id])
+        this.historyService.regionsHistory[region.id].push(null);
+
+        this.eventBus.trigger('geckoChanged', {
+            event: 'splitSegment',
+            data: [first.id, second.id, region.id]
+        })
+
+        this.setMergedRegions()
+        this.seek(time)
+    }
+
     splitSegment() {
         let region = this.selectedRegion;
         const cursorRegion = this.getCurrentRegion(this.selectedFileIndex)
@@ -1862,9 +1923,9 @@ class MainController {
         let offset = 0;
 
         if (leanTo === 'right') {
-            offset = 0.0001;
+            offset = constants.TIME_OFFSET
         } else if (leanTo === 'left') {
-            offset = -0.0001;
+            offset = - constants.TIME_OFFSET
         }
 
         this.wavesurfer.seekTo((time + offset) / this.wavesurfer.getDuration());
