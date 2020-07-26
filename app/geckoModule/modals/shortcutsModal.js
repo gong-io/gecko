@@ -1,7 +1,7 @@
 const shortcutsInfoTemplate = require('ngtemplate-loader?requireAngular!html-loader!../templates/shortcutsInfo.html')
 
 export default (parent) => {
-    return {
+    const modal = {
         templateUrl: shortcutsInfoTemplate,
         controller: ($scope, $uibModalInstance) => {
             $scope.ok = () => {
@@ -10,4 +10,8 @@ export default (parent) => {
             $scope.shortcuts = parent.shortcuts.getInfo()
         }
     }
+
+    modal.controller.$inject = ['$scope', '$uibModalInstance']
+
+    return modal
 }

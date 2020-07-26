@@ -9,7 +9,7 @@ var demoJson = require('../../../samples/demo.json')
 const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../templates/selectAudioModal.html')
 
 export default (parent) => {
-    return {
+    const modal = {
         templateUrl: audioModalTemplate,
         backdrop: 'static',
         controller: async ($scope, $uibModalInstance, $timeout, zoom) => {
@@ -213,4 +213,8 @@ export default (parent) => {
             }
         }
     }
+
+    modal.controller.$inject = ['$scope', '$uibModalInstance', '$timeout', 'zoom']
+
+    return modal
 }
