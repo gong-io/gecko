@@ -48,6 +48,10 @@ export const proofReadingViewDirective = ($timeout, eventBus, store) => {
                 })
             })
 
+            eventBus.on('proofReadingSetSelected', () => {
+                scope.setSelected()
+            })
+
             eventBus.on('proofReadingScrollToRegion', (region) => {
                 const regionElement = element[0].querySelector(`[data-region="${region.id}"]`)
                 if (regionElement) {
