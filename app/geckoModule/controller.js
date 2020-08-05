@@ -26,7 +26,9 @@ import {
     ZoomTooltip,
     prepareLegend,
     formatTime,
-    hash
+    hash,
+    needInterpolateRegionTimings,
+    interpolateRegionTimings
 } from './utils'
 
 import {
@@ -1347,22 +1349,37 @@ class MainController {
     }
 
     splitSegmentByWord (word, offset, region) {
-        const { end, start, text } = word
+        let { end, start, text } = word
+        let first = copyRegion(region)
+        let second = copyRegion(region)
+
+        if (config.interpolateTimings && needInterpolateRegionTimings(region)) {
+            const interpolated = interpolateRegionTimings(region)
+            interpolated.forEach((t, idx) => {
+                first.data.words[idx].start = t.start
+                second.data.words[idx].start = t.start
+
+                first.data.words[idx].end = t.end
+                second.data.words[idx].end = t.end
+            })
+
+            const newWord = first.data.words.find(w => w.uuid === word.uuid)
+            end = newWord.end
+            start = newWord.start
+        }
+
         const timeDelta = end - start
         const wordLength = text.length
         const percent = offset / wordLength
         const timeOffset = percent * timeDelta
         let time = start + timeOffset - constants.TIME_OFFSET
 
-        let first = copyRegion(region);
-        let second = copyRegion(region);
-
         delete first.id;
         delete second.id;
         first.end = time;
         second.start = time;
 
-        let words = JSON.parse(JSON.stringify(region.data.words));
+        let words = JSON.parse(JSON.stringify(first.data.words));
         let i;
         for (i = 0, length = words.length; i < length; i++) {
             if (words[i].start > time) break;
@@ -1410,12 +1427,23 @@ class MainController {
         let first = copyRegion(region);
         let second = copyRegion(region);
 
+        if (config.interpolateTimings && needInterpolateRegionTimings(region)) {
+            const interpolated = interpolateRegionTimings(region)
+            interpolated.forEach((t, idx) => {
+                first.data.words[idx].start = t.start
+                second.data.words[idx].start = t.start
+
+                first.data.words[idx].end = t.end
+                second.data.words[idx].end = t.end
+            })
+        }
+
         delete first.id;
         delete second.id;
         first.end = time;
         second.start = time;
 
-        let words = JSON.parse(JSON.stringify(region.data.words));
+        let words = JSON.parse(JSON.stringify(first.data.words));
         let i;
         for (i = 0, length = words.length; i < length; i++) {
             if (words[i].start > time) break;
