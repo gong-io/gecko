@@ -137,7 +137,7 @@ class dataManager {
             console.error('Audio loading error', e)
         }));
 
-        config.ctms.forEach((ctm) => {
+        config.transcripts.forEach((ctm) => {
             let s3Subfolder = null
             /* for s3 proxy */
             if (ctm.url.includes('s3_files')) {
