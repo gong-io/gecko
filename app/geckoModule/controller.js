@@ -1,6 +1,5 @@
 import uuidv4 from 'uuid/v4'
 import Swal from 'sweetalert2'
-import * as Diff from 'diff'
 import videojs from 'video.js'
 
 import * as constants from './constants'
@@ -26,7 +25,8 @@ import {
     ZoomTooltip,
     prepareLegend,
     formatTime,
-    hash
+    hash,
+    discrepancies
 } from './utils'
 
 import {
@@ -35,7 +35,7 @@ import {
 } from './modals'
 
 class MainController {
-    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, discrepancyService, historyService, debounce, $timeout, $interval, $sce, store) {
+    constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, historyService, debounce, $timeout, $interval, $sce, store) {
         this.dataManager = dataManager;
         if (config.enableDrafts) {
             this.dataBase = dataBase;
@@ -51,7 +51,6 @@ class MainController {
         this.shortcuts.bindKeys()
         this.toaster = toaster
         this.eventBus = eventBus
-        this.discrepancyService = discrepancyService
         this.historyService = historyService
         this.config = config
 
@@ -152,6 +151,8 @@ class MainController {
         this.spectrogramReady = false
         this.currentGainProc = 100
 
+        this.comparsionMode = false
+
         this.lastDraft = null
         this.currentDraftId = 0
 
@@ -212,7 +213,7 @@ class MainController {
         this.wavesurferElement = this.wavesurfer.drawer.container;
         this.store.setValue('audioBackend', this.wavesurfer.backend)
 
-        this.ctmData = [];
+        this.comparsionData = [];
         this.ready = false;
 
         this.eventBus.on('wordClick', (word, e) => {
@@ -432,83 +433,10 @@ class MainController {
         this.dataBase && this.dataBase.updateDraft(this.currentDraftId, filesData)
     }
 
-    handleCtm() {
-        if (this.ctmData.length !== 2 || this.filesData.length !== 2) return;
-
-        let diff = Diff.diffArrays(this.ctmData[0], this.ctmData[1], {
-            comparator: (x, y) => {
-                return x.text === y.text;
-            }
-        });
-
-        // discrepancies is also the indication if we are in ctm comparing mode
-        this.discrepancies = [];
+    handleComparsion() {
+        if (!this.comparsionMode || this.comparsionData.length !== 2 || this.filesData.length !== 2) return
+        this.discrepancies = discrepancies(this.comparsionData[0], this.comparsionData[1])
         this.wavesurfer.params.autoCenter = true;
-
-        const handleDiscrepancy = (discrepancy, diffItem) => {
-            if (diffItem.removed) {
-                if (discrepancy.old) {
-                    throw 'Does not suppose to happen'
-                }
-                discrepancy.old = diffItem.value;
-            } else {
-                if (discrepancy.new) {
-                    throw 'Does not suppose to happen'
-                }
-                discrepancy.new = diffItem.value;
-            }
-        }
-
-        for (let i = 0, length = diff.length; i < length; i++) {
-            if (diff[i].removed || diff[i].added) {
-                let discrepancy = {};
-                handleDiscrepancy(discrepancy, diff[i])
-
-                i++;
-
-                //check for the other side of the discrepancy
-                if (i < diff.length && (diff[i].removed || diff[i].added)) {
-                    handleDiscrepancy(discrepancy, diff[i])
-                }
-
-                this.discrepancies.push(discrepancy);
-            }
-        }
-
-        this.discrepancies.forEach((discrepancy) => {
-            let oldStart = Infinity;
-            let oldEnd = 0;
-
-            if (discrepancy.old) {
-                discrepancy.oldText = discrepancy.old.map(x => x.text).join(' ');
-                oldStart = discrepancy.old[0].start;
-                oldEnd = discrepancy.old[discrepancy.old.length - 1].end;
-            }
-
-            let newStart = Infinity;
-            let newEnd = 0;
-
-            if (discrepancy.new) {
-                discrepancy.newText = discrepancy.new.map(x => x.text).join(' ');
-                newStart = discrepancy.new[0].start;
-                oldEnd = discrepancy.new[discrepancy.new.length - 1].end;
-            }
-
-            if (newStart > oldStart) {
-                discrepancy.start = oldStart;
-            } else {
-                discrepancy.start = newStart;
-            }
-
-            if (newEnd > oldEnd) {
-                discrepancy.end = newEnd;
-            } else {
-                discrepancy.end = oldEnd;
-            }
-
-            discrepancy.startDisp = secondsToMinutes(discrepancy.start);
-            discrepancy.endDisp = secondsToMinutes(discrepancy.end);
-        })
     }
 
     fixRegionsOrderAll () {
@@ -913,7 +841,7 @@ class MainController {
             this.setSilence(silencePrev, silenceNext)
             this.setCurrentTime()
         })
-        this.discrepancyService.updateSelectedDiscrepancy(this)
+        this.comparsion && this.comparsion.updateSelectedDiscrepancy()
     }
 
 
@@ -1564,8 +1492,9 @@ class MainController {
     }
 
     saveDiscrepancyResults() {
-        this.dataManager.downloadFileToClient(jsonStringify(this.discrepancies),
-            this.filesData[0].filename + '_VS_' + this.filesData[1].filename + '.json');
+        const csv = this.comparsion.discrepancyToCSV()
+        this.dataManager.downloadFileToClient(csv,
+            this.filesData[0].filename + '_VS_' + this.filesData[1].filename + '.csv');
     }
 
     saveClient(extension) {
@@ -1811,6 +1740,9 @@ class MainController {
             if (res) {
                 if (this.wavesurfer) this.wavesurfer.destroy();
                 this.init();
+                if (res.comparsion) {
+                    this.comparsionMode = true
+                }
                 parseAndLoadAudio(this, res);
             }
         });
@@ -2111,7 +2043,7 @@ class MainController {
 }
 
 MainController
-    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'discrepancyService', 'historyService', 'debounce', '$timeout', '$interval', '$sce', 'store'];
+    .$inject = ['$scope', '$uibModal', 'toaster', 'dataManager', 'dataBase', 'eventBus', 'historyService', 'debounce', '$timeout', '$interval', '$sce', 'store'];
 export {
     MainController
 }

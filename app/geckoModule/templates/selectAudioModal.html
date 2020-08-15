@@ -45,12 +45,25 @@
             Audio/video file or transcript files (JSON, CTM, RTTM, SRT, TSV)
         </div>
     </div>
+
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1 text-center">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" ng-model="isComparsionMode"> Comparsion mode
+                </label>
+            </div>
+            <p ng-if="isComparsionMode">
+                In comparsion mode you can select only two JSON or CTM files
+            </p>
+        </div>
+    </div>
     
 </div>
 <div class="modal-footer">
     <button class="btn btn-default pull-left" type="button" ng-click="runDemo()">Load Demo</button>
     <button class="btn btn-default pull-left" type="button" ng-if="draftAvailable" ng-click="loadDraft()">Load Draft</button>
     <button class="btn btn-primary" type="button"
-            ng-disabled="!mediaFile" ng-click="ok()">OK
+            ng-disabled="!mediaFile || (isComparsionMode && (!isComparsionModeValid || transcriptFiles.length != 2))" ng-click="ok()">OK
     </button>
 </div>

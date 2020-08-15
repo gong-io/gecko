@@ -196,12 +196,12 @@ class Shortcuts {
         }
     }
 
-    jumpNextDiscrepancyHandler (e) {
-        this.app.discrepancyService.jumpNextDiscrepancy(this.app)
+    jumpNextDiscrepancyHandler () {
+        this.app.comparsion.jumpNextDiscrepancy()
     }
 
-    jumpPreviousDiscrepancyHandler (e) {
-        this.app.discrepancyService.jumpPreviousDiscrepancy(this.app)
+    jumpPreviousDiscrepancyHandler () {
+        this.app.comparsion.jumpPreviousDiscrepancy()
     }
 }
 

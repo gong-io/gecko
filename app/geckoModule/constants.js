@@ -111,3 +111,5 @@ export const DEFAULT_USER_CONFIG = {
     showVideo: true
 }
 export const TRANSCRIPT_EXTENSIONS = ['json', 'ctm', 'rttm', 'srt', 'tsv']
+
+export const COMPARSION_EXTENSIONS = ['json', 'ctm']

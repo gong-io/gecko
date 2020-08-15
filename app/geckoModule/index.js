@@ -27,7 +27,8 @@ import {
     editableDirective,
     Checklist,
     fileRead,
-    contextMenu
+    contextMenu,
+    comparsionDirective
 } from './directives'
 
 import { 
@@ -36,7 +37,8 @@ import {
     speakersFilterColor,
     toTrusted,
     toMMSS,
-    secondsToFixed
+    secondsToFixed,
+    secondsToMinutes
 } from './filters'
 
 const geckoModule = angular.module('gecko', [ dropdown, modal, collapse, tooltip, toaster ])
@@ -58,6 +60,7 @@ geckoModule.directive('playPart', ['store', playPartDirective])
 geckoModule.directive('miniPlayer', miniPlayerDirective)
 geckoModule.directive('checklistModel', Checklist)
 geckoModule.directive('fileread', fileRead)
+geckoModule.directive('comparsion', ['discrepancyService', comparsionDirective])
 geckoModule.directive('contextMenu', ['$timeout', contextMenu])
 
 geckoModule.filter('mulSearch', mulSearch)
@@ -66,6 +69,6 @@ geckoModule.filter('speakersFilterColor', speakersFilterColor)
 geckoModule.filter('to_trusted', ['$sce', toTrusted])
 geckoModule.filter('toMMSS', toMMSS)
 geckoModule.filter('secondsToFixed', secondsToFixed)
-
+geckoModule.filter('secondsToMinutes', secondsToMinutes)
 
 export default geckoModule

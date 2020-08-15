@@ -1,6 +1,6 @@
 import Swal from 'sweetalert2'
 
-import { ZOOM, TRANSCRIPT_EXTENSIONS } from '../constants'
+import { ZOOM, TRANSCRIPT_EXTENSIONS, COMPARSION_EXTENSIONS } from '../constants'
 import loadDraftModal from './loadDraftModal'
 import { formatTime } from '../utils'
 
@@ -16,6 +16,9 @@ export default (parent) => {
             $scope.draftAvailable = false
             $scope.isLoading = false
             $scope.newSegmentFiles = [undefined]
+
+            $scope.isComparsionMode = false
+            $scope.isComparsionModeValid = false
 
             $scope.transcriptFiles = []
             
@@ -102,7 +105,8 @@ export default (parent) => {
                     audio: $scope.mediaFile,
                     call_from_url: call_from_url,
                     segmentsFiles: $scope.transcriptFiles,
-                    zoom: $scope.zoom
+                    zoom: $scope.zoom,
+                    comparsion: $scope.isComparsionMode
                 });
             };
 
@@ -154,13 +158,32 @@ export default (parent) => {
                             mediaFiles.push(f)
                         } else {
                             const ext = f.name.split('.').pop()
-                            if (TRANSCRIPT_EXTENSIONS.includes(ext)) {
-                                const alreadyAdd = $scope.transcriptFiles.find((tf) => {
-                                    return tf.name === f.name
-                                })
-
-                                if (!alreadyAdd) {
-                                    $scope.transcriptFiles.push(f)
+                            if ($scope.isComparsionMode) {
+                                if (COMPARSION_EXTENSIONS.includes(ext)) {
+                                    const alreadyAdd = $scope.transcriptFiles.find((tf) => {
+                                        return tf.name === f.name
+                                    })
+    
+                                    if (!alreadyAdd) {
+                                        if ($scope.transcriptFiles.length < 2) {
+                                            $scope.transcriptFiles.push(f)
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'warning',
+                                                title: 'Please select only two transcript files in comparsion mode'
+                                            })
+                                        }
+                                    }
+                                }
+                            } else {
+                                if (TRANSCRIPT_EXTENSIONS.includes(ext)) {
+                                    const alreadyAdd = $scope.transcriptFiles.find((tf) => {
+                                        return tf.name === f.name
+                                    })
+    
+                                    if (!alreadyAdd) {
+                                        $scope.transcriptFiles.push(f)
+                                    }
                                 }
                             }
                         }
@@ -206,6 +229,48 @@ export default (parent) => {
             $scope.cancel = () => {
                 $uibModalInstance.dismiss('cancel');
             };
+
+            $scope.checkComparsionFiles = () => {
+                const unsupportedFiles = $scope.transcriptFiles.filter(f => {
+                    const ext = f.name.split('.').pop()
+                    if (!COMPARSION_EXTENSIONS.includes(ext)) {
+                        return true
+                    }
+                    return false
+                })
+                if ($scope.transcriptFiles.length > 2) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Please select only two transcript files in comparsion mode'
+                    })
+
+                    return false
+                } else if (unsupportedFiles.length) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'You can select only JSON or CTM files in comparsion mode'
+                    })
+
+                    return false
+                }
+
+                return true
+            }
+
+            $scope.$watch('isComparsionMode', (newValue) => {
+                if (newValue) {
+                    $scope.isComparsionModeValid = $scope.checkComparsionFiles()
+                    if (!$scope.isComparsionModeValid) {
+                        $scope.isComparsionMode = false
+                    }
+                }
+            })
+
+            $scope.$watchCollection('transcriptFiles', () => {
+                if ($scope.isComparsionMode) {
+                    $scope.isComparsionModeValid = $scope.checkComparsionFiles()
+                }
+            })
         },
         resolve: {
             zoom: () => {
