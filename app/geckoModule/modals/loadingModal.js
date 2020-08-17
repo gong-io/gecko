@@ -50,7 +50,7 @@ export default (parent) => {
                     audio: {
                         url: 'https://raw.githubusercontent.com/gong-io/gecko/master/samples/demo.mp3'
                     },
-                    ctms: []
+                    transcripts: []
                 })
                 if (parent.config.enableDrafts && parent.dataBase) {
                     const demoDraft = await parent.dataBase.createDraft({

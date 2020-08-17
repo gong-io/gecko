@@ -86,21 +86,16 @@ class MainController {
 
         const audio = urlParams.get('audio')
         
-        let formats = ['rttm', 'tsv', 'json', 'ctm', 'srt']
-        formats = formats.map((f) => {
-            if (urlParams.get(f)) {
-                return {
-                    format: f,
-                    url: urlParams.get(f)
-                }
-            }
-            return null
+        let transcriptParams = ['rttm', 'tsv', 'json', 'ctm', 'srt', 'transcript']
+        transcriptParams = transcriptParams.map((f) => {
+            return urlParams.get(f)
         }).filter(Boolean)
+
         let serverConfig = null
-        if (audio || formats.length) {
+        if (audio || transcriptParams.length) {
             serverConfig = {
                 mode: 'server',
-                ctms: []
+                transcripts: []
             }
 
             if (audio) {
@@ -109,13 +104,12 @@ class MainController {
                 }
             }
 
-            if (formats.length) {
-                serverConfig.ctms = []
-                formats.forEach(f => {
-                    const fileUrls = f.url.split(';')
+            if (transcriptParams.length) {
+                transcriptParams.forEach(f => {
+                    const fileUrls = f.split(';')
                     fileUrls.forEach((fUrl) => {
                         const fileName = fUrl.split('/').pop();
-                        serverConfig.ctms.push(
+                        serverConfig.transcripts.push(
                             {
                                 url: fUrl,
                                 fileName: fileName

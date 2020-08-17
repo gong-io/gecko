@@ -48,7 +48,7 @@ params = {'save_mode':'server', 'audio':quote(audio)}
 if args.transcript:
     put_transcript = create_presigned('put_object', args.bucket, args.transcript, args.expiration)
     get_transcript = create_presigned('get_object', args.bucket, args.transcript, args.expiration)
-    params['json'] = quote(get_transcript)
+    params['transcript'] = quote(get_transcript)
     params['presigned_url'] = quote(put_transcript)
 
 if args.proofreading:
