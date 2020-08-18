@@ -6,6 +6,9 @@ import { formatTime } from '../utils'
 
 var demoJson = require('../../../samples/demo.json')
 
+import demoCTMFirst from '../../../samples/demo1.ctm'
+import demoCTMSecond from '../../../samples/demo2.ctm'
+
 const audioModalTemplate = require('ngtemplate-loader?requireAngular!html-loader!../templates/selectAudioModal.html')
 
 export default (parent) => {
@@ -37,16 +40,38 @@ export default (parent) => {
                 }
 
                 $scope.isLoading = true
-                const demoFile = {
-                    filename: 'demo.json',
-                    data: parent.handleTextFormats('demo.json', JSON.stringify(demoJson))[0]
-                }
+
                 parent.init()
-                parent.filesData = [
-                    demoFile
-                ];
+
+                if ($scope.isComparsionMode) {
+                    const demoFileCTMFirst = {
+                        filename: 'demo1.ctm',
+                        data: parent.handleTextFormats('demo1.ctm', demoCTMFirst)[0]
+                    }
+    
+                    const demoFileCTMSecond = {
+                        filename: 'demo2.ctm',
+                        data: parent.handleTextFormats('demo2.ctm', demoCTMSecond)[0]
+                    }
+                    
+                    parent.filesData = [
+                        demoFileCTMFirst,
+                        demoFileCTMSecond
+                    ]
+                } else {
+                    const demoFileJSON = {
+                        filename: 'demo.json',
+                        data: parent.handleTextFormats('demo.json', JSON.stringify(demoJson))[0]
+                    }
+
+                    parent.filesData = [
+                        demoFileJSON
+                    ]
+                }
+                
                 parent.audioFileName = 'demo.mp3';
                 parent.loader = true
+                parent.comparsionMode = true
                 $uibModalInstance.close(false)
 
                 const res = await parent.dataManager.loadFileFromServer({

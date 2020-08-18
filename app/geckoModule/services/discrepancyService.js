@@ -69,16 +69,18 @@ class DiscrepancyService {
 
     toCSV (context) {
         const { discrepancies, filesData } = context
-        const header = [ filesData[0].filename, filesData[1].filename, 'Choice', 'Timestamp' ]
+        const header = [ filesData[0].filename, filesData[1].filename, 'Choice', 'Start', 'End' ]
+        const escape = (t) => `"${t}"`
         const rows = discrepancies.map(d => {
             const oldText = d.oldText ? d.oldText : ''
             const newText = d.newText ? d.newText : ''
-            const choice = d.choice ? (d.choice == 'old' ? '1' : '2') : 'None'
-            const timestamp = `${parseFloat(d.start).toFixed(3)}-${parseFloat(d.end).toFixed(3)}`
-            return [ oldText, newText, choice, timestamp]
+            const choice = d.choice ? (d.choice == 'old' ? '1' : '2') : ''
+            const timeStart = parseFloat(d.start).toFixed(3)
+            const timeEnd = parseFloat(d.end).toFixed(3)
+            return [ oldText, newText, choice, timeStart, timeEnd].map(escape)
         })
 
-        return [header, ...rows].map(r => r.join(',')).join('\n')
+        return [header.map(escape), ...rows].map(r => r.join(',')).join('\n')
     }
 }
 

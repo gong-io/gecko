@@ -150,6 +150,7 @@ class MainController {
         this.showSpectrogramButton = false
         this.spectrogramReady = false
         this.currentGainProc = 100
+        this.comparsionData = []
 
         this.comparsionMode = false
 
@@ -213,7 +214,6 @@ class MainController {
         this.wavesurferElement = this.wavesurfer.drawer.container;
         this.store.setValue('audioBackend', this.wavesurfer.backend)
 
-        this.comparsionData = [];
         this.ready = false;
 
         this.eventBus.on('wordClick', (word, e) => {
