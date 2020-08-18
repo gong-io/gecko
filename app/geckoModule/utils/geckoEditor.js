@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4'
 import crel from 'crel'
 
-import { findByUuid } from './index'
+import { findByUuid, compareObjects } from './index'
 
 const spaceSpanHTML = '<span class="segment-text__space"> </span>'
 
@@ -707,6 +707,7 @@ class GeckoEdtior {
             this.trigger('wordsUpdated', [{start: this.region.start, end: this.region.end, text: '', uuid: uuidv4()}])
             return
         }
+
         const updatedWords = []
         for (let i = 0, l = spans.length; i < l; i++) {
             const span = spans[i]
@@ -803,17 +804,34 @@ class GeckoEdtior {
             this.words = updatedWords
         }
 
-        this.trigger('wordsUpdated', this.words.map((w) => {
-            const copy = Object.assign({}, w)
-            delete copy.isSelected
-            return copy
-        }), this.previousState.map((w) => {
-            const copy = Object.assign({}, w)
-            delete copy.isSelected
-            return copy
-        }))
+        let wasChanged = false
 
-        this.previousState = this.words.slice()
+        const newWords = this.words.map((w) => {
+            const copy = Object.assign({}, w)
+            delete copy.isSelected
+            return copy
+        })
+
+        const oldWords = this.previousState.map((w) => {
+            const copy = Object.assign({}, w)
+            delete copy.isSelected
+            return copy
+        })
+        
+        if (newWords.length !== oldWords.length) {
+            wasChanged = true
+        } else {
+            newWords.forEach(w => {
+                const previous = findByUuid(oldWords, w.uuid)
+                if (!compareObjects(w, previous)) {
+                    wasChanged = true
+                }
+            })
+        }
+
+        wasChanged && this.trigger('wordsUpdated', newWords, oldWords)
+
+        this.previousState = newWords.slice()
         this.formDOM(this.words)
     }
 
