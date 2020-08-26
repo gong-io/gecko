@@ -283,8 +283,34 @@ class GeckoEdtior {
 
     keydownEvent (e) {
         if (e.which === 13 || e.which === 27) {
+            if (e.shiftKey) {
+                const selection = document.getSelection()
+                if (selection.isCollapsed) {
+                    const range = selection.getRangeAt(0)
+                    let { startOffset } = range
+                    let wordNode = this.findNodeAncestor(selection.focusNode)
+                    if (this.isSpace(wordNode)) {
+                        wordNode = wordNode.nextSibling
+                        startOffset = 0
+                    }
+
+                    const wordUuid = wordNode.getAttribute('word-uuid')
+                    const word = findByUuid(this.words, wordUuid)
+                    const isLast = wordNode === this.element.lastChild && word.text.length === startOffset
+                    const isFirst = wordNode === this.element.firstChild && startOffset === 0
+                    if (wordUuid && !isLast && !isFirst) {
+                        e.preventDefault()
+                        this.trigger('split', {
+                            word,
+                            offset: startOffset
+                        })
+                        return
+                    }
+                }
+            }
             this.element.blur()
             e.preventDefault()
+            return
         }
 
         const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
@@ -600,7 +626,7 @@ class GeckoEdtior {
     }
 
     bindEvents () {
-        this.element.addEventListener('blur', () => {
+        this.element.addEventListener('blur', (e) => {
             this.updateAll()
         })
 
@@ -675,7 +701,6 @@ class GeckoEdtior {
     }
 
     setRegion (region) {
-        // console.log('set reg')
         if (region && region.data.words) {
             this.region = region
             this.setWords(region.data.words)

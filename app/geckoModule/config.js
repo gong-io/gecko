@@ -21,7 +21,8 @@ var config = {
     isServerMode: false,
     proofreadingAutoScroll: false,
     enableDrafts: false,
-    emptySectionClick: true
+    emptySectionClick: true,
+    interpolateTimings: true
 }
 
 export { config }

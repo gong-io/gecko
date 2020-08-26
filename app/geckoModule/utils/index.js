@@ -221,4 +221,38 @@ export const hash = (s) => {
     return hash
 }
 
+export const filterPunctuation = (text) => {
+    return text.split('').filter(c => { 
+        return !constants.PUNCTUATIONS.includes(c) 
+    }).join('')
+}
+
+export const needInterpolateRegionTimings = (region) => {
+    if (!region.data.words.length || region.data.words.length === 1) {
+        return false
+    }
+
+    return region.data.words.filter(w => w.start === region.data.words[0].start && w.end === region.data.words[0].end).length === region.data.words.length ? true : false
+}
+
+export const interpolateRegionTimings = (region) => {
+    const ret = []
+    const monologueTime = region.end - region.start
+    const regionText = filterPunctuation(region.data.words.map(w => w.text).join(' '))
+    let wordStartIdx = 0
+
+    region.data.words.forEach(w => {
+        const fWordText = filterPunctuation(w.text)
+        const start = region.start + (wordStartIdx / regionText.length) * monologueTime
+        const end = region.start + ((wordStartIdx + fWordText.length) / regionText.length) * monologueTime
+        ret.push({
+            start,
+            end
+        })
+        wordStartIdx += w.text.length
+    })
+
+    return ret
+}
+
 export { geckoEditor, parseAndLoadAudio, parseServerResponse, ZoomTooltip, DomUtils, detectLineEndings, setLineEndings }

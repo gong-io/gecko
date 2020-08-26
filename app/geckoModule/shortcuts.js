@@ -58,6 +58,10 @@ class Shortcuts {
             {
                 keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>→</kbd> when word is selected' : '<kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd> when word is selected',
                 desc: 'Jump to previous / next word'
+            },
+            {
+                keyDesc: '<kbd>Shift</kbd>+<kbd>↵</kbd>',
+                desc: 'Split region under text cursor position in proofreading view'
             }
         ]
         this.hotkeys = [
