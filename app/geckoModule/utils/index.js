@@ -5,6 +5,8 @@ import DomUtils from './domUtils'
 
 import { detectLineEndings, setLineEndings } from './line-endings'
 
+import discrepancies from './discrepancies'
+
 import * as constants from '../constants'
 
 export const jsonStringify = (json) => {
@@ -221,4 +223,4 @@ export const hash = (s) => {
     return hash
 }
 
-export { geckoEditor, parseAndLoadAudio, parseServerResponse, ZoomTooltip, DomUtils, detectLineEndings, setLineEndings }
+export { geckoEditor, parseAndLoadAudio, parseServerResponse, ZoomTooltip, DomUtils, detectLineEndings, setLineEndings, discrepancies }
