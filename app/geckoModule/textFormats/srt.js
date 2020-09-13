@@ -92,7 +92,7 @@ export const parse = (data, $parent, parserOptions) => {
         })
     }
 
-    $parent.ctmData.push(words);
+    $parent.comparsionData.push(words);
 
     return [ monologues ];
 }

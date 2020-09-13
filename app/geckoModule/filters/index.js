@@ -1,3 +1,4 @@
+import { secondsToMinutes as stm } from '../utils'
 
 export const mulSearch = () => {
     return (items, searchText) => {
@@ -65,8 +66,14 @@ export const toMMSS = () =>{
     }
 }
 
-export const secondsToFixed = () =>{
+export const secondsToFixed = () => {
     return (seconds) => {
         return seconds ? seconds.split('.')[0] : '00:00'
+    }
+}
+
+export const secondsToMinutes = () => {
+    return (seconds) => {
+        return stm(seconds)
     }
 }

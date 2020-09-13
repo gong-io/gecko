@@ -1,9 +1,9 @@
 import { EXTRA_DISCREPANCY_TIME } from '../constants'
 
 class DiscrepancyService {
-    updateSelectedDiscrepancy (context) {
+    updateSelectedDiscrepancy (context, wavesurferContext) {
         if (!context.discrepancies) return;
-        let time = context.wavesurfer.getCurrentTime();
+        let time = wavesurferContext.wavesurfer.getCurrentTime();
 
         let oldSelectedDiscrepancy = document.getElementsByClassName('selected-discrepancy')[0];
         if (oldSelectedDiscrepancy) {
@@ -28,15 +28,15 @@ class DiscrepancyService {
         }
     }
 
-    playDiscrepancy(context, discrepancy) {
-        context.wavesurfer.play(discrepancy.start - EXTRA_DISCREPANCY_TIME,
+    playDiscrepancy(wavesurferContext, discrepancy) {
+        wavesurferContext.wavesurfer.play(discrepancy.start - EXTRA_DISCREPANCY_TIME,
             discrepancy.end + EXTRA_DISCREPANCY_TIME);
     }
 
-    jumpNextDiscrepancy(context) {
+    jumpNextDiscrepancy(context, wavesurferContext) {
         if (!context.discrepancies) return;
 
-        let time = context.wavesurfer.getCurrentTime();
+        let time = wavesurferContext.wavesurfer.getCurrentTime();
 
         let i = 0;
         for (; i < context.filteredDiscrepancies.length; i++) {
@@ -46,14 +46,14 @@ class DiscrepancyService {
         }
 
         if (context.filteredDiscrepancies[i]) {
-            this.playDiscrepancy(context, context.filteredDiscrepancies[i]);
+            this.playDiscrepancy(wavesurferContext, context.filteredDiscrepancies[i]);
         }
     }
 
-    jumpPreviousDiscrepancy (context) {
+    jumpPreviousDiscrepancy (context, wavesurferContext) {
         if (!context.discrepancies) return;
 
-        let time = context.wavesurfer.getCurrentTime();
+        let time = wavesurferContext.wavesurfer.getCurrentTime();
 
         let i = context.filteredDiscrepancies.length - 1;
         for (; i >=0; i--) {
@@ -63,8 +63,24 @@ class DiscrepancyService {
         }
 
         if (context.filteredDiscrepancies[i - 1]) {
-            context.discrepancyService.playDiscrepancy(context, context.filteredDiscrepancies[i - 1]);
+            context.discrepancyService.playDiscrepancy(wavesurferContext, context.filteredDiscrepancies[i - 1]);
         }
+    }
+
+    toCSV (context) {
+        const { discrepancies, filesData } = context
+        const header = [ filesData[0].filename, filesData[1].filename, 'Choice', 'Start', 'End' ]
+        const escape = (t) => `"${t}"`
+        const rows = discrepancies.map(d => {
+            const oldText = d.oldText ? d.oldText : ''
+            const newText = d.newText ? d.newText : ''
+            const choice = d.choice ? (d.choice == 'old' ? '1' : '2') : ''
+            const timeStart = parseFloat(d.start).toFixed(3)
+            const timeEnd = parseFloat(d.end).toFixed(3)
+            return [ oldText, newText, choice, timeStart, timeEnd].map(escape)
+        })
+
+        return [header.map(escape), ...rows].map(r => r.join(',')).join('\n')
     }
 }
 

@@ -87,7 +87,11 @@ module.exports = {
                         },
                     },
                 ]
-            }
+            },
+            {
+                test: /\.ctm$/i,
+                use: 'raw-loader',
+              }
         ]
     },
     plugins: [

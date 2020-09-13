@@ -64,7 +64,7 @@ export const parse = (data, $parent) => {
         m.end = lastWord.end;
     });
 
-    $parent.ctmData.push(words);
+    $parent.comparsionData.push(words);
 
     return [ monologues ];
 }

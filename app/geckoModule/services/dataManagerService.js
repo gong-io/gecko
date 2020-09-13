@@ -23,7 +23,6 @@ class dataManager {
     }
 
     async saveToPresigned(data, { url }) {
-        console.log('presigned', url)
         try {
             const resp = await this.$http({
                 method: 'PUT',
