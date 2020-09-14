@@ -1565,6 +1565,7 @@ class MainController {
         })
 
         this.setMergedRegions()
+        this.eventBus.trigger('proofReadingSetSelected')
     }
 
     speakerNameChanged(speaker, oldText, newText) {
