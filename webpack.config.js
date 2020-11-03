@@ -5,6 +5,11 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
+    watch: true,
+    watchOptions: {
+    aggregateTimeout: 200,
+    poll: 1000
+    },
     devtool: 'eval-source-map',
     context: __dirname,
     entry: "./app/app.js",
