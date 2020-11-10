@@ -85,7 +85,7 @@ class MainController {
 
         const audio = urlParams.get('audio')
         
-        let transcriptParams = ['rttm', 'tsv', 'json', 'ctm', 'srt', 'transcript']
+        let transcriptParams = ['rttm', 'tsv', 'json', 'json2', 'ctm', 'srt', 'transcript']
         transcriptParams = transcriptParams.map((f) => {
             return urlParams.get(f)
         }).filter(Boolean)
