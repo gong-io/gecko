@@ -1,6 +1,6 @@
 import geckoEditor from './geckoEditor'
 import ZoomTooltip from './zoomTooltip'
-import { parseAndLoadAudio, parseServerResponse } from './fileUtils'
+import { parseAndLoadAudio, parseServerResponse, parseImageCsv, combineImageCsv } from './fileUtils'
 import DomUtils from './domUtils'
 
 import { detectLineEndings, setLineEndings } from './line-endings'
@@ -231,4 +231,4 @@ export const compareObjects = (a, b) => {
     return JSON.stringify(s(a)) === JSON.stringify(s(b))
   }
 
-export { geckoEditor, parseAndLoadAudio, parseServerResponse, ZoomTooltip, DomUtils, detectLineEndings, setLineEndings, discrepancies }
+export { geckoEditor, parseAndLoadAudio, parseServerResponse, parseImageCsv, combineImageCsv, ZoomTooltip, DomUtils, detectLineEndings, setLineEndings, discrepancies }

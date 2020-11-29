@@ -22,6 +22,8 @@ import {
     copyRegion,
     parseAndLoadAudio,
     parseServerResponse,
+    parseImageCsv,
+    combineImageCsv,
     ZoomTooltip,
     prepareLegend,
     formatTime,
@@ -48,7 +50,7 @@ class MainController {
         this.isServerMode = false
         this.proofReadingView = false
         this.shortcuts = new Shortcuts(this, constants)
-        this.shortcuts.bindKeys()
+//        this.shortcuts.bindKeys()
         this.toaster = toaster
         this.eventBus = eventBus
         this.historyService = historyService
@@ -71,63 +73,116 @@ class MainController {
 
     async loadApp(config) {
         const urlParams = new URLSearchParams(window.location.search)
-        const saveMode = urlParams.get('save_mode')
-        if (saveMode) {
-            if (saveMode === 'server') {
-                this.isServerMode = true
-            } else if (saveMode === 'local') {
-                this.isServerMode = false
-            }
+        const mode = urlParams.get('mode');
+        if (mode && (mode == "images" || mode == "image")){
+            this.dataManager.serverRequestImageList("https://gecko.research.gongio.net/s3_files/images/images.tsv").then(async (res) => {
+                parseImageCsv(this, res);
+                this.isImageMode = true;
+            });
         }
-
-        this.onlyProofreading = !!urlParams.has('OnlyProofreading');
-        // console.log('Proofreading:'+ this.onlyProofreading);
-
-        const audio = urlParams.get('audio')
-        
-        let transcriptParams = ['rttm', 'tsv', 'json', 'json2', 'ctm', 'srt', 'transcript']
-        transcriptParams = transcriptParams.map((f) => {
-            return urlParams.get(f)
-        }).filter(Boolean)
-
-        let serverConfig = null
-        if (audio || transcriptParams.length) {
-            serverConfig = {
-                mode: 'server',
-                transcripts: []
-            }
-
-            if (audio) {
-                serverConfig.audio = {
-                    url: audio
+        else{
+            this.shortcuts.bindKeys();
+            const saveMode = urlParams.get('save_mode')
+            if (saveMode) {
+                if (saveMode === 'server') {
+                    this.isServerMode = true
+                } else if (saveMode === 'local') {
+                    this.isServerMode = false
                 }
             }
 
-            if (transcriptParams.length) {
-                transcriptParams.forEach(f => {
-                    const fileUrls = f.split(';')
-                    fileUrls.forEach((fUrl) => {
-                        const fileName = fUrl.split('/').pop();
-                        serverConfig.transcripts.push(
-                            {
-                                url: fUrl,
-                                fileName: fileName
-                            }
-                        )
+            this.onlyProofreading = !!urlParams.has('OnlyProofreading');
+            // console.log('Proofreading:'+ this.onlyProofreading);
+
+            const audio = urlParams.get('audio')
+
+            let transcriptParams = ['rttm', 'tsv', 'json', 'ctm', 'srt', 'transcript']
+            transcriptParams = transcriptParams.map((f) => {
+                return urlParams.get(f)
+            }).filter(Boolean)
+
+            let serverConfig = null
+            if (audio || transcriptParams.length) {
+                serverConfig = {
+                    mode: 'server',
+                    transcripts: []
+                }
+
+                if (audio) {
+                    serverConfig.audio = {
+                        url: audio
+                    }
+                }
+
+                if (transcriptParams.length) {
+                    transcriptParams.forEach(f => {
+                        const fileUrls = f.split(';')
+                        fileUrls.forEach((fUrl) => {
+                            const fileName = fUrl.split('/').pop();
+                            serverConfig.transcripts.push(
+                                {
+                                    url: fUrl,
+                                    fileName: fileName
+                                }
+                            )
+                        })
                     })
-                })
+                }
+            }
+            const presignedUrl = urlParams.get('presigned_url')
+            if (presignedUrl) {
+                serverConfig.presignedUrl = presignedUrl
+            }
+
+            if (config.mode === 'server' || serverConfig) {
+                this.loadServerMode(serverConfig ? serverConfig : config);
+            } else {
+                this.loadClientMode();
             }
         }
-        const presignedUrl = urlParams.get('presigned_url')
-        if (presignedUrl) {
-            serverConfig.presignedUrl = presignedUrl
-        }
+    }
 
-        if (config.mode === 'server' || serverConfig) {
-            this.loadServerMode(serverConfig ? serverConfig : config);
-        } else {
-            this.loadClientMode();
+        async imageOpen(index){
+        this.imageIndex = index;
+        return new Promise(resolve =>{
+                this.dataManager.serverRequestImage("https://gecko.research.gongio.net/s3_files/" + this.imagesCsv[this.imageIndex].file_path).then(async (res) => {
+                    this.imageSrc = URL.createObjectURL(res.data);
+                    resolve();
+                })
+            }
+        );
+    }
+
+    async imageChange(diff){
+        let index = this.imageIndex;
+        if (diff > 0){
+            index = index + diff <  this.imagesCsv.length ? index + diff : 0;
         }
+        else{
+            index = index + diff >= 0 ? index + diff : this.imagesCsv.length - 1;
+        }
+        return this.imageOpen(index);
+    }
+
+    async backToImageList(){
+        this.saveImageCsvLocal();
+        this.saveImageCsvServer();
+        this.imageSrc = null;
+        this.imageIndex = null;
+    }
+
+    async saveImageCsvServer(popup = false){
+        await combineImageCsv(this, this.imagesCsv);
+        return new Promise(resolve =>{
+                this.dataManager.serverSaveImageList(this.outputImagesCsv,"images/images.tsv", popup);
+                resolve();
+            }
+        );
+    }
+
+    async saveImageCsv(){
+        this.saveImageCsvLocal();
+        this.saveImageCsvServer(true);
     }
 
     setInitialValues() {

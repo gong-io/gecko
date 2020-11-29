@@ -170,3 +170,46 @@ export const parseAndLoadAudio = async (context, res) => {
         }
     }
 }
+
+
+export const parseImageCsv = async (context, res) => {
+    let fileData = res.data.split('\n');
+    var keys = fileData[0].split('\t');
+    context.imagesCsv = []
+    for (let i = 1 ; i < fileData.length; i++){
+        let data = {}
+        let values = fileData[i].split('\t');
+
+        for (let keyIndex = 0 ; keyIndex < keys.length; keyIndex++){
+            if (!data[keys[keyIndex]]){
+                let key = keys[keyIndex].trim();
+                if (key === 'presentation')
+                    data[key] = (values[keyIndex].toLowerCase() == 'true' || values[keyIndex] == '');
+                else if (key === 'bounding_box' && values[keyIndex]){
+                    let bounding_box = values[keyIndex].substring(1, values[keyIndex].length - 1);
+                    bounding_box = bounding_box.split(',');
+                    if(bounding_box.length == 4)
+                        data[key] = {x: bounding_box[0], y: bounding_box[1], width: bounding_box[2], height: bounding_box[3]};
+                    else
+                        data[key] = '';
+                }
+                else
+                    data[key] = values[keyIndex];
+            }
+        }
+        context.imagesCsv.push(data);
+    }
+}
+
+export const combineImageCsv = async (context, data) => {
+    return new Promise(resolve => {
+        context.outputImagesCsv = "file_path\tpredicted_title\tbounding_box\tpresentation\tconfidence_classifier";
+        for(let i = 0; i < data.length; i++){
+            let bounding_box = '';
+             if (data[i].bounding_box && data[i].bounding_box != '' && 'x' in data[i].bounding_box && 'y' in data[i].bounding_box && 'width' in data[i].bounding_box && 'height' in data[i].bounding_box)
+                bounding_box = `(${data[i].bounding_box.x},${data[i].bounding_box.y},${data[i].bounding_box.width},${data[i].bounding_box.height})`;
+            context.outputImagesCsv += `\n${data[i].file_path}\t${data[i].predicted_title}\t${bounding_box}\t${data[i].presentation}\t`;
+        }
+        resolve();
+    });
+}

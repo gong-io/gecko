@@ -463,3 +463,71 @@ input[type=range].gecko-mini-player-range {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
+
+
+.call-table{
+    font-size: 14px;
+    width:100%;
+
+}
+
+.call-table .table-header{
+    font-size: 16px;
+    border-radius: 3px 0 3px 0;
+    font-weight: bold;
+    color: white;
+    background-color: #812AC1;
+    padding-top: 15px;
+
+}
+
+.call-table .table-header .table-call-id{
+    cursor: default;
+	color: white;
+}
+
+
+.call-table div{
+    display: flex;
+    padding: 7px;
+}
+
+.call-table .table-call-id:hover{
+    font-weight: bold;
+}
+
+.call-table .table-call-id{
+	cursor: pointer;
+	color: #812AC1;
+    width: 25%;
+}
+
+.rectangle {
+    box-shadow: 0 0 3px 3px #a8a3abc2;
+    border: 2px dashed #812ac1;
+    border-radius: 3px;
+    position: absolute;
+}
+
+.call-table .table-call-id:hover{
+    font-weight: bold;
+}
+.call-table .table-call-status{
+    width: 20%;
+}
+
+.call-table .table-call-comment{
+    width: 55%;
+}
+
+.call-table div span{
+    padding: 10px;
+}
+
+.call-table .table-note {
+    justify-content: flex-end;
+    padding: 5px 90px;
+    border-top: dotted 1px lightgray;
+    color: black;
+    font-size: small;
+}

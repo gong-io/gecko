@@ -1,0 +1,27 @@
+
+<div>
+    <div class="call-table">
+        <div class="table-header">
+            <span class="table-call-status" style="width:5%"></span>
+            <span class="table-call-id" style="width:35%;">file_path</span>
+            <span class="table-call-status">predicted_title</span>
+            <span class="table-call-status">bounding_box</span>
+            <span class="table-call-status">presentation</span>
+<!--            <span class="table-call-status">confidence_classifier</span>-->
+        </div>
+        <div ng-repeat="(index, imageLine) in parent.imagesCsv" ng-hide="imageLine.predicted_title != '' || !imageLine.presentation">
+<!--            -->
+            <span class="table-call-status" style="width:5%">{{ index }}</span>
+            <span class="table-call-id" style="width:35%;" ng-click="clickPath(index)">{{ imageLine.file_path }}</span>
+            <span class="table-call-status">{{ imageLine.predicted_title }}</span>
+            <span class="table-call-status">({{ imageLine.bounding_box.x }},{{ imageLine.bounding_box.y }},{{ imageLine.bounding_box.width }},{{ imageLine.bounding_box.height }})</span>
+            <span class="table-call-status">{{ imageLine.presentation }}</span>
+<!--            <span class="table-call-status">{{ imageLine.confidence_classifier }}</span>-->
+        </div>
+
+        <div class="table-note">
+            <span>Click on the image you want to edit</span>
+        </div>
+    </div>
+</div>
+<!--<img ng-if="parent.imageSrc" src="{{parent.imageSrc}}">-->

@@ -174,6 +174,98 @@ class dataManager {
             return res;
         });
     }
+
+    serverRequestImage(imageUrl) {
+        let promises = [];
+        let res;
+
+        promises.push(this.$http({
+            method: 'GET',
+            url: imageUrl,
+            responseType: 'blob'
+        }).then((response) => {
+
+            res = response;
+
+        }, (e) => {
+            // called asynchronously if an error occurs
+            // or server returns response with an error status.
+            Swal.fire({
+                icon: 'error',
+                title: 'Loading the file has failed, open console for more details',
+                text: e.error
+            })
+            console.error('Image loading error', e)
+        }));
+
+        return this.$q.all(promises).then(() => {
+            return res;
+        });
+    }
+
+    serverRequestImageList(url) {
+        let promises = [];
+        let res;
+
+        promises.push(this.$http({
+            method: 'GET',
+            url: url,
+        }).then((response) => {
+
+            res = response;
+
+        }, (e) => {
+            // called asynchronously if an error occurs
+            // or server returns response with an error status.
+            Swal.fire({
+                icon: 'error',
+                title: 'Loading the file has failed, open console for more details',
+                text: e.error
+            })
+            console.error('Image loading error', e)
+        }));
+
+        return this.$q.all(promises).then(() => {
+            return res;
+        });
+    }
+
+    async serverSaveImageList(data, filename, popup = false) {
+        try {
+            const resp = await this.$http({
+                method: 'POST',
+                url:  '/upload_s3',
+                data: {
+                    filename: filename,
+                    data
+                }
+            })
+
+            if (popup){
+                if (resp.data && resp.data.OK) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: `File ${filename} successefully uploaded`
+                    })
+                }
+                else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Upload error',
+                        text: resp.data.error
+                    })
+                }
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Upload error',
+                text: e.statusText
+            })
+        }
+    }
+
 }
 
 
