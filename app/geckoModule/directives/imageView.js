@@ -15,7 +15,12 @@ export const imageViewDirective = () => {
             scope.predictedTitle = document.getElementById('PredictedTitle');
             scope.change = (diff) => {
                 scope.updateList();
-                let promise = scope.parent.imageChange(diff);
+                let newIndex;
+                if (diff > 0)
+                    newIndex = (scope.parent.imageIndex + diff) % (scope.parent.imagesCsv.length - 1);
+                else
+                    newIndex = scope.parent.imageIndex + diff >= 0 ? scope.parent.imageIndex + diff : this.imagesCsv.length - 1;
+                let promise = scope.parent.imageOpen(newIndex);
                 promise.then(()=>{
                     scope.imageIndex = scope.parent.imageIndex;
                     scope.init(scope.canvas);
@@ -23,8 +28,8 @@ export const imageViewDirective = () => {
                 scope.parent.saveImageCsvServer();
             }
 
-            angular.element(document).bind("keyup", function (event) {
-                if(event.which === 13 || ((event.metaKey || event.ctrlKey) && event.which === 39)) {
+            angular.element(document).bind("keydown", function (event) {
+                if((event.which === 13 && !($("button").is(":focus"))) || ((event.metaKey || event.ctrlKey) && event.which === 39)) {
                     scope.change(1);
                 }
                 else if((event.metaKey || event.ctrlKey) && event.which === 37){

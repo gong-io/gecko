@@ -184,12 +184,17 @@ export const parseImageCsv = async (context, res) => {
             if (!data[keys[keyIndex]]){
                 let key = keys[keyIndex].trim();
                 if (key === 'presentation')
-                    data[key] = (!values[keyIndex] || values[keyIndex].toLowerCase() == 'true' || values[keyIndex] == '');
+                    data[key] = (!values[keyIndex] || values[keyIndex] == '' || values[keyIndex].toLowerCase() == 'true');
                 else if (key === 'bounding_box' && values[keyIndex]){
                     let bounding_box = values[keyIndex].substring(1, values[keyIndex].length - 1);
                     bounding_box = bounding_box.split(',');
-                    if(bounding_box.length == 4)
+                    if(bounding_box.length == 4){
+                        if (bounding_box[0].includes("("))
+                            bounding_box[0] = bounding_box[0].substring(1);
+                        if (bounding_box[3].includes(")"))
+                            bounding_box[3] = bounding_box[3].substring(0,values[keyIndex].length - 1);
                         data[key] = {x: bounding_box[0], y: bounding_box[1], width: bounding_box[2], height: bounding_box[3]};
+                    }
                     else
                         data[key] = '';
                 }
