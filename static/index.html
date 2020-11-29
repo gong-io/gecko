@@ -29,13 +29,13 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li>
+                <li ng-show="!ctrl.isImageMode">
                     <a class="audio__filename" title="{{ ctrl.audioFileName }}">
                         <b>Audio filename: </b>
                         {{ ctrl.audioFileName }}
                     </a>
                 </li>
-                <li class="">
+                <li class="" ng-show="!ctrl.isImageMode">
                     <a>
                         <b>Time: </b>
                         <span id="timeSpan"></span>
@@ -50,11 +50,16 @@
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li class="active">
-                    <a href="#" onclick="location.reload();">
+                    <a href="#" onclick="location.reload();" ng-if="!ctrl.isImageMode">
                         <i class="glyphicon glyphicon-open"></i>
                         Load
                     </a></li>
-                <li class="dropdown" ng-if="!ctrl.isServerMode">
+                <li class="dropdown" ng-if="ctrl.isImageMode" ng-show="ctrl.imageSrc">
+                    <a href="#" ng-click="ctrl.backToImageList();">
+<!--                        <i class="glyphicon glyphicon-open"></i>-->
+                            Back to list
+                    </a></li>
+                <li class="dropdown" ng-if="!ctrl.isServerMode && !ctrl.isImageMode">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                        aria-expanded="false">
                         <i class="glyphicon glyphicon-save"></i>
@@ -88,8 +93,15 @@
                         Save
                     </a>
                 </li>
-
-                <li>
+                <li class="dropdown" ng-if="ctrl.isImageMode && ctrl.imageSrc">
+                    <a href="#"
+                       class="dropdown-toggle" role="button"
+                       ng-click="ctrl.saveImageCsv()">
+                        <i class="glyphicon glyphicon-save"></i>
+                        Save
+                    </a>
+                </li>
+                <li ng-show="!ctrl.isImageMode">
                     <a href="#" ng-click="ctrl.openShortcutsInfo()">
                         <i class="glyphicon glyphicon-info-sign"></i>
                         Shortcuts
@@ -133,7 +145,10 @@
     </div>
 </div>
 
-
+<div ng-if="ctrl.isImageMode">
+    <image-table ng-if="!ctrl.imageIndex && !ctrl.imageSrc" parent="ctrl"></image-table>
+    <image-view ng-if="ctrl.imageSrc" parent="ctrl"></image-view>
+</div>
 
 <div class="wrapper" ng-show="ctrl.ready">
     <div id="zoom" class="row" style="margin-bottom: 2em; margin-top: 1em;" ng-show="ctrl.userConfig.showWaveform">

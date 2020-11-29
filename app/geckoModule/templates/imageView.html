@@ -1,0 +1,28 @@
+<div id="container" style="margin-top:40px; display:flex; flex-direction: row; align-items: center; justify-content: center;">
+    <div id="canvas"
+         style="
+            background-img: none;
+            background-position: center;
+            background-size: contain;
+            background-repeat: no-repeat;
+
+            width: 480px;
+            position: relative;
+            ">
+    </div>
+    <div style="display:flex; flex-direction:column; margin-left: 7%;" >
+        <span style="font-size: 15px; margin-bottom: 10px;">Predicted title</span>
+        <textarea  style="margin: 0px; width: 312px; height: 130px;" id="PredictedTitle"></textarea>
+    </div>
+</div>
+<div style="margin: 3% 15%; display:flex; flex-direction: row; align-items: center; justify-content: center;">
+    <input style="margin: 0;" type="checkbox" id="PresentationCheckbox">
+    <label style="margin: 0; font-size: 15px;" for="PresentationCheckbox">Not presentation {{ parent.imagesCsv[imageIndex].confidence_classifier }}</label>
+</div>
+<div style="margin: 3% 15%; display:flex; flex-direction: row; align-items: center; justify-content: center;">
+    <button ng-click="deleteBoundingBox()" class="btn btn-primary">Delete Bounding Box</button>
+</div>
+<div style="margin: 3% 15%; display:flex; flex-direction: row; align-items: center; justify-content: space-around;">
+    <button ng-click="change(-1)" class="btn btn-primary">Prev</button>
+    <button ng-click="change(1)" class="btn btn-primary">Next</button>
+</div>

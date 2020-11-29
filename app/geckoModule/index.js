@@ -24,6 +24,8 @@ import {
     proofReadingViewDirective,
     playPartDirective,
     miniPlayerDirective,
+    imageViewDirective,
+    imageTableDirective,
     editableDirective,
     Checklist,
     fileRead,
@@ -58,6 +60,8 @@ geckoModule.directive('proofReadingView', ['$timeout', 'eventBus', 'store', proo
 geckoModule.directive('editable', editableDirective)
 geckoModule.directive('playPart', ['store', playPartDirective])
 geckoModule.directive('miniPlayer', miniPlayerDirective)
+geckoModule.directive('imageView', imageViewDirective)
+geckoModule.directive('imageTable', imageTableDirective)
 geckoModule.directive('checklistModel', Checklist)
 geckoModule.directive('fileread', fileRead)
 geckoModule.directive('comparsion', ['discrepancyService', comparsionDirective])
