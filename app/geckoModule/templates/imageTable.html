@@ -1,4 +1,13 @@
-
+<div style="margin: 0.5% 15%; display:flex; flex-direction: row; align-items: center; justify-content: flex-end;">
+    <div>
+        <span>Search:</span>
+        <input ng-change="changeSearch()" type="text" ng-model="search">
+    </div>
+    <div>
+        <span>Filter unedited:</span>
+        <input ng-change="changeSearch()"  type="checkbox" ng-model="only_done">
+    </div>
+</div>
 <div>
     <div class="call-table">
         <div class="table-header">
@@ -9,7 +18,7 @@
             <span class="table-call-status">presentation</span>
 <!--            <span class="table-call-status">confidence_classifier</span>-->
         </div>
-        <div ng-repeat="(index, imageLine) in parent.imagesCsv" ng-hide="imageLine.predicted_title != '' || !imageLine.presentation">
+        <div ng-repeat="(index, imageLine) in parent.imagesCsv" ng-show="test(imageLine, index)">
 <!--            -->
             <span class="table-call-status" style="width:5%">{{ index }}</span>
             <span class="table-call-id" style="width:35%;" ng-click="clickPath(index)">{{ imageLine.file_path }}</span>
