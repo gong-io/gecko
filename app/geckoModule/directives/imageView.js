@@ -9,22 +9,27 @@ export const imageViewDirective = () => {
         },
         templateUrl: imageViewTemplate,
         link: (scope, element, attrs) => {
+            scope.filteredIndex = scope.parent.indexes.findIndex(element => element === scope.parent.imageIndex);
+
             scope.imageIndex = scope.parent.imageIndex;
             scope.canvas = document.getElementById('canvas');
             scope.presentationCheckbox = document.getElementById('PresentationCheckbox');
             scope.predictedTitle = document.getElementById('PredictedTitle');
             scope.change = (diff) => {
                 scope.updateList();
-                let newIndex;
+
                 if (diff > 0)
-                    newIndex = (scope.parent.imageIndex + diff) % (scope.parent.imagesCsv.length - 1);
+                    scope.filteredIndex = (scope.filteredIndex + diff) % (scope.parent.indexes.length - 1);
                 else
-                    newIndex = scope.parent.imageIndex + diff >= 0 ? scope.parent.imageIndex + diff : this.imagesCsv.length - 1;
+                    scope.filteredIndex = scope.filteredIndex + diff >= 0 ? scope.filteredIndex + diff : scope.parent.indexes.length - 1;
+                let newIndex = scope.parent.indexes[scope.filteredIndex];
+
                 let promise = scope.parent.imageOpen(newIndex);
                 promise.then(()=>{
                     scope.imageIndex = scope.parent.imageIndex;
                     scope.init(scope.canvas);
                 });
+                scope.imageIndex = scope.parent.imageIndex;
                 scope.parent.saveImageCsvServer();
             }
 
