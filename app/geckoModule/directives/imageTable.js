@@ -21,7 +21,7 @@ export const imageTableDirective = () => {
 
             scope.test = (imageLine,index)=>{
                 if(scope.search){
-                    if(imageLine.predicted_title == scope.search){
+                    if(imageLine.predicted_title.includes(scope.search)){
                         scope.parent.indexes.push(index);
                         return true;
                     }
