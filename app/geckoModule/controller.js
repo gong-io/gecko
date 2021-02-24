@@ -55,6 +55,7 @@ class MainController {
         this.eventBus = eventBus
         this.historyService = historyService
         this.config = config
+        this.legend = []
 
         this.zoomTooltipOpen = false
 
@@ -1200,13 +1201,13 @@ class MainController {
             }
         })
 
-        self.filesData.forEach(fileData => {
+        self.filesData.forEach((fileData, index) => {
             fileData.legend = [ ...speakersColors ]
-
             fileData.data.forEach(monologue => {
                 if (!monologue.speaker.id) return;
 
                 let speakerId = monologue.speaker.id;
+                let speakerName = "name" in monologue.speaker ? monologue.speaker.name : '';
 
                 if (speakerId === constants.UNKNOWN_SPEAKER) {
                     speakerId = '';
@@ -1227,19 +1228,32 @@ class MainController {
                 }
 
                 speakers.forEach(s => {
-                    const found = fileData.legend.find(sc => sc.value === s)
+                    var found = fileData.legend.find(sc => sc.value === s)
                     // Encounter the speaker id for the first time (among all files)
+
                     if (!found) {
-                        const newSpeaker = {
-                            value: s,
-                            color : this.fileSpeakerColors && this.fileSpeakerColors[s] ? this.fileSpeakerColors[s] : null
+                        var newSpeaker = this.legend.find(sc => sc.value === s)
+                        if (speakerName != '' && !newSpeaker){
+                            newSpeaker = this.legend.find(sc => sc.name === speakerName);
+                            if (newSpeaker){
+                                newSpeaker = JSON.parse(JSON.stringify(newSpeaker));
+                                newSpeaker.value = s;
+                            }
                         }
+                        if (!newSpeaker)
+                            newSpeaker = {
+                                value: s,
+                                name: speakerName,
+                                color : this.fileSpeakerColors && this.fileSpeakerColors[s] ? this.fileSpeakerColors[s] : null
+                            }
                         fileData.legend.push(newSpeaker)
                     }
                 });
             })
 
-            fileData.legend = prepareLegend(fileData.legend)
+            fileData.legend = prepareLegend(fileData.legend, this.legend)
+            this.legend.push(...fileData.legend);
+            this.legend = this.legend.filter(el => !speakersColors.includes(el));
         });
     }
 
@@ -1261,8 +1275,10 @@ class MainController {
                 var monologue = monologues[i];
 
                 var speakerId = '';
+                var speakerName = '';
                 if (monologue.speaker) {
                     speakerId = monologue.speaker.id.toString();
+                    speakerName = "name" in monologue.speaker ? monologue.speaker.name : '';
                 }
 
                 if (speakerId === constants.UNKNOWN_SPEAKER) {
@@ -1293,6 +1309,7 @@ class MainController {
                         initFinished: true,
                         fileIndex: fileIndex,
                         speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x => x), //removing empty speaker
+                        speakerName: speakerName,
                         words: monologue.words.map((w) => {
                             return {
                                 ...w,
@@ -1588,6 +1605,8 @@ class MainController {
     }
 
     speakerChanged(speaker, isFromContext = false, event = null) {
+//        console.log(speaker)
+
         var self = this;
         const currentRegion = isFromContext ? self.contextMenuRegion : self.selectedRegion
 
@@ -1607,6 +1626,9 @@ class MainController {
         // Is newly selected
         else {
             speakers.push(speaker.value);
+            if (currentRegion.data.speakerName != ''){
+                currentRegion.data.speakerName = speaker.name;
+            }
         }
 
         this.historyService.addHistory(currentRegion);
@@ -1680,6 +1702,7 @@ class MainController {
         const regularSpeakers = legend.slice(0, firstDefaultIndex)
         legend.push({
             value: this.newSpeakerName,
+//            name: this.newSpeakerName,
             color: constants.SPEAKER_COLORS[regularSpeakers.length % constants.SPEAKER_COLORS.length]
         })
 
