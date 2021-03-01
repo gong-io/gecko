@@ -531,3 +531,20 @@ input[type=range].gecko-mini-player-range {
     color: black;
     font-size: small;
 }
+
+.floating-filename {
+    position: absolute;
+    left: 5px;
+    z-index: 50;
+    background-color: #00000035;
+    border-radius: 5px;
+    padding: 0 2px;
+    box-shadow: 0 0 3px 0px #00000040;
+    color: white;
+}
+.floating-filename.top-float {
+    top: 5px;
+}
+.floating-filename.bottom-float {
+    bottom: 25px;
+}
