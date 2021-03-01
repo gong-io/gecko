@@ -899,7 +899,8 @@ class MainController {
         if (items && items.length) {
             const spans = items.map(s => {
                 const legendItem = legend.find(l => l.value === s)
-                return `<span style="color: ${legendItem.color};">${s}</span>`
+                if (legendItem)
+                    return `<span style="color: ${legendItem.color};">${s}</span>`
             })
             return spans.join(', ')
         } else if (items && !items.length) {
@@ -1665,6 +1666,25 @@ class MainController {
             }
         }, self.selectedFileIndex);
 
+        let fileAmount = self.filesData.length;
+        var changeColor = []; // [] - no change, [{fileIndex, speaker, color, oldColor}] - change color of speakers
+        if (fileAmount == 2){
+            let index = self.selectedFileIndex == 0 ? 1 : 0;
+            const found = self.filesData[index].legend.find((s) => s.value === speaker.value && s !== speaker)
+            if (found){
+
+                let sameColor = self.filesData[self.selectedFileIndex].legend.find((s) => s.color === found.color)
+                if (sameColor){
+                    changeColor.push({"fileIndex":self.selectedFileIndex, "speaker":sameColor.value, "color":speaker.color, "oldColor": sameColor.color})
+                    self.filesData[self.selectedFileIndex].legend.find((s) => s.value === sameColor.value).color = speaker.color;
+                    this.changeSpeakerColor(self.selectedFileIndex, sameColor.value, speaker.color, sameColor.color);
+                }
+                changeColor.push({"fileIndex":self.selectedFileIndex, "speaker":newText, "color":found.color, "oldColor": speaker.color})
+                self.filesData[self.selectedFileIndex].legend.find((s) => s.value === found.value).color = found.color;
+                this.changeSpeakerColor(self.selectedFileIndex, newText, found.color, speaker.color, false)
+            }
+        }
+
         this.eventBus.trigger('geckoChanged', {
             event: 'speakerNameChanged',
             data: [self.selectedFileIndex, oldText, newText, changedRegions]
@@ -1673,7 +1693,10 @@ class MainController {
         this.setMergedRegions()
 
         // notify the undo mechanism to change the legend as well as the regions
-        this.historyService.undoStack.push([constants.SPEAKER_NAME_CHANGED_OPERATION_ID, self.selectedFileIndex, oldText, newText, changedRegions]);
+        if (changeColor == [])
+            this.historyService.undoStack.push([constants.SPEAKER_NAME_CHANGED_OPERATION_ID, self.selectedFileIndex, oldText, newText, changedRegions]);
+       else
+           this.historyService.undoStack.push([constants.SPEAKER_NAME_AND_COLOR_CHANGED_OPERATION_ID, self.selectedFileIndex, oldText, newText, changedRegions, changeColor]);
     }
 
     updateLegend(fileIndex, oldSpeaker, newSpeaker) {
@@ -1721,17 +1744,24 @@ class MainController {
 //     }
 // }
 
-    changeSpeakerColor(fileIndex, speaker, color) {
+    changeSpeakerColor(fileIndex, speaker, color, oldColor='', updateHistory=true) {
         var self = this;
 
-        self.filesData[fileIndex].legend[speaker] = color;
+//        self.filesData[fileIndex].legend[speaker] = color;
+        self.filesData[fileIndex].legend.find((s) => s.value === speaker).color = color;
 
         this.iterateRegions((region) => {
             if (region.data.speaker.indexOf(speaker) > -1) {
-                //region.color = color;
+                oldColor = oldColor == '' || oldColor == color ? region.color : oldColor;
                 self.regionUpdated(region);
             }
         }, fileIndex);
+
+        if (updateHistory && oldColor != ''){
+            this.historyService.undoStack.push([constants.SPEAKER_COLORS_CHANGED_OPERATION_ID, fileIndex, speaker, color, oldColor]);
+        }
+
+
     }
 
     async loadDraft (draft) {

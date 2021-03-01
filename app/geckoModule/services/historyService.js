@@ -1,5 +1,5 @@
 import { copyRegion } from '../utils'
-import { SPEAKER_NAME_CHANGED_OPERATION_ID, REGION_TEXT_CHANGED_OPERATION_ID } from '../constants'
+import { SPEAKER_NAME_CHANGED_OPERATION_ID, REGION_TEXT_CHANGED_OPERATION_ID, SPEAKER_COLORS_CHANGED_OPERATION_ID, SPEAKER_NAME_AND_COLOR_CHANGED_OPERATION_ID } from '../constants'
 
 class HistoryService {
     constructor () {
@@ -40,6 +40,23 @@ class HistoryService {
         } else if (regionIds[0] === REGION_TEXT_CHANGED_OPERATION_ID) {
             needUpdateEditable = true
             regionIds = [regionIds[1]]
+        } else if (regionIds[0] === SPEAKER_COLORS_CHANGED_OPERATION_ID) {
+//            console.log(regionIds)
+            context.changeSpeakerColor(regionIds[1], regionIds[2], regionIds[4], regionIds[3], false)
+            return
+        } else if (regionIds[0] === SPEAKER_NAME_AND_COLOR_CHANGED_OPERATION_ID) {
+//            console.log(regionIds)
+            for (let i = 0; i < regionIds[5].length; i++){
+                let currentColorChange = regionIds[5][i];
+                context.changeSpeakerColor(currentColorChange.fileIndex, currentColorChange.speaker, currentColorChange.oldColor, currentColorChange.color, false);
+            }
+            let fileIndex = regionIds[1];
+            let oldSpeaker = regionIds[2];
+            let newSpeaker = regionIds[3];
+
+            context.updateLegend(fileIndex, newSpeaker, oldSpeaker);
+
+            regionIds = regionIds[4];
         }
 
 
