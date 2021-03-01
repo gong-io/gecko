@@ -137,7 +137,10 @@
         </button>
     </div>
     <div class="col-md-{{ ctrl.videoMode && ctrl.userConfig.showVideo ? '9' : '12' }} pl-0 pr-0">
-        <div id="waveform" ng-show="ctrl.userConfig.showWaveform" context-menu="regionContextMenu" app="ctrl"></div>
+        <div id="waveform" ng-show="ctrl.userConfig.showWaveform" context-menu="regionContextMenu" app="ctrl">
+            <p class="floating-filename top-float" ng-if="ctrl.filesData.length == 2">{{ctrl.filesData[0].filename.substring(0, ctrl.filesData[1].filename.lastIndexOf("."))}}</p>
+            <p class="floating-filename bottom-float" ng-if="ctrl.filesData.length == 2">{{ctrl.filesData[1].filename.substring(0, ctrl.filesData[1].filename.lastIndexOf("."))}}</p>
+        </div>
         <div id="timeline" ng-show="ctrl.userConfig.showWaveform"></div>
         <div class="row" ng-show="ctrl.ready && !ctrl.userConfig.showWaveform">
             <mini-player parent="ctrl"></mini-player>
