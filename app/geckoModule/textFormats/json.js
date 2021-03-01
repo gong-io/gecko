@@ -64,9 +64,9 @@ export const parse = (data, $parent) => {
     
     $parent.comparsionData.push(words);
 
-    if (data['colors']) {
-        return [ monologues, data['colors'] ]
-    }
+//    if (data['colors']) {
+//        return [ monologues, data['colors'] ]
+//    }
 
     return [ monologues, null ];
 }
@@ -104,7 +104,7 @@ export const convert = (app, fileIndex) => {
             })
         }
         data.monologues.push({
-            speaker: {id: self.formatSpeaker(region.data.speaker)},
+            speaker: {id: self.formatSpeaker(region.data.speaker), name: region.data.speakerName},
             start: region.start,
             end: region.end,
             terms: terms
@@ -112,10 +112,10 @@ export const convert = (app, fileIndex) => {
 
     }, fileIndex, true);
 
-    data.colors = {}
-    app.filesData[fileIndex].legend.forEach(l => {
-        data.colors[l.value] = l.color
-    })
+//    data.colors = {}
+//    app.filesData[fileIndex].legend.forEach(l => {
+//        data.colors[l.value] = l.color
+//    })
 
     return jsonStringify(data);
 }

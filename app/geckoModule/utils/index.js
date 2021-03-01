@@ -171,7 +171,7 @@ export const splitLegendSpeakers = (legend) => {
     }
 }
 
-export const prepareLegend = (fileDataLegend) => {
+export const prepareLegend = (fileDataLegend, appLegend=[]) => {
     const legend = sortLegend(fileDataLegend)
     let { regularSpeakers, defaultSpeakers } = splitLegendSpeakers(legend)
     regularSpeakers = regularSpeakers.sort((a, b) => {
@@ -183,10 +183,11 @@ export const prepareLegend = (fileDataLegend) => {
             return 0
         }
     }).map((rs, index) => {
+        let color_index = index + appLegend.length;
         return {
             ...rs,
-            shortcut: index + 1,
-            color: rs.color ? rs.color : constants.SPEAKER_COLORS[index % constants.SPEAKER_COLORS.length]
+            shortcut: color_index + 1,
+            color: rs.color ? rs.color : constants.SPEAKER_COLORS[color_index % constants.SPEAKER_COLORS.length]
         }
     })
     return [ ...regularSpeakers, ...defaultSpeakers ]
