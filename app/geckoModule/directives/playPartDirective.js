@@ -5,13 +5,15 @@ export const playPartDirective = (store) => {
         replace: true,
         restrict: "E",
         scope: {
-            'rep': '=representative'
+            'rep': '=representative',
+            'label': '=label',
         },
         templateUrl: playPartTemplate,
         link: (scope, element, attrs) => {
             if(!scope.rep){
                 scope.rep = {};
             }
+            scope.totalDuration = scope.$parent.ctrl.totalDuration;
 
             //taken from:
             //https://github.com/vikasmagar512/wavesurfer-audio-editor/blob/master/src/utils/waveSurferOperation.js
@@ -59,16 +61,50 @@ export const playPartDirective = (store) => {
             let source;
 
             const play = () => {
-                scope.rep.start = parseFloat(scope.rep.start);
-                scope.rep.end = parseFloat(scope.rep.end);
 
+//                scope.rep.start = parseFloat(scope.rep.start).toFixed(2);
+//                scope.rep.end = parseFloat(scope.rep.end).toFixed(2);
+
+                if(!isNaN(scope.rep.start) || !isNaN(scope.rep.end)){
+                    if (isNaN(scope.rep.start))
+                        scope.rep.start = scope.rep.end > 5 ? scope.rep.end - 5 : 0;
+                    else if (isNaN(scope.rep.end))
+                        scope.rep.end = scope.rep.start < scope.totalDuration - 5 ? scope.rep.start + 5 : scope.totalDuration;
+                    else{
+                        if (scope.rep.start > scope.rep.end){
+                            let temp = scope.rep.end;
+                            scope.rep.end = scope.rep.start;
+                            scope.rep.start = temp;
+                        }
+                        if (scope.rep.start >= scope.totalDuration){
+                            scope.rep.start = scope.totalDuration - 5;
+                        }
+                        if (scope.rep.end > scope.totalDuration){
+                            scope.rep.end = scope.totalDuration;
+                        }
+                    }
+                }
                 if (isNaN(scope.rep.start) && isNaN(scope.rep.end)) {
                     let parent = scope.$parent.ctrl;
                     if (parent.selectedRegion) {
                         scope.rep.start = parent.selectedRegion.start;
                         scope.rep.end = parent.selectedRegion.end;
                     } else {
-                        return;
+                        let firstRegion;
+                        parent.iterateRegions(region => {
+                                if (region.data.speaker.length === 1 && region.data.speaker[0] === scope.label){
+                                    firstRegion = firstRegion ? firstRegion : region;
+                                    return "STOP"
+                                }
+                        }, parent.selectedFileIndex)
+
+                        if (firstRegion){
+                            scope.rep.start = firstRegion.start;
+                            scope.rep.end = firstRegion.end;
+                        }
+                        else{
+                            return;
+                        }
                     }
                 }
 
@@ -94,6 +130,22 @@ export const playPartDirective = (store) => {
 
             scope.playStop = () => {
                 scope.isPlaying ? stop() : play();
+            }
+
+            scope.formatTime = (att) => {
+                if (!isNaN(scope.rep[att]))
+                    scope.rep[att] = parseFloat(scope.rep[att]).toFixed(3);
+                else
+                    scope.rep[att] = "";
+            }
+            scope.isEmpty = () => {
+                if(scope.rep)
+                    return (isNaN(scope.rep.start) || isNaN(scope.rep.end));
+                return false;
+            }
+
+            scope.clear = () => {
+                scope.rep = {};
             }
         }
     }

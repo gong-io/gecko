@@ -1,9 +1,14 @@
-<span style="margin:10px">
-    <input type="text" ng-model="rep.start" style="font-size:13px;width:35px" ng-value="rep.start | number : 2">
-    -
-    <input type="text" ng-model="rep.end" style="font-size:13px;width:35px" ng-value="rep.end | number : 2">
-    <button class="btn btn-primary btn-sm" ng-click="playStop()" style="vertical-align: top; height: 23px">
-        <i class="glyphicon glyphicon-play" ng-show="!isPlaying" style="vertical-align: top;"></i>
-        <i class="glyphicon glyphicon-pause" ng-show="isPlaying" style="vertical-align: top;"></i>
-    </button>
+<span class="flex space-between play-part">
+    <span>
+        <input type="text" ng-model="rep.start" style="font-size:13px;width:35px;" ng-value="rep.start" min="0" ng-blur="formatTime('start')">
+        -
+        <input type="text" ng-model="rep.end" style="font-size:13px;width:35px" ng-value="rep.end" min="0" ng-blur="formatTime('end')">
+    </span>
+    <a class="play-part play-part-play" ng-click="playStop()" style="cursor: pointer;">
+        <i class="glyphicon glyphicon-play" ng-show="!isPlaying"></i>
+        <i class="glyphicon glyphicon-pause" ng-show="isPlaying"></i>
+    </a>
+    <a class="play-part play-part-clear" ng-click="clear()" style="cursor: pointer; width:10px;">
+        <i class="glyphicon glyphicon-trash" ng-hide="isEmpty() || isPlaying"></i>
+    </a>
 </span>

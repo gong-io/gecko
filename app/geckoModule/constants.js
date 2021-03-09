@@ -67,10 +67,15 @@ export const defaultSpeakers = speakers;
 
 export const MINIMUM_LENGTH = 0.1;
 
-export const SPEAKER_NAME_CHANGED_OPERATION_ID = '1';
-export const REGION_TEXT_CHANGED_OPERATION_ID = '2';
-export const SPEAKER_COLORS_CHANGED_OPERATION_ID = '3';
-export const SPEAKER_NAME_AND_COLOR_CHANGED_OPERATION_ID = '4';
+export const OPERATION_IDS = {
+    SPEAKER_NAME_CHANGED : '1',
+    REGION_TEXT_CHANGED : '2',
+    SPEAKER_COLORS_CHANGED : '3',
+    SPEAKER_NAME_AND_COLOR_CHANGED : '4',
+    SPEAKER_LABEL_ADDED : '5',
+    SPEAKER_LABEL_DELETED : '6',
+    SPEAKER_LABEL_MERGED : '7',
+};
 
 export const NO_SPEAKER_COLOR = 'hsla(0, 0%, 30%, 0.1)';
 
