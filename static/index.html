@@ -138,8 +138,8 @@
     </div>
     <div class="col-md-{{ ctrl.videoMode && ctrl.userConfig.showVideo ? '9' : '12' }} pl-0 pr-0">
         <div id="waveform" ng-show="ctrl.userConfig.showWaveform" context-menu="regionContextMenu" app="ctrl">
-            <p class="floating-filename top-float" ng-if="ctrl.filesData.length == 2">{{ctrl.filesData[0].filename.substring(0, ctrl.filesData[1].filename.lastIndexOf("."))}}</p>
-            <p class="floating-filename bottom-float" ng-if="ctrl.filesData.length == 2">{{ctrl.filesData[1].filename.substring(0, ctrl.filesData[1].filename.lastIndexOf("."))}}</p>
+            <p class="floating-filename top-float" ng-show="ctrl.ready" ng-if="ctrl.filesData.length == 2">{{ctrl.filesData[0].filename.substring(0, ctrl.filesData[1].filename.lastIndexOf("."))}}</p>
+            <p class="floating-filename bottom-float" ng-show="ctrl.ready" ng-if="ctrl.filesData.length == 2">{{ctrl.filesData[1].filename.substring(0, ctrl.filesData[1].filename.lastIndexOf("."))}}</p>
         </div>
         <div id="timeline" ng-show="ctrl.userConfig.showWaveform"></div>
         <div class="row" ng-show="ctrl.ready && !ctrl.userConfig.showWaveform">
@@ -389,8 +389,7 @@
                 <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
             </button>
         </div>
-
-        <div class="col col-md-3 segment-labeling" 
+        <div class="col col-md-3 segment-labeling"
         ng-if="ctrl.userConfig.showSegmentLabeling"
         ng-class="{stretched: !ctrl.userConfig.showSegmentLabeling || (ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences)}">
             <div class="panel panel-default">
@@ -417,28 +416,68 @@
                     </div>
                     <div class="text-align-left" style="text-align: left" ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy">
                         <div class="form-group">
-                            <label class="annotation-label" style="background-color:{{ speaker.color + 80 }};"
-                                   ng-repeat="speaker in ctrl.filesData[ctrl.selectedFileIndex].legend">
+                            <div class="annotation-label" style="display: flex; justify-content: space-between; padding: 0; background-color:{{ speaker.color + 80 }};"
+                                 ng-repeat="speaker in ctrl.filesData[ctrl.selectedFileIndex].legend">
+                                <label style="margin: 0; padding: 3px 10px 1px; width: 100%;">
+                                    <input type="checkbox"
+                                           value="{{speaker.display}}"
+                                           ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker.value) > -1"
+                                           ng-click="ctrl.speakerChanged(speaker)"
+                                           ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy"
+                                           class="mb-0">
+                                    <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.{{ speaker.display }}</span>
+                                    <span ng-if="!speaker.isDefault" editable
+                                          changed="ctrl.speakerNameChanged(speaker, oldText,newText)"
+                                          ng-model="speaker.value"
+                                          title="{{speaker.value}}"
+                                    class="speaker-legend">
+                                    </span>
+    <!--                                <div class="pull-right">-->
+    <!--                                    <play-part representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>-->
+    <!--                                    <input type="color" ng-model="speaker.color" class="pull-right"-->
+    <!--                                          ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker.value, speaker.color)"/>-->
+    <!--                                </div>-->
+                                </label>
+                                <div class="btn-group dropdown pull-right" uib-dropdown auto-close="outsideClick" style="padding: 5px 10px 1px;" is-open="status['isopen_'+speaker.value]">
+                                    <a href uib-dropdown-toggle><i class="glyphicon glyphicon-option-horizontal" style="cursor: pointer; color: #666666;"></i></a>
+                                    <ul class="dropdown-menu" uib-dropdown-menu role="menu" >
+                                        <li role="menuitem" class="dropdown-item">
+                                            <a class="dropdown-item">
+                                                <b>Options</b>
+                                            </a>
+                                        </li>
+                                        <li role="menuitem" class="dropdown-item">
+                                            <a class="dropdown-item">
+                                                <play-part representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]" label="speaker.value"></play-part>
+                                            </a>
+                                        </li>
 
-                                <input type="checkbox"
-                                       value="{{speaker.display}}"
-                                       ng-checked="ctrl.selectedRegion.data.speaker.indexOf(speaker.value) > -1"
-                                       ng-click="ctrl.speakerChanged(speaker)"
-                                       ng-disabled="!ctrl.selectedRegion || ctrl.selectedRegion.data.isDummy""
-                                       class="mb-0">
-                                <span ng-if="speaker.isDefault" class="speaker-legend">{{ speaker.shortcut }}.{{ speaker.display }}</span>
-                                <span ng-if="!speaker.isDefault" editable
-                                      changed="ctrl.speakerNameChanged(speaker, oldText,newText)"
-                                      ng-model="speaker.value"
-                                      title="{{speaker.value}}"
-                                class="speaker-legend">
-                                </span>
-                                <div class="pull-right">
-                                    <play-part representative="ctrl.filesData[ctrl.selectedFileIndex].reps[speaker.value]"></play-part>
-                                    <input type="color" ng-model="speaker.color" class="pull-right"
-                                           ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker.value, speaker.color)"/>
+                                        <li role="menuitem">
+                                            <span class="dropdown-item flex space-between">
+                                                <span style="margin-right:5px;"> Change color</span>
+                                                    <input type="color" ng-model="speaker.color"
+                                                           class="primary-color"
+                                                           style="cursor:pointer;"
+                                                           ng-change="ctrl.changeSpeakerColor(ctrl.selectedFileIndex, speaker.value, speaker.color)">
+                                            </span>
+                                        </li>
+                                        <li class="divider dropdown-divider" ng-if="!speaker.isDefault"></li>
+                                        <li role="menuitem"
+                                            ng-if="!speaker.isDefault && !otherSpeaker.isDefault && otherSpeaker != speaker"
+                                            ng-repeat="otherSpeaker in ctrl.filesData[ctrl.selectedFileIndex].legend"
+                                            ng-click="status['isopen_'+speaker.value] = false; ctrl.mergeSpeakerLabel(speaker, otherSpeaker);">
+                                            <a class="dropdown-item flex space-between" href="#">
+                                                <span style="margin-right:5px; ">Merge with</span>
+                                                <span class="merge-label" style="background-color:{{ otherSpeaker.color + 80 }}">{{otherSpeaker.value}}</span>
+                                            </a>
+                                        </li>
+                                        <li class="divider dropdown-divider"  ng-if="!speaker.isDefault"></li>
+                                        <li role="menuitem" ng-if="!speaker.isDefault" ng-click="status['isopen_'+speaker.value] = false; ctrl.deleteSpeakerLabel(speaker);">
+                                            <a class="dropdown-item flex space-between" href="#" >Delete</a>
+                                        </li>
+                                      </ul>
                                 </div>
-                            </label>
+                            </div>
                         </div>
 
                         <div>
@@ -560,7 +599,7 @@
             <span title="{{speaker.value}}" class="speaker-legend" ng-if="!speaker.isDefault">{{ speaker.value }}</span>
         </a>
     </li>
-  </ul>
+</ul>
 
 <!--<script type="text/ng-template" id="selectAudioModal.html">-->
 <!--   -->

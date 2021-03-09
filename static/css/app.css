@@ -25,7 +25,7 @@
 
 .speaker-legend{
     display:inline-block;
-    max-width:120px;
+    max-width:80%;
     white-space: nowrap;
     overflow: hidden;
 }
@@ -547,4 +547,61 @@ input[type=range].gecko-mini-player-range {
 }
 .floating-filename.bottom-float {
     bottom: 25px;
+}
+
+input[type="checkbox"]{
+    margin-bottom: 0px;
+}
+input[type='number'] {
+    -moz-appearance:textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+
+.merge-label{
+    padding: 1px 5px;
+    box-shadow: 1px 1px 0px 1px #00000020;
+    border-radius: 3px;
+}
+
+a.play-part{
+
+}
+a.play-part.play-part-play{
+
+}
+a.play-part.play-part-pause{
+
+}
+a.play-part.play-part-clear{
+
+}
+
+.flex.space-between{
+    display: flex;
+    justify-content: space-between;
+}
+
+.primary-color{
+    border-radius: 100%;
+    padding: 0;
+    outline: none;
+    -webkit-appearance: none;
+    height: 22px;
+    width: 22px;
+    border: 1px solid #66666666;
+}
+
+.primary-color::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+.primary-color::-webkit-color-swatch {
+    border: none;
+    border-radius: 100%;
+    width: 100%;
+    height: 100%;
 }

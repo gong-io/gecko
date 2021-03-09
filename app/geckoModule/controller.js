@@ -283,7 +283,7 @@ class MainController {
         this.eventBus.on('regionTextChanged', (regionId) => {
             let currentRegion = this.getRegion(regionId)
             this.historyService.addHistory(currentRegion)
-            this.historyService.undoStack.push([constants.REGION_TEXT_CHANGED_OPERATION_ID, regionId])
+            this.historyService.undoStack.push([constants.OPERATION_IDS.REGION_TEXT_CHANGED, regionId])
 
             // this.resetEditableWords(currentRegion)
 
@@ -1022,6 +1022,7 @@ class MainController {
         this.iterateRegions((r) => {
             if (time >= r.start - constants.TOLERANCE && time <= r.end + constants.TOLERANCE) {
                 region = r;
+                return "STOP";
             }
         }, fileIndex);
 
@@ -1113,7 +1114,7 @@ class MainController {
 
     iterateRegions(func, fileIndex, sort) {
         var regions = this.wavesurfer.regions.list;
-
+        let stop = false;
         if (sort) {
             regions = sortDict(regions, 'start');
             /* iterate regions as Map */
@@ -1121,7 +1122,8 @@ class MainController {
                 if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
                     continue
                 }
-                func(region)
+                stop = func(region)
+                if (stop == "STOP")return
             }
         } else {
             for (key in regions) {
@@ -1129,7 +1131,8 @@ class MainController {
                 if (fileIndex !== undefined && region.data.fileIndex !== fileIndex) {
                     continue
                 }
-                func(region)
+                stop = func(region)
+                if (stop == "STOP")return
             }
         }
     }
@@ -1260,6 +1263,7 @@ class MainController {
 
     addRegions() {
         var self = this;
+        self.totalDuration = self.wavesurfer.getDuration();
 
         self.currentRegions = [];
 
@@ -1646,12 +1650,71 @@ class MainController {
         this.eventBus.trigger('proofReadingSetSelected')
     }
 
+    mergeSpeakerLabel(currentSpeaker, mergeToSpeaker) {
+
+        this.filesData[this.selectedFileIndex].legend = this.filesData[this.selectedFileIndex].legend.filter(s => s.value != currentSpeaker.value);
+
+        let changedRegions = [];
+
+        this.iterateRegions(region => {
+            let index = region.data.speaker.indexOf(currentSpeaker.value);
+            if (index > -1) {
+                region.data.speaker.splice(index);
+                if (!region.data.speaker.includes(mergeToSpeaker)){
+                    region.data.speaker.push(mergeToSpeaker.value);
+                }
+                this.historyService.addHistory(region);
+                changedRegions.push(region.id);
+                this.regionUpdated(region);
+            }
+        }, this.selectedFileIndex);
+
+//        this.eventBus.trigger('geckoChanged', {
+//            event: 'speakerLabelDeleted',
+//            data: [this.selectedFileIndex, speaker, changedRegions]
+//        })
+
+        this.setMergedRegions()
+        this.historyService.undoStack.push([constants.OPERATION_IDS.SPEAKER_LABEL_MERGED, this.selectedFileIndex, currentSpeaker, mergeToSpeaker, changedRegions]);
+    }
+
+    deleteSpeakerLabel(speaker) {
+
+        this.filesData[this.selectedFileIndex].legend = this.filesData[this.selectedFileIndex].legend.filter(s => s.value != speaker.value);
+
+        let changedRegions = [];
+
+        this.iterateRegions(region => {
+            let index = region.data.speaker.indexOf(speaker.value);
+            if (index > -1) {
+                region.data.speaker.splice(index);
+                this.historyService.addHistory(region);
+                changedRegions.push(region.id);
+                this.regionUpdated(region);
+            }
+        }, this.selectedFileIndex);
+
+//        this.eventBus.trigger('geckoChanged', {
+//            event: 'speakerLabelDeleted',
+//            data: [this.selectedFileIndex, speaker, changedRegions]
+//        })
+
+        this.setMergedRegions()
+        this.historyService.undoStack.push([constants.OPERATION_IDS.SPEAKER_LABEL_DELETED, this.selectedFileIndex, speaker, changedRegions]);
+    }
+
     speakerNameChanged(speaker, oldText, newText) {
         let self = this;
 
         // Check that there is no duplicate speaker.
         const found = self.filesData[self.selectedFileIndex].legend.find((s) => s.value === speaker.value && s !== speaker)
         if (found || !speaker.value.length) return false
+
+        let rep = self.filesData[self.selectedFileIndex].reps[oldText];
+        if (rep !== {}){
+            self.filesData[self.selectedFileIndex].reps[newText] = rep;
+            delete self.filesData[self.selectedFileIndex].reps[oldText];
+        }
 
         self.updateLegend(self.selectedFileIndex);
 
@@ -1693,10 +1756,10 @@ class MainController {
         this.setMergedRegions()
 
         // notify the undo mechanism to change the legend as well as the regions
-        if (changeColor == [])
-            this.historyService.undoStack.push([constants.SPEAKER_NAME_CHANGED_OPERATION_ID, self.selectedFileIndex, oldText, newText, changedRegions]);
+        if (changeColor.length === 0)
+            this.historyService.undoStack.push([constants.OPERATION_IDS.SPEAKER_NAME_CHANGED, self.selectedFileIndex, oldText, newText, changedRegions]);
        else
-           this.historyService.undoStack.push([constants.SPEAKER_NAME_AND_COLOR_CHANGED_OPERATION_ID, self.selectedFileIndex, oldText, newText, changedRegions, changeColor]);
+           this.historyService.undoStack.push([constants.OPERATION_IDS.SPEAKER_NAME_AND_COLOR_CHANGED, self.selectedFileIndex, oldText, newText, changedRegions, changeColor]);
     }
 
     updateLegend(fileIndex, oldSpeaker, newSpeaker) {
@@ -1723,15 +1786,30 @@ class MainController {
 
         const firstDefaultIndex = legend.findIndex(s => s.isDefault)
         const regularSpeakers = legend.slice(0, firstDefaultIndex)
+
+        let activeColors = regularSpeakers.map(speaker => speaker.color);
+        let chosenColor;
+        for (let i = 0; i < constants.SPEAKER_COLORS.length; i++){
+            if (!activeColors.includes(constants.SPEAKER_COLORS[i])){
+                chosenColor = constants.SPEAKER_COLORS[i];
+                break;
+            }
+        }
+
         legend.push({
             value: this.newSpeakerName,
-//            name: this.newSpeakerName,
-            color: constants.SPEAKER_COLORS[regularSpeakers.length % constants.SPEAKER_COLORS.length]
+            name: '',
+            color: chosenColor
         })
 
         this.filesData[this.selectedFileIndex].legend = prepareLegend(legend)
 
+        this.historyService.undoStack.push([constants.OPERATION_IDS.SPEAKER_LABEL_ADDED, this.selectedFileIndex, this.newSpeakerName]);
+
         this.newSpeakerName = ''
+
+
+
     }
 
 // WARNING: Does not work well. after resize there's a dragging problem for regions
@@ -1758,7 +1836,7 @@ class MainController {
         }, fileIndex);
 
         if (updateHistory && oldColor != ''){
-            this.historyService.undoStack.push([constants.SPEAKER_COLORS_CHANGED_OPERATION_ID, fileIndex, speaker, color, oldColor]);
+            this.historyService.undoStack.push([constants.OPERATION_IDS.SPEAKER_COLORS_CHANGED, fileIndex, speaker, color, oldColor]);
         }
 
 
