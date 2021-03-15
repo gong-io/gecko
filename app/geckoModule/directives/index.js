@@ -1,6 +1,7 @@
 import { editableWordsDirective } from './editableWordsDirective'
 import { proofReadingViewDirective } from './proofReadingViewDirective'
 import { playPartDirective } from './playPartDirective'
+import { searchBarDirective } from './searchBarDirective'
 import { miniPlayerDirective } from './miniPlayer'
 import { imageViewDirective } from './imageView'
 import { imageTableDirective } from './imageTable'
@@ -14,6 +15,7 @@ export {
     editableWordsDirective,
     proofReadingViewDirective,
     playPartDirective,
+    searchBarDirective,
     miniPlayerDirective,
     imageViewDirective,
     imageTableDirective,

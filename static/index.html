@@ -281,13 +281,18 @@
                     title="Show/hide Proofreading View"
                     data-toggle="tooltip" data-placement="top">
                 <i class="glyphicon glyphicon-list-alt"></i>
-                Toggle Proofreading View
+                Proofreading View
             </button>
 
             <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()"
                     ng-if="ctrl.userConfig.showWaveform&&!ctrl.onlyProofreading"
                     title="Toggle waveform">
                 <i class="glyphicon glyphicon-resize-small"></i>
+            </button>
+
+            <button class="btn btn-primary" ng-click="ctrl.toggleSearchBar()"
+                    title="Toggle search">
+                <i class="glyphicon glyphicon-search"></i>
             </button>
 
             <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()"
@@ -532,6 +537,7 @@
                 <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                     <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                         <h3 class="panel-title transcript__filename" title="{{ file.filename }}">File: {{ file.filename }}</h3>
+                        <search-bar ng-show="ctrl.searchBarView"></search-bar>
                         <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
                             <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                         </button>
@@ -569,6 +575,7 @@
              <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
+                    <search-bar ng-show="ctrl.searchBarView" ></search-bar>
                     <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
                         <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                     </button>

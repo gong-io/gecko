@@ -49,6 +49,8 @@ class MainController {
         this.$interval = $interval
         this.isServerMode = false
         this.proofReadingView = false
+        this.searchBarView = false;
+        this.searchBarText = "";
         this.shortcuts = new Shortcuts(this, constants)
 //        this.shortcuts.bindKeys()
         this.toaster = toaster
@@ -1511,6 +1513,16 @@ class MainController {
         this.wavesurfer.params.autoCenter = !this.wavesurfer.params.autoCenter;
     }
 
+    toggleSearchBar() {
+        this.searchBarView = !this.searchBarView;
+        if (this.searchBarView){
+            let i = this.proofReadingView ? 1 : 0;
+            setTimeout(() => {
+                document.getElementsByClassName("search-bar")[i].getElementsByClassName("SearchBarInput")[0].focus();
+            }, 500);
+        }
+    }
+
     setCurrentTime() {
         this.currentTimeSeconds = this.wavesurfer.getCurrentTime()
         this.currentTime = secondsToMinutes(this.currentTimeSeconds)
@@ -2051,6 +2063,9 @@ class MainController {
 
     toggleProofReadingView() {
         this.proofReadingView = !this.proofReadingView
+
+        let i = this.proofReadingView ? 1 : 0;
+        document.getElementsByClassName("search-bar")[i].getElementsByClassName("SearchBarInput")[0].value = this.searchBarText;
 
         if (!this.proofReadingView) {
             for (let i = 0; i < this.filesData.length; i++) {
