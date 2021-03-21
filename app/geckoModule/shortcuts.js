@@ -44,6 +44,10 @@ class Shortcuts {
                 desc: 'Undo'
             },
             {
+                keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>f</kbd>' : '<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>f</kbd>',
+                desc: 'Find in transcript'
+            },
+            {
                 keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>1</kbd>...<kbd>⌘</kbd>+<kbd>9</kbd>' : '<kbd>Ctrl</kbd>+<kbd>1</kbd>...<kbd>Ctrl</kbd>+<kbd>9</kbd>',
                 desc: 'Select fixed label'
             },
@@ -96,6 +100,10 @@ class Shortcuts {
             {
                 handler: (e) => this.undoHandler(e),
                 keys: 'ctrl+z,command+z'
+            },
+            {
+                handler: (e) => this.toggleSearchBar(e),
+                keys: 'ctrl+shift+f,command+shift+f'
             },
             {
                 handler: (e) => this.saveHandler(e),
@@ -173,6 +181,10 @@ class Shortcuts {
 
     undoHandler (e) {
         this.app.historyService.undo(this.app)
+    }
+
+    toggleSearchBar (e) {
+        this.app.toggleSearchBar();
     }
 
     saveHandler (e) {

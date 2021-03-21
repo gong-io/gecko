@@ -49,6 +49,8 @@ class MainController {
         this.$interval = $interval
         this.isServerMode = false
         this.proofReadingView = false
+        this.searchBarView = false;
+        this.searchBarText = "";
         this.shortcuts = new Shortcuts(this, constants)
 //        this.shortcuts.bindKeys()
         this.toaster = toaster
@@ -826,6 +828,26 @@ class MainController {
         }
     }
 
+    colorFoundWords(words) {
+        if (this.proofReadingView) {
+            if (!words){
+                for (let i = 0; i < this.mergedRegions[this.selectedFileIndex].length; i++){
+                    let region = this.mergedRegions[this.selectedFileIndex][i].regions[this.selectedFileIndex];
+                    const editableWord = this.editableWords.get(region.id)
+                    editableWord.resetFound()
+                }
+            }
+            else{
+                for (let i = 0; i < words.length; i++){
+                    let region = words[i].region;
+
+                    const editableWord = this.editableWords.get(region.id)
+                    editableWord.setFound(words[i].uuid)
+                }
+            }
+        }
+    }
+
     setCurrentRegions (currentRegions) {
         for (let i = 0; i < this.filesData.length; i++) {
             const currentRegion = currentRegions[i];
@@ -1511,6 +1533,16 @@ class MainController {
         this.wavesurfer.params.autoCenter = !this.wavesurfer.params.autoCenter;
     }
 
+    toggleSearchBar() {
+        this.searchBarView = !this.searchBarView;
+        if (this.searchBarView){
+            let i = this.proofReadingView ? 1 : 0;
+            setTimeout(() => {
+                document.getElementsByClassName("search-bar")[i].getElementsByClassName("SearchBarInput")[0].focus();
+            }, 500);
+        }
+    }
+
     setCurrentTime() {
         this.currentTimeSeconds = this.wavesurfer.getCurrentTime()
         this.currentTime = secondsToMinutes(this.currentTimeSeconds)
@@ -2049,8 +2081,21 @@ class MainController {
         this.showSpectrogram = !this.showSpectrogram
     }
 
+    searchBarUpdate(time=200) {
+        let i = this.proofReadingView ? 1 : 0;
+        let searchBar = document.getElementsByClassName("search-bar")[i].getElementsByClassName("SearchBarInput")[0].value = this.searchBarText;
+        if (this.searchBarView){
+            setTimeout(() => {
+                let searchBarRefresh = document.getElementsByClassName("search-bar")[i].getElementsByClassName("search-refresh")[0];
+                angular.element(searchBarRefresh).click();
+            }, time);
+        }
+    }
+
     toggleProofReadingView() {
         this.proofReadingView = !this.proofReadingView
+
+        this.searchBarUpdate()
 
         if (!this.proofReadingView) {
             for (let i = 0; i < this.filesData.length; i++) {

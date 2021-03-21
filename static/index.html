@@ -281,13 +281,18 @@
                     title="Show/hide Proofreading View"
                     data-toggle="tooltip" data-placement="top">
                 <i class="glyphicon glyphicon-list-alt"></i>
-                Toggle Proofreading View
+                Proofreading View
             </button>
 
             <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()"
                     ng-if="ctrl.userConfig.showWaveform&&!ctrl.onlyProofreading"
                     title="Toggle waveform">
                 <i class="glyphicon glyphicon-resize-small"></i>
+            </button>
+
+            <button class="btn btn-primary" ng-click="ctrl.toggleSearchBar()"
+                    title="Toggle search">
+                <i class="glyphicon glyphicon-search"></i>
             </button>
 
             <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()"
@@ -382,7 +387,7 @@
 
         <!--            </div>-->
         <!--        </div>-->
-        
+
         <div class="" style="position: absolute; z-index: 1;" ng-if="!ctrl.userConfig.showSegmentLabeling">
             <button type="button" class="btn btn-primary btn-sm" tooltip-placement="right" tooltip-class="gecko-segment-labeling-tooltip"
             uib-tooltip="Segment Labeling" ng-click="ctrl.toggleSegmentLabeling()">
@@ -516,7 +521,7 @@
                     </button>
                 </div>
                 <div class="panel-body">
-                    <comparsion 
+                    <comparsion
                         parent="ctrl"
                         discrepancies="ctrl.discrepancies">
                     </comparsion>
@@ -532,6 +537,7 @@
                 <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                     <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                         <h3 class="panel-title transcript__filename" title="{{ file.filename }}">File: {{ file.filename }}</h3>
+                        <search-bar ng-show="ctrl.searchBarView"></search-bar>
                         <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
                             <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                         </button>
@@ -542,7 +548,7 @@
                         <p ng-if="ctrl.currentRegions[$index].data.isDummy"><b style="word-break: break-all;">Dummy Region</b></p>
                         <!--                <p ng-show="ctrl.currentRegions[$index]">Time: {{ctrl.currentRegions[$index].start | number : 2}} - {{ctrl.currentRegions[$index].end | number : 2}}-->
                         <!--                    ({{ ctrl.currentRegions[$index].end - ctrl.currentRegions[$index].start | number : 2}})</p>-->
-                        <editable-words 
+                        <editable-words
                             ng-show="ctrl.currentRegions[$index] && !ctrl.currentRegions[$index].data.isDummy"
                             region="ctrl.currentRegions[$index]"
                             file-index="$index"
@@ -569,6 +575,7 @@
              <div class="panel panel-default" ng-class="{'selected-file': $index === ctrl.selectedFileIndex}">
                 <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
+                    <search-bar ng-show="ctrl.searchBarView" ></search-bar>
                     <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
                         <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                     </button>
@@ -580,14 +587,14 @@
                         file-index="$index"
                     >
                     </proof-reading-view>
-                </div>   
+                </div>
              </div>
             </div>
         </div>
     </div>
 </div>
 
-<ul id="regionContextMenu" class="dropdown-menu" role='menu'> 
+<ul id="regionContextMenu" class="dropdown-menu" role='menu'>
     <li ng-repeat="speaker in ctrl.filesData[ctrl.contextMenuFileIndex].legend">
         <a class="region-context-menu__button" ng-click="ctrl.contextMenuSpeakerClicked(speaker, $event)">
             <input type="checkbox"

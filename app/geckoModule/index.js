@@ -27,6 +27,7 @@ import {
     imageViewDirective,
     imageTableDirective,
     editableDirective,
+    searchBarDirective,
     Checklist,
     fileRead,
     contextMenu,
@@ -62,6 +63,7 @@ geckoModule.directive('playPart', ['store', playPartDirective])
 geckoModule.directive('miniPlayer', miniPlayerDirective)
 geckoModule.directive('imageView', imageViewDirective)
 geckoModule.directive('imageTable', imageTableDirective)
+geckoModule.directive('searchBar', searchBarDirective)
 geckoModule.directive('checklistModel', Checklist)
 geckoModule.directive('fileread', fileRead)
 geckoModule.directive('comparsion', ['discrepancyService', comparsionDirective])
