@@ -26,7 +26,7 @@ class GeckoEdtior {
     }
 
     spanHTML ({ uuid, confidence, color, text }) {
-        return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" style="color: ${ color ? color : 'rgb(0, 0, 0)' };">${text}</span>`
+        return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" style="color: ${ color ? color : 'rgb(0, 0, 0)' }; };">${text}</span>`
     }
 
     isDownCtrl (e) {
@@ -872,6 +872,17 @@ class GeckoEdtior {
         this.selectedWord = wordEl
     }
 
+    setFound (uuid) {
+        const wordEl = this.wordsEls.get(uuid)
+        wordEl.classList.add('found-word')
+    }
+
+    resetFound () {
+        this.element.querySelectorAll('.found-word').forEach((w) => {
+            w.classList.remove('found-word')
+        })
+    }
+
     createSpan (w) {
         const classes = ['segment-text__word-wrapper']
 
@@ -898,7 +909,7 @@ class GeckoEdtior {
                 'data-start': w.start,
                 'data-end': w.end,
                 'word-uuid': w.uuid,
-                'style' : w.color ? `color: ${w.color}` : ''
+                'style' : w.color ? `color: ${w.color};` : ''
             },
             w.text.length ? document.createTextNode(w.text) : document.createTextNode('')
         )

@@ -19,7 +19,7 @@ var config = {
     },
     slider: "#slider",
     isServerMode: false,
-    proofreadingAutoScroll: false,
+    proofreadingAutoScroll: true,
     enableDrafts: false,
     emptySectionClick: true
 }

@@ -39,10 +39,22 @@ export const editableWordsDirective = ($timeout, eventBus, store) => {
                 editor.setSelected(uuid)
             }
 
+            scope.resetFound = () => {
+                editor.resetFound()
+            }
+
+            scope.setFound = (uuid) => {
+                editor.setFound(uuid)
+            }
+
             editor.on('wordsUpdated', (newWords) => {
                 scope.region.data.words = newWords
                 eventBus.trigger('regionTextChanged', scope.region.id)
                 checkIsEmpty()
+                const control = store.getValue('control')
+                if (control.searchBarView) {
+                    control.searchBarUpdate()
+                }
             })
 
             editor.on('wordClick', ({ word, event }) => {

@@ -56,7 +56,9 @@ export const proofReadingViewDirective = ($timeout, eventBus, store) => {
                 const regionElement = element[0].querySelector(`[data-region="${region.id}"]`)
                 if (regionElement) {
                     const topAncestor = findTopAncestor(regionElement)
-                    element[0].parentNode.scrollTop = topAncestor.offsetTop - 36
+                    topAncestor.scrollIntoView();
+                    element[0].parentNode.scrollTop -= 10;
+//                    element[0].parentNode.scrollTop = topAncestor.offsetTop;
                 }
             })
 

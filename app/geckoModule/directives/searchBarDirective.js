@@ -11,7 +11,8 @@ export const searchBarDirective = () => {
         link: (scope, element, attrs) => {
             scope.words = [];
             scope.currentIndex = 0;
-            scope.amount = 0
+            scope.amount = 0;
+            scope.time = 0;
             scope.findText = scope.$parent.ctrl.searchBarText;
             scope.regex = false;
             scope.matchCase = false;
@@ -37,13 +38,17 @@ export const searchBarDirective = () => {
             }
 
             scope.searchInTranscript = () => {
+                let parent = scope.$parent.ctrl;
+                parent.colorFoundWords();
                 if (scope.isActive()){
                     scope.words = [];
-                    let parent = scope.$parent.ctrl;
+//                    let parent = scope.$parent.ctrl;
 
                     parent.searchBarText = scope.findText;
 
-                    let transcript = parent.filesData[parent.selectedFileIndex].data;
+//                    let transcript = parent.filesData[parent.selectedFileIndex].data;
+                    let transcript = parent.mergedRegions[parent.selectedFileIndex];
+
                     let findText = scope.findText;
                     if(!scope.matchCase){
                         findText = scope.findText.toLowerCase()
@@ -52,21 +57,30 @@ export const searchBarDirective = () => {
                     if (t.length > 1){
                         scope.wholeWord = false;
 
-                        let words = transcript.map(mono => mono.words.filter(word => word.text.endsWith(t[0])))
+                        let words = transcript.map(region => region.regions[0].data.words.filter(word => word.text.endsWith(t[0])))
                         for (let i = 0; i < words.length; i++){
                             for (let j = 0; j < words[i].length; j++){
-                                let monologue = transcript[i].words.filter(word => word.start >= words[i][j].start).map(word => word.text).slice(0, t.length).join(" ")
+                                let monologue = transcript[i].regions[0].data.words.filter(word => word.start >= words[i][j].start).map(word => word.text).slice(0, t.length).join(" ")
                                 if((scope.regex && monologue.match(findText)) || !scope.regex && monologue.includes(findText))
-                                    scope.words.push(words[i][j]);
+                                    scope.words.push({...words[i][j], region: transcript[i].regions[0]});
                             }
                         }
                     }
                     else{
-                        scope.words = transcript.map(mono => mono.words.filter((word, index) => scope.searchRight(word.text, findText))).flat()
+                        let words = transcript.map(region => region.regions[0].data.words.filter((word, index) => scope.searchRight(word.text, findText)))
+                        for (let i = 0; i < words.length; i++){
+                            for (let j = 0; j < words[i].length; j++){
+                                scope.words.push({...words[i][j], region: transcript[i].regions[0]});
+                            }
+                        }
                     }
+                    let time = parent.currentTimeSeconds;
+
                     scope.amount = scope.words.length;
-                    scope.currentIndex = 0;
+                    scope.currentIndex = scope.words.findIndex(word => word.end > time);
+                    scope.currentIndex = scope.currentIndex > -1 ? scope.currentIndex : 0;
                     scope.seek(0);
+                    parent.colorFoundWords(scope.words);
                 }
             }
 
@@ -88,8 +102,19 @@ export const searchBarDirective = () => {
             }
 
             scope.search = (e) => {
-                if (e.which == 13){
-                    scope.seek(1);
+
+                if (e.which == 13 && scope.isActive()){
+                    let parent = scope.$parent.ctrl;
+                    let currentTime = parent.currentTimeSeconds;
+                    if (Math.abs(currentTime - scope.time) > 0.5){
+                        scope.currentIndex = scope.words.findIndex(word => word.end > currentTime);
+                        scope.currentIndex = scope.currentIndex > -1 ? scope.currentIndex : 0;
+                        scope.seek(0);
+                    }
+                    else{
+                        scope.seek(1);
+                    }
+
                 }
             }
 
@@ -98,6 +123,8 @@ export const searchBarDirective = () => {
                 scope.currentIndex = 0;
                 scope.amount = 0
                 scope.findText = "";
+                let parent = scope.$parent.ctrl;
+                parent.colorFoundWords();
             }
 
             scope.seek = (i) => {
@@ -109,6 +136,10 @@ export const searchBarDirective = () => {
                     let currentTime = scope.words[scope.currentIndex].start;
                     let parent = scope.$parent.ctrl;
                     parent.seek(currentTime, "right");
+                    scope.time = parent.currentTimeSeconds;
+                    if (parent.proofReadingView){
+                        parent.eventBus.trigger('proofReadingScrollToRegion', parent.getCurrentRegion());
+                    }
                 }
             }
         }

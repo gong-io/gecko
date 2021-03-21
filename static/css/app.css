@@ -662,3 +662,7 @@ a.play-part.play-part-clear{
 .search-toggle-off{
     color: gray;
 }
+
+.found-word {
+    background-color: #e8acf28c;
+}
