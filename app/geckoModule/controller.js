@@ -2082,6 +2082,7 @@ class MainController {
     }
 
     searchBarUpdate(time=200) {
+        return; // not working right..
         let i = this.proofReadingView ? 1 : 0;
         let searchBar = document.getElementsByClassName("search-bar")[i].getElementsByClassName("SearchBarInput")[0].value = this.searchBarText;
         if (this.searchBarView){
