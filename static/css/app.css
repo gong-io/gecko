@@ -609,7 +609,7 @@ a.play-part.play-part-clear{
 .search-bar{
     display: flex;
     justify-content: space-between;
-    width: 400px;
+    width: 440px;
 }
 
 .search-bar .results{
@@ -665,4 +665,9 @@ a.play-part.play-part-clear{
 
 .found-word {
     background-color: #e8acf28c;
+}
+
+.regex-exp{
+    font-size: small;
+    position: absolute;
 }

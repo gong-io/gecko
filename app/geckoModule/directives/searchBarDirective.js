@@ -47,7 +47,10 @@ export const searchBarDirective = () => {
                     parent.searchBarText = scope.findText;
 
 //                    let transcript = parent.filesData[parent.selectedFileIndex].data;
-                    let transcript = parent.mergedRegions[parent.selectedFileIndex];
+                    let transcript = parent.mergedRegions[parent.selectedFileIndex].map(regions => regions.regions).flat();
+                    for(let i = 0; i < transcript.length; i++){
+                        transcript[i].data["regionIndex"] = i
+                    }
 
                     let findText = scope.findText;
                     if(!scope.matchCase){
@@ -57,20 +60,29 @@ export const searchBarDirective = () => {
                     if (t.length > 1){
                         scope.wholeWord = false;
 
-                        let words = transcript.map(region => region.regions[0].data.words.filter(word => word.text.endsWith(t[0])))
+                        let words = transcript.map(region => {
+                            return {
+                                words: region.data.words.filter(word => word.text.endsWith(t[0])),
+                                regionIndex: region.data.regionIndex };
+                            })
+
                         for (let i = 0; i < words.length; i++){
                             for (let j = 0; j < words[i].length; j++){
-                                let monologue = transcript[i].regions[0].data.words.filter(word => word.start >= words[i][j].start).map(word => word.text).slice(0, t.length).join(" ")
+                                let monologue = transcript[i].data.words.filter(word => word.start >= words[i].words[j].start).map(word => word.text).slice(0, t.length).join(" ")
                                 if((scope.regex && monologue.match(findText)) || !scope.regex && monologue.includes(findText))
-                                    scope.words.push({...words[i][j], region: transcript[i].regions[0]});
+                                    scope.words.push({...words[i].words[j], region: transcript[words[i].regionIndex]});
                             }
                         }
                     }
                     else{
-                        let words = transcript.map(region => region.regions[0].data.words.filter((word, index) => scope.searchRight(word.text, findText)))
+                        let words = transcript.map(region => {
+                            return {
+                                words: region.data.words.filter((word, index) => scope.searchRight(word.text, findText)),
+                                regionIndex: region.data.regionIndex };
+                            })
                         for (let i = 0; i < words.length; i++){
-                            for (let j = 0; j < words[i].length; j++){
-                                scope.words.push({...words[i][j], region: transcript[i].regions[0]});
+                            for (let j = 0; j < words[i].words.length; j++){
+                                scope.words.push({...words[i].words[j], region: transcript[words[i].regionIndex]});
                             }
                         }
                     }
