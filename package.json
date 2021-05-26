@@ -38,7 +38,7 @@
     "@babel/core": "^7.10.4",
     "@babel/preset-env": "^7.10.4",
     "babel-loader": "^8.1.0",
-    "css-loader": "^3.5.3",
+    "css-loader": "^5.2.6",
     "dotenv-webpack": "^1.7.0",
     "file-loader": "^4.3.0",
     "html-loader": "^0.5.5",
