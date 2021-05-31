@@ -40,28 +40,6 @@ export const imageTableDirective = () => {
                 }
             }
 
-//
-//            scope.$watch(() => scope.parent.imageSrc,
-//            (newVal)=>{
-//                if (newVal){
-//                    scope.imgSrc = newVal;
-//                }
-//            })
-//
-//            scope.$watch(() => scope.parent.currentTimeSeconds,
-//                (newVal) => {
-//                    if (newVal) {
-//                        scope.sliderModel = newVal
-//                    }
-//            })
-//
-//            scope.changeProgress = (e) => {
-//                scope.parent.seek(scope.sliderModel)
-//            }
-//
-//            scope.playPause = () => {
-//                scope.parent.playPause()
-//            }
         }
     }
 }

@@ -36,6 +36,8 @@ import {
     shortcutsModal
 } from './modals'
 
+const CSV = require('csv-string')
+
 class MainController {
     constructor($scope, $uibModal, toaster, dataManager, dataBase, eventBus, historyService, debounce, $timeout, $interval, $sce, store) {
         this.dataManager = dataManager;
@@ -149,8 +151,14 @@ class MainController {
         this.imageIndex = index;
         return new Promise(resolve =>{
                 this.dataManager.serverRequestImage("https://gecko.research.gongio.net/s3_files/" + this.imagesCsv[this.imageIndex].file_path).then(async (res) => {
-                    this.imageSrc = URL.createObjectURL(res.data);
-                    resolve();
+                    if(res){
+                        this.imageSrc = URL.createObjectURL(res.data);
+                        resolve();
+                    }
+                    else{
+                        this.imageSrc = null;
+                        this.imageIndex = null;
+                    }
                 })
             }
         );
