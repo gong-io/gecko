@@ -2,6 +2,8 @@ import videojs from 'video.js'
 
 import { getCurrentTimeStamp, formatTime } from './index.js'
 
+const CSV = require('csv-string')
+
 export const readTextFile = (file) => {
     return new Promise((resolve) => {
         // check for empty file object
@@ -173,18 +175,27 @@ export const parseAndLoadAudio = async (context, res) => {
 
 
 export const parseImageCsv = async (context, res) => {
-    let fileData = res.data.split('\n');
-    var keys = fileData[0].split('\t');
+    let parsedCSV = CSV.parse(res.data);
+
+//    let fileData = res.data.split('\n');
+    var keys = parsedCSV[0];
     context.imagesCsv = []
-    for (let i = 1 ; i < fileData.length; i++){
+    for (let i = 1 ; i < parsedCSV.length; i++){
         let data = {}
-        let values = fileData[i].split('\t');
+        let values = parsedCSV[i];
 
         for (let keyIndex = 0 ; keyIndex < keys.length; keyIndex++){
             if (!data[keys[keyIndex]]){
                 let key = keys[keyIndex].trim();
-                if (key === 'presentation')
-                    data[key] = (!values[keyIndex] || values[keyIndex] == '' || values[keyIndex].toLowerCase() == 'true');
+                if (key === 'presentation'){
+                    key = "computer_classification"
+                    data[key] = 'presentation';
+                    key = "human_classification"
+                    data[key] = values[keyIndex] == 'true' ? 'presentation' : '';
+                }
+                else if (key.includes('classification')){
+                    data[key] = values[keyIndex];
+                }
                 else if (key === 'bounding_box' && values[keyIndex]){
                     let bounding_box = values[keyIndex].substring(1, values[keyIndex].length - 1);
                     bounding_box = bounding_box.split(',');
@@ -208,13 +219,25 @@ export const parseImageCsv = async (context, res) => {
 
 export const combineImageCsv = async (context, data) => {
     return new Promise(resolve => {
-        context.outputImagesCsv = "file_path\tpredicted_title\tbounding_box\tpresentation\tconfidence_classifier";
+        let f = [Object.keys(data[0])];
+        f[0].pop("$$hashKey")
+//        context.outputImagesCsv = "file_path\tpredicted_title\tbounding_box\tpresentation\t";
         for(let i = 0; i < data.length; i++){
             let bounding_box = '';
              if (data[i].bounding_box && data[i].bounding_box != '' && 'x' in data[i].bounding_box && 'y' in data[i].bounding_box && 'width' in data[i].bounding_box && 'height' in data[i].bounding_box)
                 bounding_box = `(${data[i].bounding_box.x},${data[i].bounding_box.y},${data[i].bounding_box.width},${data[i].bounding_box.height})`;
-            context.outputImagesCsv += `\n${data[i].file_path}\t${data[i].predicted_title}\t${bounding_box}\t${data[i].presentation}\t`;
+             var arr = [];
+             for (let j = 0; j < f[0].length; j++){
+                if (f[0][j] === "bounding_box")
+                    arr.push(bounding_box);
+                else
+                    arr.push(data[i][f[0][j]]);
+             }
+             f.push(arr);
+//            context.outputImagesCsv += `\n${data[i].file_path}\t${data[i].predicted_title}\t${bounding_box}\t${data[i].presentation}\t`;
         }
+        context.outputImagesCsv = CSV.stringify(f)
         resolve();
     });
 }
+

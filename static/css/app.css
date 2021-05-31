@@ -690,3 +690,28 @@ a.play-part.play-part-clear{
     font-size: small;
     position: absolute;
 }
+
+.clickable {
+    cursor: pointer;
+}
+
+.image-label {
+    text-align: center;
+    background: #f1ddff;
+    border-radius: 3px;
+    margin: 0 15px 2px;
+    padding: 2px 5px;
+    font-size: 16px;
+    box-shadow: 1px 1px 2px #a9a9a9ad;
+}
+
+.image-label.clicked {
+    background: #e4c3f5;
+    border: none;
+    box-shadow: inset 1px 1px 3px 1px #8c8c8ce0;
+}
+
+.cmptr {
+    height: 25px;
+    text-align: center;
+}
