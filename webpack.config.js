@@ -15,6 +15,18 @@ module.exports = {
     resolve: {
         alias: {
             '@': path.join(__dirname, 'app'),
+        },
+        fallback: {
+            "stream": require.resolve("stream-browserify"),
+            // "fs": false,
+            // "tls": false,
+            // "net": false,
+            // "path": false,
+            // "zlib": false,
+            // "http": false,
+            // "https": false,
+            // "stream": false,
+            // "crypto": false,
         }
     },
     devServer: {
@@ -30,36 +42,32 @@ module.exports = {
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
-                loader: 'babel-loader',
-                query: {
-                    presets: [[
-                        "@babel/preset-env",
-                        {
-                          "targets": {
-                            "esmodules": true
-                          }
-                        }
-                      ]],
-                    plugins: []
-                }
+                use: [
+                    {
+                        loader: 'babel-loader',
+                        options: {
+                            cacheDirectory: true,
+                        },
+                    }
+                ]
             },
             {
                 test: /\.css$/,
                 use: [
                     {
                         loader: MiniCssExtractPlugin.loader,
-                        options: {
-                            // you can specify a publicPath here
-                            // by default it uses publicPath in webpackOptions.output
-                            hmr: process.env.NODE_ENV === 'development',
-                        },
                     },
                     'css-loader',
                 ],
             },
             {
                 test: /soundtouch\.js$/,
-                loader: "imports-loader?this=>window"
+                use: [
+                    {
+                        loader: "imports-loader?this=>window"
+                    }
+                ]
+                //loader: "imports-loader?this=>window"
             },
             {
                 test: /\.woff2?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
