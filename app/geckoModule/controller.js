@@ -33,7 +33,8 @@ import {
 
 import {
     loadingModal,
-    shortcutsModal
+    shortcutsModal,
+    noSpeakerWarningModal
 } from './modals'
 
 const CSV = require('csv-string')
@@ -1557,6 +1558,29 @@ class MainController {
         this.timeSpan.textContent = `${this.currentTime} / ${this.totalTime}`
     }
 
+    checkSaveAsync(fileIndex) {
+        return new Promise((resolve) => {
+            const noSpeakerRegions = []
+            this.iterateRegions((r) => {
+                const { data } = r
+                const { speaker } = data
+                !speaker.length && noSpeakerRegions.push(r)
+            }, fileIndex)
+            if (noSpeakerRegions.length) {
+                const modalInstance = this.$uibModal.open(noSpeakerWarningModal(noSpeakerRegions, this.filesData[fileIndex]))
+                modalInstance.result.then((res) => {
+                    if (res) {
+                        resolve(true)
+                    } else {
+                        resolve(false)
+                    }
+                });
+            } else {
+                resolve(true)
+            }
+        })
+    }
+
     async save(extension, converter) {
         for (var i = 0; i < this.filesData.length; i++) {
             var current = this.filesData[i];
@@ -1566,7 +1590,10 @@ class MainController {
 
                 if (!this.checkValidRegions(i)) return;
 
-                this.dataManager.downloadFileToClient(converter(i), filename);
+                const result = await this.checkSaveAsync(i)
+                if (result) {
+                    this.dataManager.downloadFileToClient(converter(i), filename)
+                }
             }
         }
         this.saveToDB()
@@ -1589,11 +1616,15 @@ class MainController {
 
                 if (!this.checkValidRegions(i)) return;
                 try {
-                    if (this.serverConfig && this.serverConfig.presignedUrl) {
-                        this.dataManager.saveToPresigned(converter(i), { url: this.serverConfig.presignedUrl});
-                    } else {
-                        this.dataManager.saveDataToServer(converter(i), {filename, s3Subfolder: current.s3Subfolder});
+                    const result = await this.checkSaveAsync(i)
+                    if (result) {
+                        if (this.serverConfig && this.serverConfig.presignedUrl) {
+                            this.dataManager.saveToPresigned(converter(i), { url: this.serverConfig.presignedUrl});
+                        } else {
+                            this.dataManager.saveDataToServer(converter(i), {filename, s3Subfolder: current.s3Subfolder});
+                        }
                     }
+                    
                 } catch (e) {
 
                 }
