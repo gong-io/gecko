@@ -8,6 +8,8 @@ const spaceSpanHTML = '<span class="segment-text__space"> </span>'
 class GeckoEdtior {
     constructor (element) {
         this.element = element
+        this.previousElementStack = [];
+        this.nextElementStack = [];
         this.originalWords = []
         this.previousState = []
         this.listeners = new Map()
@@ -26,7 +28,7 @@ class GeckoEdtior {
     }
 
     spanHTML ({ uuid, confidence, color, text }) {
-        return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" style="color: ${ color ? color : 'rgb(0, 0, 0)' }; };">${text}</span>`
+        return `<span class="segment-text__word-wrapper" title="Confidence: ${ confidence ? confidence : ''}" word-uuid="${uuid}" style="color: ${ color ? color : 'rgb(0, 0, 0)' };">${text}</span>`
     }
 
     isDownCtrl (e) {
@@ -35,10 +37,12 @@ class GeckoEdtior {
         return isMacMeta || isOtherControl
     }
 
-    clickEvent (e) {
+
+
+    clickEvent (e, moveByEnter = false) {
         const selection = window.getSelection()
         const clickedSpan = selection.anchorNode.parentNode
-        if (e.ctrlKey || e.metaKey) {
+        if (e.ctrlKey || e.metaKey || moveByEnter) {
             if (clickedSpan && this.isText(clickedSpan)) {
                 const wordUuid = clickedSpan.getAttribute('word-uuid')
                 const clickedWord = findByUuid(this.words, wordUuid)
@@ -75,7 +79,7 @@ class GeckoEdtior {
             const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: ''})
             document.execCommand('insertHTML', false, html)
         }
-        
+
     }
 
     isBackwardsSelection (startNode, endNode) {
@@ -114,7 +118,7 @@ class GeckoEdtior {
         const timeEnd = lastNode.getAttribute('data-end')
 
         const newText = text ? `${firstNode.textContent.substring(0, startOffset)}${text}${lastNode.textContent.substring(range.endOffset, lastNode.textContent.length)}` : `${firstNode.textContent.substring(0, startOffset)}${lastNode.textContent.substring(range.endOffset, lastNode.textContent.length)}`
-        
+
         if (startOffset !== 0) {
             document.execCommand('delete')
 
@@ -136,11 +140,12 @@ class GeckoEdtior {
                 document.execCommand('insertHTML', false, span.outerHTML)
                 return
             } else {
-                range.deleteContents()
-                nextSpace.remove()
+                newRange.selectNodeContents(previousSpace);
 
-                newRange.selectNode(previousWord)
-                newRange.collapse()
+
+
+                newRange.collapse();
+                range.deleteContents();
             }
         }
 
@@ -176,7 +181,7 @@ class GeckoEdtior {
                 newRange.setStart(previousSpace.firstChild, previousSpace.textContent.length)
             }
         }
-        
+
         selection.removeAllRanges()
         selection.addRange(newRange)
     }
@@ -199,7 +204,7 @@ class GeckoEdtior {
         const newRange = document.createRange()
 
         newRange.setStart(previousWord.firstChild, text ? previousLength + text.length : previousLength)
-        
+
         selection.removeAllRanges()
         selection.addRange(newRange)
     }
@@ -231,9 +236,9 @@ class GeckoEdtior {
             firstNode.remove()
             nextWord.remove()
             newRange.setStart(previousWord.firstChild, text ? previousLength + text.length : previousLength)
-        } 
+        }
 
-        
+
         selection.removeAllRanges()
         selection.addRange(newRange)
     }
@@ -255,7 +260,7 @@ class GeckoEdtior {
             nextWord.remove()
             range.setStart(previousWord.firstChild, text ? previousWordText.length + text.length : previousWordText.length)
         }
-        
+
         selection.removeAllRanges()
         selection.addRange(range)
     }
@@ -283,8 +288,37 @@ class GeckoEdtior {
 
     keydownEvent (e) {
         if (e.which === 13 || e.which === 27) {
+            if (e.shiftKey) {
+                const selection = document.getSelection()
+                if (selection.isCollapsed) {
+                    const range = selection.getRangeAt(0)
+                    let { startOffset } = range
+                    let wordNode = this.findNodeAncestor(selection.focusNode)
+                    if(wordNode.innerText.length === startOffset){
+                        wordNode = wordNode.nextSibling
+                        startOffset = 0
+                    }
+                    if (this.isSpace(wordNode)) {
+                        wordNode = wordNode.nextSibling
+                        startOffset = 0
+                    }
+                    const wordUuid = wordNode.getAttribute('word-uuid')
+                    const word = findByUuid(this.words, wordUuid)
+                    const isLast = wordNode === this.element.lastChild && word.text.length === startOffset
+                    const isFirst = wordNode === this.element.firstChild && startOffset === 0
+                    if (wordUuid && !isLast && !isFirst) {
+                        e.preventDefault()
+                        this.trigger('split', {
+                            word,
+                            offset: startOffset
+                        })
+                        return
+                    }
+                }
+            }
             this.element.blur()
             e.preventDefault()
+            return
         }
 
         const isMacMeta = window.navigator.platform === 'MacIntel' && e.metaKey
@@ -411,7 +445,7 @@ class GeckoEdtior {
                             selection.addRange(range)
                         }
                         e.preventDefault()
-                    } 
+                    }
                     return
                 } else if (e.which === 32 && selection.focusNode === this.element && selection.isCollapsed) {
                     /* input first space in empty editable */
@@ -446,7 +480,25 @@ class GeckoEdtior {
             }
         }
 
+        if (this.isDownCtrl(e) && e.which === 90){
+            if (this.previousElementStack.length > 0){
+                this.nextElementStack.unshift(this.element.innerHTML);
+                this.element.innerHTML = this.previousElementStack.pop();
+                e.stopPropagation();
+            }
+            else if (this.nextElementStack.length > 0){
+                this.previousElementStack.push(this.element.innerHTML);
+                this.element.innerHTML = this.nextElementStack.pop();
+                e.stopPropagation();
+            }
+        }
+
         if (isPrintableKey && !this.isDownCtrl(e)) {
+            if(this.previousElementStack.length === 0){
+                this.nextElementStack = [];
+                this.previousElementStack.push(this.element.innerHTML);
+            }
+
             if (this.isAllSelected()) {
                 const html = this.spanHTML({ uuid: uuidv4(), index: 0, text: e.key})
                 document.execCommand('insertHTML', false, html)
@@ -478,7 +530,7 @@ class GeckoEdtior {
                         range.setStart(nodeTo.firstChild, 1)
                         range.setStart(nodeTo.firstChild, 1)
                         selection.addRange(range)
-    
+
                         e.preventDefault()
                     } else if (ancestorNode.textContent.length === 0) {
                         const nodeTo = ancestorNode
@@ -593,14 +645,14 @@ class GeckoEdtior {
                         }
                         e.preventDefault()
                     }
-                    
+
                 }
             }
         }
     }
 
     bindEvents () {
-        this.element.addEventListener('blur', () => {
+        this.element.addEventListener('blur', (e) => {
             this.updateAll()
         })
 
@@ -675,7 +727,7 @@ class GeckoEdtior {
     }
 
     setRegion (region) {
-        // console.log('set reg')
+
         if (region && region.data.words) {
             this.region = region
             this.setWords(region.data.words)
@@ -700,7 +752,21 @@ class GeckoEdtior {
         this.cleanDOM()
     }
 
+    fixTimes(spans){
+        for (let i = 0, l = spans.length; i < l; i++) {
+            const span = spans[i]
+            const wordText = span.textContent.trim().replace('\u200B', '')
+            const wordUuid = span.getAttribute('word-uuid')
+            if (wordText.length) {
+
+
+            }
+        }
+    }
+
     updateAll () {
+        this.previousElementStack = [];
+        this.nextElementStack = [];
         const spans = this.element.querySelectorAll('span.segment-text__word-wrapper')
 
         if (!spans.length) {
@@ -717,6 +783,14 @@ class GeckoEdtior {
             if (wordText.length) {
                 const newWordSplited = wordText.split(' ')
                 const originalWord = findByUuid(this.originalWords, wordUuid)
+                var originalWordIndex;
+                for (let j = 0; j <  this.originalWords.length; j++){
+                    if (originalWord == this.originalWords[j]){
+                        originalWordIndex = j;
+                        break;
+                    }
+                }
+
                 const word = findByUuid(this.words, wordUuid)
                 if (newWordSplited.length === 1) {
                     if (word) {
@@ -729,7 +803,7 @@ class GeckoEdtior {
                             if (wasEdited) {
                                 word.wasEdited = true
                                 span.style.color = 'rgb(129, 42, 193)'
-                            } 
+                            }
                         } else {
                             if (!word.wasEdited) {
                                 span.style.color = 'rgb(0, 0, 0)'
@@ -739,7 +813,7 @@ class GeckoEdtior {
                         updatedWords.push(Object.assign({}, {
                             ...word,
                             text: span.textContent.trim(),
-                            end: parseFloat(span.getAttribute('data-end')),
+                            end: word.end,
                             isSelected: wordSelected
                         }))
                     } else {
@@ -752,27 +826,58 @@ class GeckoEdtior {
                             isSelected: wordSelected
                         })
                     }
-                } else {
+                }
+                else {
                     if (word) {
-                        if (originalWord && newWordSplited[0].trim() !== originalWord.text.trim()) {
-                            updatedWords.push(Object.assign({}, {
-                                ...word,
-                                text: newWordSplited[0].trim(),
-                                wasEdited: true,
-                                isSelected: wordSelected
-                            }))
-                        } else {
-                            updatedWords.push(Object.assign({}, {
-                                ...word,
-                                text: newWordSplited[0].trim(),
-                                isSelected: wordSelected
-                            }))
+                        let start, end;
+                        if (i > 0){
+                            if (spans[i - 1].dataset.end !==  originalWord.start){
+                                start = Number(spans[i - 1].dataset.end);
+
+
+
+
+                            }
+                            else{
+                                start = originalWord.start;
+                            }
+
+
                         }
-                        for (let i = 1; i < newWordSplited.length; i++) {
-                            if (newWordSplited[i].trim().length) {
+                        else{
+                            start = this.region.start;
+                        }
+
+                        if (i < (spans.length - 1)){
+                            if (spans[i + 1].dataset.start !==  originalWord.end){
+                                end = Number(spans[i + 1].dataset.start);
+                            }
+                            else{
+                                end = originalWord.end;
+                            }
+                        }
+                        else{
+                            end = this.region.end;
+                        }
+
+
+
+                        let duration = (end - start) / newWordSplited.length;
+                        updatedWords.push(Object.assign({}, {
+                            ...word,
+                            start: start,
+                            end: Math.round((start + duration) * 100) / 100,
+                            text: newWordSplited[0].trim(),
+                            wasEdited: true,
+                            isSelected: wordSelected
+                        }))
+                        for (let j = 1; j < newWordSplited.length; j++) {
+                            if (newWordSplited[j].trim().length) {
                                 const wordCopy = Object.assign({}, {
                                     ...word,
-                                    text: newWordSplited[i],
+                                    start: Math.round((start + duration * j) * 100) / 100,
+                                    end: Math.round((start + duration * (j + 1)) * 100) / 100,
+                                    text: newWordSplited[j],
                                     uuid: uuidv4(),
                                     wasEdited: true,
                                     isSelected: wordSelected
@@ -781,13 +886,14 @@ class GeckoEdtior {
                             }
                         }
                     } else {
-                        for (let i = 0; i < newWordSplited.length; i++) {
-                            if (newWordSplited[i].trim()) {
+                        let duration = (this.region.end - this.region.start) / newWordSplited.length;
+                        for (let j = 0; j < newWordSplited.length; j++) {
+                            if (newWordSplited[j].trim()) {
                                 updatedWords.push({
-                                    text: newWordSplited[i],
+                                    text: newWordSplited[j],
                                     uuid: uuidv4(),
-                                    start: this.region.start,
-                                    end: this.region.end,
+                                    start: Math.round((this.region.start + duration * j) * 100) / 100,
+                                    end: Math.round((this.region.start + duration * (j + 1)) * 100) / 100,
                                     wasEdited: true,
                                     isSelected: wordSelected
                                 })
@@ -817,13 +923,13 @@ class GeckoEdtior {
             delete copy.isSelected
             return copy
         })
-        
+
         if (newWords.length !== oldWords.length) {
             wasChanged = true
         } else {
             newWords.forEach(w => {
                 const previous = findByUuid(oldWords, w.uuid)
-                if (!compareObjects(w, previous)) {
+                if (!previous || !compareObjects(w, previous)) {
                     wasChanged = true
                 }
             })
@@ -855,7 +961,7 @@ class GeckoEdtior {
                 }
             }
         }
-        
+
         this.element.appendChild(frag)
     }
 
@@ -872,23 +978,23 @@ class GeckoEdtior {
         this.selectedWord = wordEl
     }
 
-    setFound (uuid) {
-        const wordEl = this.wordsEls.get(uuid)
-        wordEl.classList.add('found-word')
-    }
 
-    resetFound () {
-        this.element.querySelectorAll('.found-word').forEach((w) => {
-            w.classList.remove('found-word')
-        })
-    }
+
+
+
+
+
+
+
+
+
 
     createSpan (w) {
         const classes = ['segment-text__word-wrapper']
 
         if (w.wasEdited) {
             classes.push('segment-text__word-wrapper--was-edited')
-        } 
+        }
 
         if (w.confidence) {
             if (w.confidence < 0.95 && w.confidence >= 0) {
@@ -905,11 +1011,11 @@ class GeckoEdtior {
             'span',
             {
                 'class' : classes.join(' '),
-                'title' : `Confidence: ${w.confidence ? w.confidence : ''}`,
+                'title' : `Confidence: ${w.confidence ? w.confidence : ''}, start: ${w.start ? w.start : ''}, end: ${w.end ? w.end : ''}`,
                 'data-start': w.start,
                 'data-end': w.end,
                 'word-uuid': w.uuid,
-                'style' : w.color ? `color: ${w.color};` : ''
+                'style' : w.color ? `color: ${w.color}` : ''
             },
             w.text.length ? document.createTextNode(w.text) : document.createTextNode('')
         )

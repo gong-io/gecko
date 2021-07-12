@@ -61,6 +61,13 @@ export const editableWordsDirective = ($timeout, eventBus, store) => {
                 eventBus.trigger('wordClick', word, event)
             })
 
+            editor.on('split', ({ word, offset }) => {
+                if (scope.proofReading) {
+                    eventBus.trigger('split', word, offset, scope.region)
+                }
+            })
+
+
             editor.on('emptyEditorClick', ({ region, event }) => {
                 $timeout(() => {
                     eventBus.trigger('emptyEditorClick', region, event)

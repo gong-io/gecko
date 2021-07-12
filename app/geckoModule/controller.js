@@ -282,6 +282,10 @@ class MainController {
             e.stopPropagation()
         })
 
+        this.eventBus.on('split', (word, offset, region) => {
+            this.splitSegmentByWord(word, offset, region)
+        })
+
         this.eventBus.on('emptyEditorClick', (region, e) => {
             if (this.config.emptySectionClick) {
                 this.seek(region.start, 'right')
@@ -1367,6 +1371,123 @@ class MainController {
         this.fixRegionsOrderAll()
         this.setMergedRegions()
         this.updateView()
+    }
+
+    changeTimingForWordsWithSameTiming(words){
+        let prev = -1;
+        var changes = false;
+        let indexStart = -1;
+        for (let i = 0; i < words.length; i++){
+            if (words[i].start == prev){
+                if(indexStart == -1){
+                    indexStart = i - 1;
+                }
+            }
+            else{
+                if(indexStart > -1){
+                    var wordDuration =  (words[indexStart].end - words[indexStart].start) / (i - indexStart);
+                    for(let j=indexStart; j < i; j++){
+                        words[j].start = Math.round((words[j].start + (wordDuration * (j - indexStart))) * 100) / 100;
+                        words[j].end = Math.round((words[j].start + wordDuration) * 100) / 100;
+                        changes = true;
+                    }
+                    indexStart = -1;
+                }
+                prev = words[i].start;
+            }
+        }
+        return [words, changes];
+    }
+
+
+    splitSegmentByWord (word, offset, region) {
+        let { end, start, text } = word
+        let first = copyRegion(region)
+        let second = copyRegion(region)
+
+        if (config.interpolateTimings && needInterpolateRegionTimings(region)) {
+            const interpolated = interpolateRegionTimings(region)
+            interpolated.forEach((t, idx) => {
+                first.data.words[idx].start = t.start
+                second.data.words[idx].start = t.start
+
+                first.data.words[idx].end = t.end
+                second.data.words[idx].end = t.end
+            })
+
+            const newWord = first.data.words.find(w => w.uuid === word.uuid)
+            end = newWord.end
+            start = newWord.start
+        }
+
+        const timeDelta = end - start
+        const wordLength = text.length
+        const percent = offset / wordLength
+        const timeOffset = percent * timeDelta
+        let time = start + timeOffset - constants.TIME_OFFSET
+
+        delete first.id;
+        delete second.id;
+        let changeToWords;
+        let words = JSON.parse(JSON.stringify(first.data.words));
+        let i;
+
+        [ words, changeToWords ] = this.changeTimingForWordsWithSameTiming(words);
+
+        for (i = 0, length = words.length; i < length; i++) {
+            if (words[i].uuid === word.uuid) break;
+            //if (words[i].end > time) break;
+        }
+
+        first.data.words = words.slice(0, i);
+        second.data.words = words.slice(i);
+
+
+        if (changeToWords){
+            first.end = words[i].start;
+            second.start = words[i].start;
+        }
+        else{
+            first.end = time;
+            second.start = time;
+        }
+
+        if (offset !== 0 && offset !== wordLength) {
+            var prev = first.data.words[first.data.words.length - 1]
+            if (prev.text != text){
+                let add = {...second.data.words[0]};
+                first.data.words.push(add);
+                prev = first.data.words[first.data.words.length - 1]
+            }
+            prev.text = text.substr(0, offset)
+            prev.end = time
+
+            if (second.data.words[0].uuid === word.uuid){
+                second.data.words.shift(0);
+            }
+            second.data.words.unshift({
+                start: start + timeOffset,
+                end,
+                uuid: uuidv4(),
+                text: text.substr(offset)
+            })
+        }
+
+        this.__deleteRegion(region);
+        first = this.wavesurfer.addRegion(first);
+        second = this.wavesurfer.addRegion(second);
+
+        //the list order matters!
+        this.historyService.undoStack.push([first.id, second.id, region.id])
+        this.historyService.regionsHistory[region.id].push(null);
+
+        this.eventBus.trigger('geckoChanged', {
+            event: 'splitSegment',
+            data: [first.id, second.id, region.id]
+        })
+
+        this.setMergedRegions()
+        this.seek(time)
     }
 
     splitSegment() {
