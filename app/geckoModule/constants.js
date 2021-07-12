@@ -119,4 +119,6 @@ export const DEFAULT_USER_CONFIG = {
 }
 export const TRANSCRIPT_EXTENSIONS = ['json', 'ctm', 'rttm', 'srt', 'tsv']
 
+export const TIME_OFFSET = 0.0001
+
 export const COMPARSION_EXTENSIONS = ['json', 'ctm']
