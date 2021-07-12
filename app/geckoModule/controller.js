@@ -1375,7 +1375,7 @@ class MainController {
 
     changeTimingForWordsWithSameTiming(words){
         let prev = -1;
-        var changes = false;//Rotem
+        var changes = false;
         let indexStart = -1;
         for (let i = 0; i < words.length; i++){
             if (words[i].start == prev){
