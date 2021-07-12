@@ -1,4 +1,4 @@
-FROM node:8.7.0-alpine
+FROM node:16.4.2-alpine
 
 RUN mkdir -p /srv/app/gecko
 WORKDIR /srv/app/gecko
