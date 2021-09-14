@@ -53,13 +53,13 @@ export const UNKNOWN_SPEAKER_COLOR = '#808080';
 const speakers = [
     { display: '[noise]', value: '[noise]', shortcut: 1, color: '#e1c7ff'},
     { display: '[crosstalk]', value: '[crosstalk]', shortcut: 2, color: '#e1c7ff'},
-    { display: '[bubble]', value: '[bubble]', shortcut: 3, color: '#e1c7ff'},
-    { display: '[laughter]', value: '[laughter]', shortcut: 4, color: '#e1c7ff'},
-    { display: '[music]', value: '[music]', shortcut: 5, color: '#e1c7ff'},
-    { display: '[recording]', value: '[recording]', shortcut: 6, color: '#e1c7ff'},
-    { display: '[dialtone]', value: '[dialtone]', shortcut: 7, color: '#e1c7ff'},
-    { display: '[foreign]', value: '[foreign]', shortcut: 8, color: '#e1c7ff'},
-    { display: '[beep]', value: '[beep]', shortcut: 9, color: '#e1c7ff'}
+    { display: '[laughter]', value: '[laughter]', shortcut: 3, color: '#e1c7ff'},
+    { display: '[music]', value: '[music]', shortcut: 4, color: '#e1c7ff'},
+    { display: '[dialtone]', value: '[dialtone]', shortcut: 5, color: '#e1c7ff'},
+//    { display: '[bubble]', value: '[bubble]', shortcut: 6, color: '#e1c7ff'},
+//    { display: '[recording]', value: '[recording]', shortcut: 7, color: '#e1c7ff'},
+//    { display: '[foreign]', value: '[foreign]', shortcut: 8, color: '#e1c7ff'},
+//    { display: '[beep]', value: '[beep]', shortcut: 9, color: '#e1c7ff'}
 ]
 
 export const defaultSpeakers = speakers;
@@ -118,5 +118,7 @@ export const DEFAULT_USER_CONFIG = {
     showVideo: true
 }
 export const TRANSCRIPT_EXTENSIONS = ['json', 'ctm', 'rttm', 'srt', 'tsv']
+
+export const TIME_OFFSET = 0.0001
 
 export const COMPARSION_EXTENSIONS = ['json', 'ctm']

@@ -141,9 +141,6 @@ class GeckoEdtior {
                 return
             } else {
                 newRange.selectNodeContents(previousSpace);
-
-
-
                 newRange.collapse();
                 range.deleteContents();
             }
@@ -858,7 +855,7 @@ class GeckoEdtior {
                         }
                         else{
                             end = this.region.end;
-                        }
+              
 
 
 
@@ -987,6 +984,7 @@ class GeckoEdtior {
             w.classList.remove('found-word')
         })
     }
+
 
     createSpan (w) {
         const classes = ['segment-text__word-wrapper']

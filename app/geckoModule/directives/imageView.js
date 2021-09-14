@@ -10,10 +10,20 @@ export const imageViewDirective = () => {
         templateUrl: imageViewTemplate,
         link: (scope, element, attrs) => {
             scope.filteredIndex = scope.parent.indexes.findIndex(element => element === scope.parent.imageIndex);
+            scope.labels = [
+                {name: "app_screen", shortcut: 'a', keycode: 65},
+                {name: "browser", shortcut: 's',  keycode: 83},
+                {name: "presentation", shortcut: 'd', keycode: 68},
+                {name: "webcam", shortcut: 'f', keycode: 70},
+            ];
 
             scope.imageIndex = scope.parent.imageIndex;
             scope.canvas = document.getElementById('canvas');
-            scope.presentationCheckbox = document.getElementById('PresentationCheckbox');
+            scope.labelChosen = {
+                hmn: "",
+                cmptr: ""
+            }
+//            scope.presentationCheckbox = document.getElementById('PresentationCheckbox');
             scope.predictedTitle = document.getElementById('PredictedTitle');
             scope.change = (diff) => {
                 scope.updateList();
@@ -34,15 +44,20 @@ export const imageViewDirective = () => {
             }
 
             angular.element(document).bind("keydown", function (event) {
-                if((event.which === 13 && !($("button").is(":focus"))) || ((event.metaKey || event.ctrlKey) && event.which === 39)) {
+
+                if((event.which === 13 && !($("textarea").is(":focus"))) ||  ((event.metaKey || event.ctrlKey) && event.which === 13) || ((event.metaKey || event.ctrlKey) && event.which === 39)) {
                     scope.change(1);
                 }
                 else if((event.metaKey || event.ctrlKey) && event.which === 37){
                     scope.change(-1);
                 }
-                else if(event.which === 78){
-                    if(!($("textarea").is(":focus"))){
-                        scope.presentationCheckbox.checked = !scope.presentationCheckbox.checked;
+                else{
+                    for(let i = 0; i < scope.labels.length; i++){
+                        if (event.which == scope.labels[i].keycode && !($("textarea").is(":focus"))){
+                            scope.chooseLabel(scope.labels[i]);
+                            scope.$apply();
+                            return;
+                        }
                     }
                 }
             });
@@ -70,35 +85,52 @@ export const imageViewDirective = () => {
                     scope.parent.imagesCsv[scope.imageIndex].bounding_box = '';
                 }
                 scope.parent.imagesCsv[scope.imageIndex].predicted_title = scope.predictedTitle.value;
-                scope.parent.imagesCsv[scope.imageIndex].presentation = !scope.presentationCheckbox.checked;
+
+                scope.parent.imagesCsv[scope.imageIndex].human_classification = scope.labelChosen.hmn === '' ? scope.labelChosen.cmptr : scope.labelChosen.hmn;
+//                scope.parent.imagesCsv[scope.imageIndex].presentation = !scope.presentationCheckbox.checked;
             }
 
 
             scope.init = (canvas) => {
-                    scope.bgImg.src = scope.parent.imageSrc;
+                scope.labelChosen = {
+                    hmn: scope.parent.imagesCsv[scope.imageIndex].human_classification,
+                    cmptr: scope.parent.imagesCsv[scope.imageIndex].computer_classification,
+                };
+                if(scope.bgImg.src) {
+                    scope.$apply();
+                }
+                scope.bgImg.src = scope.parent.imageSrc;
             }
 
             scope.bgImg = new Image();
             scope.bgImg.onload = () => {
-                    scope.canvas.style.backgroundImage = 'url(' + scope.bgImg.src + ')';
-                    scope.canvas.style.height = scope.bgImg.height + "px";
-                    let prev = document.getElementsByClassName("rectangle");
-                    if (prev.length > 0){
-                        prev[0].remove();
-                    }
-                    scope.presentationCheckbox.checked = !scope.parent.imagesCsv[scope.imageIndex].presentation;
-                    scope.predictedTitle.value = scope.parent.imagesCsv[scope.imageIndex].predicted_title;
-                    if (scope.parent.imagesCsv[scope.imageIndex].bounding_box != ''){
-                        let bounding_box = scope.parent.imagesCsv[scope.imageIndex].bounding_box
-                        element = document.createElement('div');
-                        element.className = 'rectangle'
-                        element.style.left = bounding_box.x + 'px';
-                        element.style.top = bounding_box.y + 'px';
-                        element.style.width = bounding_box.width + 'px';
-                        element.style.height = bounding_box.height + 'px';
-                        canvas.appendChild(element);
-                    }
+                scope.canvas.style.backgroundImage = 'url(' + scope.bgImg.src + ')';
+                scope.canvas.style.height = scope.bgImg.height + "px";
+                let prev = document.getElementsByClassName("rectangle");
+                if (prev.length > 0){
+                    prev[0].remove();
                 }
+//                    scope.presentationCheckbox.checked = !scope.parent.imagesCsv[scope.imageIndex].presentation;
+
+                scope.predictedTitle.value = scope.parent.imagesCsv[scope.imageIndex].predicted_title;
+                if (scope.parent.imagesCsv[scope.imageIndex].bounding_box != ''){
+                    let bounding_box = scope.parent.imagesCsv[scope.imageIndex].bounding_box
+                    element = document.createElement('div');
+                    element.className = 'rectangle'
+                    element.style.left = bounding_box.x + 'px';
+                    element.style.top = bounding_box.y + 'px';
+                    element.style.width = bounding_box.width + 'px';
+                    element.style.height = bounding_box.height + 'px';
+                    canvas.appendChild(element);
+                }
+            }
+
+            scope.chooseLabel = (label) =>{
+                if (scope.labelChosen.hmn === label.name)
+                    scope.labelChosen.hmn = "";
+                else
+                    scope.labelChosen.hmn = label.name;
+            }
 
             scope.initDraw = (canvas) => {
                 function setMousePosition(e) {

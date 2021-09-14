@@ -169,6 +169,25 @@ hr.half-rule {
     background-color: #a94dec;
 }
 
+@media (min-width: 768px).container {
+    .container {
+        min-width: 750px;
+        maxwidth: 780px;
+    }
+}
+@media (min-width: 992px){
+    .container {
+        min-width: 970px;
+        max-width: 1000px;
+    }
+}
+@media (min-width: 1200px){
+    .container {
+        min-width: 1170px;
+        max-width: 1200px;
+    }
+}
+
 .navbar-inverse .navbar-nav > li > a {
     color: #fff;
 }
@@ -670,4 +689,29 @@ a.play-part.play-part-clear{
 .regex-exp{
     font-size: small;
     position: absolute;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.image-label {
+    text-align: center;
+    background: #f1ddff;
+    border-radius: 3px;
+    margin: 0 15px 2px;
+    padding: 2px 5px;
+    font-size: 16px;
+    box-shadow: 1px 1px 2px #a9a9a9ad;
+}
+
+.image-label.clicked {
+    background: #e4c3f5;
+    border: none;
+    box-shadow: inset 1px 1px 3px 1px #8c8c8ce0;
+}
+
+.cmptr {
+    height: 25px;
+    text-align: center;
 }

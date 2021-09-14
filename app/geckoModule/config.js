@@ -20,7 +20,7 @@ var config = {
     slider: "#slider",
     isServerMode: false,
     proofreadingAutoScroll: true,
-    enableDrafts: false,
+    enableDrafts: true,
     emptySectionClick: true
 }
 

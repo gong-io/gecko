@@ -290,16 +290,17 @@
                 <i class="glyphicon glyphicon-resize-small"></i>
             </button>
 
-            <button class="btn btn-primary" ng-click="ctrl.toggleSearchBar()"
-                    title="Toggle search">
-                <i class="glyphicon glyphicon-search"></i>
-            </button>
-
             <button class="btn btn-primary" ng-click="ctrl.toggleWaveform()"
                     ng-if="!ctrl.userConfig.showWaveform&&!ctrl.onlyProofreading"
                     title="Toggle waveform"
                     style="margin-left: 1rem;">
-                <i class="glyphicon glyphicon-fullscreen"></i>
+                <i class="glyphicon glyphicon-resize-full"></i>
+            </button>
+
+            <button class="btn btn-primary" ng-click="ctrl.toggleSearchBar()"
+                    title="Toggle search">
+                <i class="glyphicon glyphicon-search"></i>
+
             </button>
 
         </div>
@@ -502,7 +503,7 @@
         </div>
 
         <div class="" style="position: absolute; z-index: 1;" ng-style="!ctrl.userConfig.showSegmentLabeling && { 'top' : '32px' }" ng-if="ctrl.discrepancies && !ctrl.userConfig.showTranscriptDifferences">
-            <button type="button" class="btn btn-info btn-sm" tooltip-placement="right" tooltip-class="gecko-segment-labeling-tooltip"
+            <button type="button" class="btn btn-primary btn-sm" tooltip-placement="right" tooltip-class="gecko-segment-labeling-tooltip"
             uib-tooltip="Transcript differences" ng-click="ctrl.toggleTranscriptDifferences()">
                 <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
             </button>
@@ -516,7 +517,7 @@
                     <h3 class="panel-title">
                         Transcript differences
                     </h3>
-                    <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTranscriptDifferences()">
+                    <button type="button" class="btn btn-primary btn-sm" ng-click="ctrl.toggleTranscriptDifferences()">
                         <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
                     </button>
                 </div>
@@ -538,7 +539,7 @@
                     <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                         <h3 class="panel-title transcript__filename" title="{{ file.filename }}">File: {{ file.filename }}</h3>
                         <search-bar ng-show="ctrl.searchBarView"></search-bar>
-                        <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
+                        <button type="button" class="btn btn-primary btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
                             <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                         </button>
                     </div>
@@ -560,7 +561,7 @@
                 </div>
             </div>
         <div ng-if="!ctrl.userConfig.showTranscriptFiles[file.filename]" class="" style="position: absolute; z-index: 1; right: 0; top: {{$index * 32}}px">
-                <button type="button" class="btn btn-info btn-sm" tooltip-placement="left" tooltip-class="gecko-segment-labeling-tooltip"
+                <button type="button" class="btn btn-primary btn-sm" tooltip-placement="left" tooltip-class="gecko-segment-labeling-tooltip"
                 uib-tooltip="Transcript of file #{{ $index + 1 }}" ng-click="ctrl.toggleTextPanel(file.filename)">
                     <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
                     {{ $index + 1 }}
@@ -576,7 +577,7 @@
                 <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="panel-title">File: {{ file.filename }}</h3>
                     <search-bar ng-show="ctrl.searchBarView" ></search-bar>
-                    <button type="button" class="btn btn-info btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
+                    <button type="button" class="btn btn-primary btn-sm" ng-click="ctrl.toggleTextPanel(file.filename)" style="margin-right: 16px;">
                         <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                     </button>
                 </div>
