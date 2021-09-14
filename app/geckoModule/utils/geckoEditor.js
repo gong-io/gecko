@@ -141,9 +141,6 @@ class GeckoEdtior {
                 return
             } else {
                 newRange.selectNodeContents(previousSpace);
-
-
-
                 newRange.collapse();
                 range.deleteContents();
             }
@@ -858,7 +855,7 @@ class GeckoEdtior {
                         }
                         else{
                             end = this.region.end;
-                        }
+              
 
 
 
@@ -978,15 +975,15 @@ class GeckoEdtior {
         this.selectedWord = wordEl
     }
 
-
-
-
-
-
-
-
-
-
+    setFound (uuid) {
+        const wordEl = this.wordsEls.get(uuid)
+        wordEl.classList.add('found-word')
+    }
+    resetFound () {
+        this.element.querySelectorAll('.found-word').forEach((w) => {
+            w.classList.remove('found-word')
+        })
+    }
 
 
     createSpan (w) {
