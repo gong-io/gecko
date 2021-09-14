@@ -30,7 +30,7 @@
     "jquery": "^3.5.0",
     "sweetalert2": "^9.10.12",
     "uuid": "^3.4.0",
-    "video.js": "^7.7.5",
+    "video.js": "^7.15.4",
     "wavesurfer.js": "^4.0.1"
   },
   "devDependencies": {

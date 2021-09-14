@@ -117,15 +117,16 @@ export const searchBarDirective = () => {
 
                 if (e.which == 13 && scope.isActive()){
                     let parent = scope.$parent.ctrl;
-                    let currentTime = parent.currentTimeSeconds;
-                    if (Math.abs(currentTime - scope.time) > 0.5){
-                        scope.currentIndex = scope.words.findIndex(word => word.end > currentTime);
-                        scope.currentIndex = scope.currentIndex > -1 ? scope.currentIndex : 0;
-                        scope.seek(0);
-                    }
-                    else{
+//                    let currentTime = parent.currentTimeSeconds;
+//                    if (Math.abs(currentTime - scope.time) > 0.5){
+//                        scope.currentIndex = scope.words.findIndex(word => word.end > currentTime);
+//                        scope.currentIndex = scope.currentIndex > -1 ? scope.currentIndex : 0;
+//                        scope.seek(0);
+//                    }
+//                    else{
                         scope.seek(1);
-                    }
+                        parent.colorFoundWords(scope.words);
+//                    }
 
                 }
             }
@@ -145,9 +146,9 @@ export const searchBarDirective = () => {
                         scope.currentIndex = (scope.currentIndex + i) % scope.amount;
                     else
                         scope.currentIndex = (scope.currentIndex + i) < 0 ? scope.amount + i : (scope.currentIndex + i);
-                    let currentTime = scope.words[scope.currentIndex].start;
+                    let currentTime = Math.max(scope.words[scope.currentIndex].start - .1, 0);
                     let parent = scope.$parent.ctrl;
-                    parent.seek(currentTime, "right");
+                    parent.seek(currentTime, "left");
                     scope.time = parent.currentTimeSeconds;
                     if (parent.proofReadingView){
                         parent.eventBus.trigger('proofReadingScrollToRegion', parent.getCurrentRegion());
