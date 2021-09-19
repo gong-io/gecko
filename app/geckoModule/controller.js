@@ -844,15 +844,15 @@ class MainController {
         if (this.proofReadingView) {
             if (!words){
                 for (let i = 0; i < this.mergedRegions[this.selectedFileIndex].length; i++){
-                    let region = this.mergedRegions[this.selectedFileIndex][i].regions[this.selectedFileIndex];
+                    this.mergedRegions[this.selectedFileIndex][i].regions.forEach(region => {
                     const editableWord = this.editableWords.get(region.id)
                     editableWord.resetFound()
+                    });
                 }
             }
             else{
                 for (let i = 0; i < words.length; i++){
                     let region = words[i].region;
-
                     const editableWord = this.editableWords.get(region.id)
                     editableWord.setFound(words[i].uuid)
                 }
