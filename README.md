@@ -18,8 +18,6 @@
 * Supports different formats such as RTTM, CTM, JSON, CSV.
 * Increased productivity using keyboard shortcuts
 
-![Poster](./docs/Poster_interspeech2019.jpg)
-
 ## Technological Stack
 Gecko is written in Javascript and is based on Angular.js V1.X.
  The audio player uses the popular [wavesurfer.js](https://github.com/katspaugh/wavesurfer.js) library.
