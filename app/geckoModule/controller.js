@@ -844,15 +844,15 @@ class MainController {
         if (this.proofReadingView) {
             if (!words){
                 for (let i = 0; i < this.mergedRegions[this.selectedFileIndex].length; i++){
-                    this.mergedRegions[this.selectedFileIndex][i].regions.forEach(region => {
-                        const editableWord = this.editableWords.get(region.id)
-                        editableWord.resetFound()
-                    });
+                    let region = this.mergedRegions[this.selectedFileIndex][i].regions[this.selectedFileIndex];
+                    const editableWord = this.editableWords.get(region.id)
+                    editableWord.resetFound()
                 }
             }
             else{
                 for (let i = 0; i < words.length; i++){
                     let region = words[i].region;
+
                     const editableWord = this.editableWords.get(region.id)
                     editableWord.setFound(words[i].uuid)
                 }
@@ -2211,7 +2211,7 @@ class MainController {
     }
 
     searchBarUpdate(time=200) {
-        //return; // not working right..
+        return; // not working right..
         let i = this.proofReadingView ? 1 : 0;
         let searchBar = document.getElementsByClassName("search-bar")[i].getElementsByClassName("SearchBarInput")[0].value = this.searchBarText;
         if (this.searchBarView){
