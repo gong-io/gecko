@@ -30,12 +30,15 @@ module.exports = {
         }
     },
     devServer: {
-        contentBase: 'build/', // Relative directory for base of server
-        inline: true,
+        static: {
+            publicPath: 'build/',
+            //contentBase: 'build/', // Relative directory for base of server
+        },
+        //inline: true,
         port: 4000, // Port Number
         host: 'localhost', // Change to '0.0.0.0' for external facing server
         historyApiFallback: true,
-        disableHostCheck: true
+        allowedHosts: 'all',
     },
     module: {
         rules: [
