@@ -830,16 +830,10 @@ class GeckoEdtior {
                         if (i > 0){
                             if (!originalWord || spans[i - 1].dataset.end !==  originalWord.start){
                                 start = Number(spans[i - 1].dataset.end);
-
-
-
-
                             }
                             else{
                                 start = originalWord.start;
                             }
-
-
                         }
                         else{
                             start = this.region.start;
@@ -883,14 +877,20 @@ class GeckoEdtior {
                             }
                         }
                     } else {
-                        let duration = (this.region.end - this.region.start) / newWordSplited.length;
+                        let start = Number(spans[i - 1].dataset.end) // this.region.start
+                        if (start < this.region.start)
+                            start = this.region.start;
+                        let end = Number(spans[i + 1].dataset.start)// this.region.end
+                        if (end > this.region.end)
+                            end = this.region.end;
+                        let duration = (end - start) / newWordSplited.length;
                         for (let j = 0; j < newWordSplited.length; j++) {
                             if (newWordSplited[j].trim()) {
                                 updatedWords.push({
                                     text: newWordSplited[j],
                                     uuid: uuidv4(),
-                                    start: Math.round((this.region.start + duration * j) * 100) / 100,
-                                    end: Math.round((this.region.start + duration * (j + 1)) * 100) / 100,
+                                    start: Math.round((start + duration * j) * 100) / 100,
+                                    end: Math.round((start + duration * (j + 1)) * 100) / 100,
                                     wasEdited: true,
                                     isSelected: wordSelected
                                 })
