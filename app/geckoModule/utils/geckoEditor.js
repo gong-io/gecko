@@ -828,7 +828,7 @@ class GeckoEdtior {
                     if (word) {
                         let start, end;
                         if (i > 0){
-                            if (spans[i - 1].dataset.end !==  originalWord.start){
+                            if (!originalWord || spans[i - 1].dataset.end !==  originalWord.start){
                                 start = Number(spans[i - 1].dataset.end);
 
 
@@ -846,7 +846,7 @@ class GeckoEdtior {
                         }
 
                         if (i < (spans.length - 1)){
-                            if (spans[i + 1].dataset.start !==  originalWord.end){
+                            if (!originalWord || spans[i + 1].dataset.start !==  originalWord.end){
                                 end = Number(spans[i + 1].dataset.start);
                             }
                             else{
