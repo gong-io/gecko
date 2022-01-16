@@ -48,8 +48,14 @@ export const parse = (data, $parent) => {
             let current = monologue.words[j];
 
             if (current.type === constants.PUNCTUATION_TYPE) {
-                monologue.words[j - 1].text += current.text;
-                monologue.words.splice(j, 1);
+                if ((current.text == '¿' || current.text == '¡') && j + 1 < monologue.words.length){
+                    monologue.words[j + 1].text = current.text + monologue.words[j + 1].text;
+                    monologue.words.splice(j, 1);
+                }
+                else{
+                    monologue.words[j - 1].text += current.text;
+                    monologue.words.splice(j, 1);
+                }
             } else {
                 j++;
             }

@@ -135,18 +135,24 @@ export const copyRegion = (region) => {
 }
 
 export const splitPunctuation = (text) => {
-    let punct = ''
+    let start_punct = ''
+    let end_punct = ''
+
+    while (constants.PUNCTUATIONS.indexOf(text[0]) !== -1) {
+        start_punct = text[0] + start_punct
+        text = text.substring(1, text.length)
+    }
 
     while (constants.PUNCTUATIONS.indexOf(text[text.length - 1]) !== -1) {
-        punct = text[text.length - 1] + punct
+        end_punct = text[text.length - 1] + end_punct
         text = text.substring(0, text.length - 1)
     }
 
-    if (punct === '...') {
-        punct = '…'
+    if (end_punct === '...') {
+        end_punct = '…'
     }
 
-    return [text, punct]
+    return [start_punct, text, end_punct]
 }
 
 export const sortLegend = (legend) => {
