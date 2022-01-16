@@ -877,10 +877,10 @@ class GeckoEdtior {
                             }
                         }
                     } else {
-                        let start = Number(spans[i - 1].dataset.end) // this.region.start
+                        let start = i > 0 ? Number(spans[i - 1].dataset.end) : this.region.start;// this.region.start
                         if (start < this.region.start)
                             start = this.region.start;
-                        let end = Number(spans[i + 1].dataset.start)// this.region.end
+                        let end = i < spans.length - 1 ? Number(spans[i + 1].dataset.start) : this.region.end;// this.region.end
                         if (end > this.region.end)
                             end = this.region.end;
                         let duration = (end - start) / newWordSplited.length;
