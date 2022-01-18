@@ -44,20 +44,39 @@ export const parse = (data, $parent) => {
 
 
         // attach punctuation to the previous word
-        for (let j = 1; j < monologue.words.length;) {
+        for (let j = 0; j < monologue.words.length;) {
             let current = monologue.words[j];
 
-            if (current.type === constants.PUNCTUATION_TYPE) {
-                if ((current.text == '¿' || current.text == '¡') && j + 1 < monologue.words.length){
-                    monologue.words[j + 1].text = current.text + monologue.words[j + 1].text;
-                    monologue.words.splice(j, 1);
+            if (current.type === constants.PUNCTUATION_TYPE || current.text == '¿' || current.text == '¡') {
+//                if (current.text.length > 1){
+                for(let k=0; k < current.text.length; k++){
+                    if ((current.text[k] == '¿' || current.text[k] == '¡') && j + 1 < monologue.words.length){
+                        monologue.words[j + 1].text = current.text[k] + monologue.words[j + 1].text;
+//                            monologue.words.splice(j, 1);
+                    }
+                    else if (j > 0){
+                        monologue.words[j - 1].text += current.text[k];
+                    }
                 }
-                else{
-                    monologue.words[j - 1].text += current.text;
-                    monologue.words.splice(j, 1);
-                }
+                monologue.words.splice(j, 1);
+//                }
+
+//                if ((current.text == '¿' || current.text == '¡') && j + 1 < monologue.words.length){
+//                    monologue.words[j + 1].text = current.text + monologue.words[j + 1].text;
+//                    monologue.words.splice(j, 1);
+//                }
+//                else if (j > 0){
+//                    monologue.words[j - 1].text += current.text;
+//                    monologue.words.splice(j, 1);
+//                }
             } else {
-                j++;
+                let textAndPunct = splitPunctuation(current.text);
+                if (textAndPunct[2] != "" && textAndPunct[2][textAndPunct[2].length - 1] == '¿' || textAndPunct[2][textAndPunct[2].length - 1] == '¡'){
+                    monologue.words[j + 1].text = current.text[current.text.length - 1] + monologue.words[j + 1].text;
+                    current.text = current.text.substring(0, current.text.length - 1);
+                }
+                else
+                    j++;
             }
         }
     }
@@ -90,19 +109,27 @@ export const convert = (app, fileIndex) => {
                 delete t.uuid
                 delete t.wasEdited
 
+                let textAndPunct = splitPunctuation(t.text);
+                //trim the punctuation from the original
+                if (textAndPunct[0] !== ""){
+                    terms.push({
+                        start: t.start,
+                        end: t.start,
+                        text: textAndPunct[0],
+                        confidence: t.confidence,
+                        type: constants.PUNCTUATION_TYPE
+                    })
+                }
+
+                t.text = textAndPunct[1]
                 t.type = constants.WORD_TYPE;
                 terms.push(t);
 
-                let textAndPunct = splitPunctuation(t.text);
-                if (textAndPunct[1] !== "") {
-
-                    //trim the punctuation from the original
-                    t.text = textAndPunct[0]
-
+                if (textAndPunct[2] !== ""){
                     terms.push({
                         start: t.end,
                         end: t.end,
-                        text: textAndPunct[1],
+                        text: textAndPunct[2],
                         confidence: t.confidence,
                         type: constants.PUNCTUATION_TYPE
                     })
