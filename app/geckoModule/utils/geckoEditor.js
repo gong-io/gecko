@@ -110,9 +110,7 @@ class GeckoEdtior {
         const selection = document.getSelection()
         const range = selection.getRangeAt(0)
         const { startOffset, endOffset } = range
-        const nextSpace = lastNode.nextSibling
         const previousSpace = firstNode.previousSibling
-        const previousWord = previousSpace.previousSibling
         const newRange = document.createRange()
         const timeStart = firstNode.getAttribute('data-start')
         const timeEnd = lastNode.getAttribute('data-end')
