@@ -766,6 +766,27 @@ class GeckoEdtior {
         this.nextElementStack = [];
         const spans = this.element.querySelectorAll('span.segment-text__word-wrapper')
 
+        if (document.activeElement === this.element && this.element.contains(document.activeElement))
+            console.log("yes");
+
+        const selection = document.getSelection();
+
+        let i = 0;
+        let startOffset = 0;
+        while(i < this.element.children.length && this.element.children[i] !== this.findNodeAncestor(selection.anchorNode)){
+            startOffset += this.element.children[i].textContent.length;
+            i++;
+        }
+        let endOffset = startOffset;
+        while(i < this.element.children.length && this.element.children[i] !== this.findNodeAncestor(selection.extentNode)){
+            endOffset += this.element.children[i].textContent.length;
+            i++;
+        }
+        startOffset += selection.anchorOffset;
+        endOffset += selection.extentOffset;
+
+        const text = this.element.textContent;
+
         if (!spans.length) {
             this.trigger('wordsUpdated', [{start: this.region.start, end: this.region.end, text: '', uuid: uuidv4()}])
             return
@@ -936,6 +957,23 @@ class GeckoEdtior {
 
         this.previousState = newWords.slice()
         this.formDOM(this.words)
+
+//        if()
+        selection.removeAllRanges()
+
+        const newRange = document.createRange();
+
+        let startNodeIndex = text.substring(0, startOffset).trim().split(/\s+/g).length + (text.substring(0, startOffset).match(/\s+/g) || []).length - (text[startOffset - 1] != " " ? 1 : 0);
+//        let startIndex = text[startOffset] != " " ? startOffset - text.substring(0, startOffset).lastIndexOf(" ") - 1: 0;
+        let startIndex = startOffset - text.substring(0, startOffset).lastIndexOf(" ") - 1;
+        let endNodeIndex = text.substring(0, endOffset).trim().split(/\s+/g).length + (text.substring(0, endOffset).match(/\s+/g) || []).length - (text[endOffset - 1] != " " ? 1 : 0);
+//        let endIndex = text[endOffset] != " " ? endOffset - text.substring(0, endOffset).lastIndexOf(" ") - 1: 0;
+        let endIndex = endOffset - text.substring(0, endOffset).lastIndexOf(" ") - 1;
+
+        newRange.setStart(this.element.children[startNodeIndex].firstChild, startIndex);
+        newRange.setEnd(this.element.children[endNodeIndex].firstChild, endIndex);
+
+        selection.addRange(newRange)
     }
 
     cleanDOM () {
