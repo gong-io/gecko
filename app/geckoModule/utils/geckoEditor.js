@@ -138,7 +138,8 @@ class GeckoEdtior {
                 document.execCommand('insertHTML', false, span.outerHTML)
                 return
             } else {
-                newRange.selectNodeContents(previousSpace);
+                if (previousSpace)
+                    newRange.selectNodeContents(previousSpace);
                 newRange.collapse();
                 range.deleteContents();
             }
