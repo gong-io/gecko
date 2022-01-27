@@ -766,24 +766,26 @@ class GeckoEdtior {
         this.nextElementStack = [];
         const spans = this.element.querySelectorAll('span.segment-text__word-wrapper')
 
-        if (document.activeElement === this.element && this.element.contains(document.activeElement))
-            console.log("yes");
-
         const selection = document.getSelection();
 
-        let i = 0;
+        let forwardSelection = !this.isBackwardsSelection(this.findNodeAncestor(selection.anchorNode), this.findNodeAncestor(selection.extentNode))
+
+        let startNode = forwardSelection ? this.findNodeAncestor(selection.anchorNode) : this.findNodeAncestor(selection.extentNode);
+        let endNode = forwardSelection ? this.findNodeAncestor(selection.extentNode) : this.findNodeAncestor(selection.anchorNode);
         let startOffset = 0;
-        while(i < this.element.children.length && this.element.children[i] !== this.findNodeAncestor(selection.anchorNode)){
+
+        let i = 0;
+        while(i < this.element.children.length && this.element.children[i] !== startNode){
             startOffset += this.element.children[i].textContent.length;
             i++;
         }
         let endOffset = startOffset;
-        while(i < this.element.children.length && this.element.children[i] !== this.findNodeAncestor(selection.extentNode)){
+        while(i < this.element.children.length && this.element.children[i] !== endNode){
             endOffset += this.element.children[i].textContent.length;
             i++;
         }
-        startOffset += selection.anchorOffset;
-        endOffset += selection.extentOffset;
+        startOffset += forwardSelection ? selection.anchorOffset : selection.extentOffset;
+        endOffset += forwardSelection ? selection.extentOffset : selection.anchorOffset;
 
         const text = this.element.textContent;
 
@@ -964,16 +966,31 @@ class GeckoEdtior {
         const newRange = document.createRange();
 
         let startNodeIndex = text.substring(0, startOffset).trim().split(/\s+/g).length + (text.substring(0, startOffset).match(/\s+/g) || []).length - (text[startOffset - 1] != " " ? 1 : 0);
-//        let startIndex = text[startOffset] != " " ? startOffset - text.substring(0, startOffset).lastIndexOf(" ") - 1: 0;
         let startIndex = startOffset - text.substring(0, startOffset).lastIndexOf(" ") - 1;
         let endNodeIndex = text.substring(0, endOffset).trim().split(/\s+/g).length + (text.substring(0, endOffset).match(/\s+/g) || []).length - (text[endOffset - 1] != " " ? 1 : 0);
-//        let endIndex = text[endOffset] != " " ? endOffset - text.substring(0, endOffset).lastIndexOf(" ") - 1: 0;
         let endIndex = endOffset - text.substring(0, endOffset).lastIndexOf(" ") - 1;
+        if (endIndex === this.element.children[endNodeIndex].firstChild.textContent.length){
+            if (endNodeIndex + 1 == this.element.children.length){
+//                endIndex = Math.max(endIndex - 1, 0)
+                endIndex = endIndex;
+            }
+            else{
+                endNodeIndex++;
+                endIndex = 0;
+            }
+        }
 
-        newRange.setStart(this.element.children[startNodeIndex].firstChild, startIndex);
-        newRange.setEnd(this.element.children[endNodeIndex].firstChild, endIndex);
+        if (startIndex < this.element.children[startNodeIndex].firstChild.textContent.length &&
+            (endIndex < this.element.children[endNodeIndex].firstChild.textContent.length || endNodeIndex + 1 == this.element.children.length))
+        {
+            newRange.setStart(this.element.children[startNodeIndex].firstChild, startIndex);
+            newRange.setEnd(this.element.children[endNodeIndex].firstChild, endIndex);
 
-        selection.addRange(newRange)
+            selection.addRange(newRange)
+        }
+        else{
+            console.log(startIndex, this.element.children[startNodeIndex].firstChild.textContent.length, endIndex, this.element.children[endNodeIndex].firstChild.textContent.length);
+        }
     }
 
     cleanDOM () {
