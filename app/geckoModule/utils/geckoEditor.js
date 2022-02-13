@@ -975,6 +975,7 @@ class GeckoEdtior {
             }
             else
                 startNodeIndex--;
+            startNode = this.element.children[startNodeIndex];
         }
         if (!startNode){
             startNodeIndex = this.element.children.length - 1;
@@ -984,7 +985,7 @@ class GeckoEdtior {
         let endNodeIndex = text.substring(0, endOffset).trim().split(/\s+/g).length + (text.substring(0, endOffset).match(/\s+/g) || []).length;
         let endIndex = endOffset - 1 - text.substring(0, endOffset).lastIndexOf(" ");
         endNode = this.element.children[endNodeIndex];
-        if (endNode && /\s/.test(endNode.innerText)){
+        if (!endNode || /\s/.test(endNode.innerText)){
             if (/\s/.test(text[endOffset]))
                 endIndex = 0;
             else if (endOffset > 0 && /\s/.test(text[endOffset - 1])){
@@ -993,6 +994,7 @@ class GeckoEdtior {
             }
             else
                 endNodeIndex--;
+            endNode = this.element.children[endNodeIndex];
         }
         if (!endNode){
             endNodeIndex = this.element.children.length - 1;
