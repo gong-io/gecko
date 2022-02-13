@@ -312,8 +312,9 @@ class GeckoEdtior {
                     }
                 }
             }
-            this.element.blur()
+//            this.element.blur()
             e.preventDefault()
+            this.updateAll(true)
             return
         }
 
@@ -760,32 +761,34 @@ class GeckoEdtior {
         }
     }
 
-    updateAll () {
+    updateAll (keepSelection=false) {
         this.previousElementStack = [];
         this.nextElementStack = [];
         const spans = this.element.querySelectorAll('span.segment-text__word-wrapper')
 
         const selection = document.getSelection();
-        let forwardSelection = !(this.isBackwardsSelection(this.findNodeAncestor(selection.anchorNode), this.findNodeAncestor(selection.extentNode)) || (this.findNodeAncestor(selection.anchorNode) == this.findNodeAncestor(selection.extentNode) && selection.anchorOffset > selection.extentOffset))
+        if (keepSelection){
+            var forwardSelection = !(this.isBackwardsSelection(this.findNodeAncestor(selection.anchorNode), this.findNodeAncestor(selection.extentNode)) || (this.findNodeAncestor(selection.anchorNode) == this.findNodeAncestor(selection.extentNode) && selection.anchorOffset > selection.extentOffset))
 
-        let startNode = forwardSelection ? this.findNodeAncestor(selection.anchorNode) : this.findNodeAncestor(selection.extentNode);
-        let endNode = forwardSelection ? this.findNodeAncestor(selection.extentNode) : this.findNodeAncestor(selection.anchorNode);
-        let startOffset = 0;
+            var startNode = forwardSelection ? this.findNodeAncestor(selection.anchorNode) : this.findNodeAncestor(selection.extentNode);
+            var endNode = forwardSelection ? this.findNodeAncestor(selection.extentNode) : this.findNodeAncestor(selection.anchorNode);
+            var startOffset = 0;
 
-        let i = 0;
-        while(i < this.element.children.length && this.element.children[i] !== startNode){
-            startOffset += this.element.children[i].textContent.length;
-            i++;
+            var i = 0;
+            while(i < this.element.children.length && this.element.children[i] !== startNode){
+                startOffset += this.element.children[i].textContent.length;
+                i++;
+            }
+            var endOffset = startOffset;
+            while(i < this.element.children.length && this.element.children[i] !== endNode){
+                endOffset += this.element.children[i].textContent.length;
+                i++;
+            }
+            startOffset += forwardSelection ? selection.anchorOffset : selection.extentOffset;
+            endOffset += forwardSelection ? selection.extentOffset : selection.anchorOffset;
+
+            var text = this.element.textContent;
         }
-        let endOffset = startOffset;
-        while(i < this.element.children.length && this.element.children[i] !== endNode){
-            endOffset += this.element.children[i].textContent.length;
-            i++;
-        }
-        startOffset += forwardSelection ? selection.anchorOffset : selection.extentOffset;
-        endOffset += forwardSelection ? selection.extentOffset : selection.anchorOffset;
-
-        const text = this.element.textContent;
 
         if (!spans.length) {
             this.trigger('wordsUpdated', [{start: this.region.start, end: this.region.end, text: '', uuid: uuidv4()}])
@@ -958,51 +961,53 @@ class GeckoEdtior {
         this.previousState = newWords.slice()
         this.formDOM(this.words)
 
-        selection.removeAllRanges()
+        if (keepSelection){
+            selection.removeAllRanges()
 
-        const newRange = document.createRange();
+            const newRange = document.createRange();
 
-        let startNodeIndex = text.substring(0, startOffset).trim().split(/\s+/g).length + (text.substring(0, startOffset).match(/\s+/g) || []).length;
-        let startIndex = startOffset - 1 - text.substring(0, startOffset).lastIndexOf(" ");
-        startNode = this.element.children[startNodeIndex];
+            var startNodeIndex = text.substring(0, startOffset).trim().split(/\s+/g).length + (text.substring(0, startOffset).match(/\s+/g) || []).length;
+            var startIndex = startOffset - 1 - text.substring(0, startOffset).lastIndexOf(" ");
+            startNode = this.element.children[startNodeIndex];
 
-        if (startNode && /\s/.test(startNode.innerText)){
-            if (/\s/.test(text[startOffset]))
-                startIndex = 0;
-            else if (startOffset > 0 && /\s/.test(text[startOffset - 1])){
-                startNodeIndex--;
-                startIndex = 0;
+            if (startNode && /\s/.test(startNode.innerText)){
+                if (/\s/.test(text[startOffset]))
+                    startIndex = 0;
+                else if (startOffset > 0 && /\s/.test(text[startOffset - 1])){
+                    startNodeIndex--;
+                    startIndex = 0;
+                }
+                else
+                    startNodeIndex--;
             }
-            else
-                startNodeIndex--;
-        }
-        if (!startNode){
-            startNodeIndex = this.element.children.length - 1;
-            startIndex = this.element.children[startNodeIndex].textContent.length;
-        }
-
-        let endNodeIndex = text.substring(0, endOffset).trim().split(/\s+/g).length + (text.substring(0, endOffset).match(/\s+/g) || []).length;
-        let endIndex = endOffset - 1 - text.substring(0, endOffset).lastIndexOf(" ");
-        endNode = this.element.children[endNodeIndex];
-        if (endNode && /\s/.test(endNode.innerText)){
-            if (/\s/.test(text[endOffset]))
-                endIndex = 0;
-            else if (endOffset > 0 && /\s/.test(text[endOffset - 1])){
-                endNodeIndex--;
-                endIndex = 0;
+            if (!startNode){
+                startNodeIndex = this.element.children.length - 1;
+                startIndex = this.element.children[startNodeIndex].textContent.length;
             }
-            else
-                endNodeIndex--;
-        }
-        if (!endNode){
-            endNodeIndex = this.element.children.length - 1;
-            endIndex = this.element.children[endNodeIndex].textContent.length;
-        }
 
-        newRange.setStart(this.element.children[startNodeIndex].firstChild, startIndex);
-        newRange.setEnd(this.element.children[endNodeIndex].firstChild, endIndex);
+            var endNodeIndex = text.substring(0, endOffset).trim().split(/\s+/g).length + (text.substring(0, endOffset).match(/\s+/g) || []).length;
+            var endIndex = endOffset - 1 - text.substring(0, endOffset).lastIndexOf(" ");
+            endNode = this.element.children[endNodeIndex];
+            if (endNode && /\s/.test(endNode.innerText)){
+                if (/\s/.test(text[endOffset]))
+                    endIndex = 0;
+                else if (endOffset > 0 && /\s/.test(text[endOffset - 1])){
+                    endNodeIndex--;
+                    endIndex = 0;
+                }
+                else
+                    endNodeIndex--;
+            }
+            if (!endNode){
+                endNodeIndex = this.element.children.length - 1;
+                endIndex = this.element.children[endNodeIndex].textContent.length;
+            }
 
-        selection.addRange(newRange)
+            newRange.setStart(this.element.children[startNodeIndex].firstChild, startIndex);
+            newRange.setEnd(this.element.children[endNodeIndex].firstChild, endIndex);
+
+            selection.addRange(newRange)
+        }
     }
 
     cleanDOM () {
