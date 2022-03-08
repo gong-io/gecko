@@ -574,6 +574,7 @@ class MainController {
             region.data.initFinished = true;
             this.fixRegionsOrder(region);
         }
+        region.data.regionChanged = true;
 
         if (!region.data.isDummy) {
             var prevRegion = this.getRegion(region.prev);
@@ -765,6 +766,7 @@ class MainController {
                 start: dummyRegion.start,
                 end: dummyRegion.end,
                 data: {
+                    regionChanged: true,
                     initFinished: true,
                     fileIndex: this.selectedFileIndex,
                     speaker: [],
@@ -790,6 +792,7 @@ class MainController {
                 start: dummyRegion.start,
                 end: dummyRegion.end,
                 data: {
+                    regionChanged: true,
                     initFinished: true,
                     fileIndex: this.selectedFileIndex,
                     speaker: [],
@@ -1345,6 +1348,7 @@ class MainController {
                     start: start,
                     end: end,
                     data: {
+                        regionChanged: false,
                         initFinished: true,
                         fileIndex: fileIndex,
                         speaker: speakerId.split(constants.SPEAKERS_SEPARATOR).filter(x => x), //removing empty speaker
@@ -1733,26 +1737,33 @@ class MainController {
         this.save(extension, convertTextFormats(extension, this, config.parserOptions))
     }
 
-    checkValidRegions(fileIndex) {
+    checkValidRegions(fileIndex, loading=false) {
         var self = this;
         try {
             var last_end = 0;
             this.iterateRegions((region) => {
-                if (region.end <= region.start) {
-                    throw `Negative duration in file ${self.filesData[fileIndex].filename}\n Start: ${region.start}\n End: ${region.end}`
-                }
+                let next = this.getRegion(region.next);
+                let prev = this.getRegion(region.prev);
+                if (region.data.regionChanged == true || (next && next.data.regionChanged == true) || (prev && prev.data.regionChanged == true) || loading)
+                {
+                    if (region.end <= region.start) {
+                        throw `Negative duration in file ${self.filesData[fileIndex].filename}\n Start: ${region.start}\n End: ${region.end}`
+                    }
 
-                if (last_end > region.start + constants.TOLERANCE) {
-                    throw `Overlapping in file: ${self.filesData[fileIndex].filename}. \n Time: ${last_end.toFixed(2)}`;
+                    if (last_end > region.start + constants.TOLERANCE) {
+                        throw `Overlapping in file: ${self.filesData[fileIndex].filename}. \n Time: ${last_end.toFixed(2)}`;
+                    }
+                    last_end = region.end;
                 }
-                last_end = region.end;
             }, fileIndex, true)
         } catch (err) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Check regions error',
-                text: err
-            })
+            if (!loading){
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Check regions error',
+                    text: err
+                })
+            }
             return false;
         }
         return true;
@@ -2314,6 +2325,7 @@ class MainController {
                 start,
                 end,
                 data: {
+                    regionChanged: true,
                     initFinished: true,
                     fileIndex: this.contextMenuFileIndex,
                     speaker: [speaker.value],
