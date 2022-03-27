@@ -283,6 +283,19 @@ class GeckoEdtior {
     }
 
     keydownEvent (e) {
+        if (e.shiftKey && e.which == 32){
+            const selection = document.getSelection()
+//            if (selection.isCollapsed) {
+            let wordNode = this.findNodeAncestor(selection.anchorNode)
+            let wordClicked = findByUuid(this.words, wordNode.getAttribute("word-uuid"))
+            if (wordClicked){
+                this.trigger('playWord', { word: wordClicked, event: e })
+            }
+            e.preventDefault();
+            return
+//            }
+
+        }
         if (e.which === 13 || e.which === 27) {
             if (e.shiftKey) {
                 const selection = document.getSelection()
@@ -365,6 +378,9 @@ class GeckoEdtior {
         if (e.which === 8 || e.which === 46 || e.which === 32) {
             if ((e.which === 8 || e.which === 46) && (this.isAllSelected() || this.checkLastSymbol())) {
                 this.cleanEditor(this.isAllSelected())
+                e.preventDefault()
+                return
+            } else if (e.which === 32 && this.isDownCtrl(e)) {
                 e.preventDefault()
                 return
             } else {

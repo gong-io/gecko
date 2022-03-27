@@ -60,6 +60,10 @@ class Shortcuts {
                 desc: `Jump to the word's start`
             },
             {
+                keyDesc: '<kbd>Shift</kbd>+<kbd>Space</kbd> on a word in the editor',
+                desc: `Play from the word's start`
+            },
+            {
                 keyDesc: this.isMac ? '<kbd>⌘</kbd>+<kbd>←</kbd> / <kbd>⌘</kbd>+<kbd>→</kbd> when word is selected' : '<kbd>Ctrl</kbd>+<kbd>←</kbd> / <kbd>Ctrl</kbd>+<kbd>→</kbd> when word is selected',
                 desc: 'Jump to previous / next word'
             }
