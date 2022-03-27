@@ -283,6 +283,21 @@ class GeckoEdtior {
     }
 
     keydownEvent (e) {
+        if (e.shiftKey && e.which == 32){
+            const selection = document.getSelection()
+            if (selection.isCollapsed) {
+                const range = selection.getRangeAt(0)
+                let { startOffset } = range
+                let wordNode = this.findNodeAncestor(selection.focusNode)
+                let wordClicked = findByUuid(this.words, wordNode.getAttribute("word-uuid"))
+                if (wordClicked){
+                    this.trigger('playWord', { word: wordClicked, event: e })
+                }
+                e.preventDefault();
+                return
+            }
+
+        }
         if (e.which === 13 || e.which === 27) {
             if (e.shiftKey) {
                 const selection = document.getSelection()

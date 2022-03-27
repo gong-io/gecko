@@ -286,6 +286,14 @@ class MainController {
             this.splitSegmentByWord(word, offset, region)
         })
 
+        this.eventBus.on('playWord', (word, e) => {
+            this.seek(word.start, 'right')
+            e.preventDefault()
+            e.stopPropagation()
+            if (!this.isPlaying)
+                this.playPause();
+        })
+
         this.eventBus.on('emptyEditorClick', (region, e) => {
             if (this.config.emptySectionClick) {
                 this.seek(region.start, 'right')
