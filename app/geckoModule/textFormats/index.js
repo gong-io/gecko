@@ -43,7 +43,7 @@ const convert = (format, parent, parserOptions, ...args) => {
         case 'srt':
             return (fileIndex) => convertSRT(parent, fileIndex, parserOptions)
         default:
-            alert('format ' + ext + ' is not supported')
+            alert('format ' + format + ' is not supported')
             return () => ''
     }
 }
