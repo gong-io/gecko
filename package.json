@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@xmldom/xmldom": "^0.7.5",
+    "@xmldom/xmldom": "^0.8.3",
     "angular": "^1.8.0",
     "angular-ui-bootstrap": "^2.5.6",
     "angularjs-toaster": "^3.0.0",
