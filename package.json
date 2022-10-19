@@ -14,8 +14,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@xmldom/xmldom": "^0.7.5",
-    "angular": "^1.8.0",
+    "@xmldom/xmldom": "^0.8.3",
+    "angular": "^1.8.3",
     "angular-ui-bootstrap": "^2.5.6",
     "angularjs-toaster": "^3.0.0",
     "aws-sdk": "^2.663.0",
@@ -24,7 +24,7 @@
     "cors": "^2.8.5",
     "crel": "^4.2.1",
     "csv-string": "^4.0.1",
-    "dexie": "^2.0.4",
+    "dexie": "^3.2.2",
     "diff": "^4.0.2",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -33,15 +33,14 @@
     "sweetalert2": "^9.10.12",
     "uuid": "^8.3.2",
     "video.js": "^7.12.3",
-    "wavesurfer.js": "^4.0.1",
-    "xmldom": "^0.6.0"
+    "wavesurfer.js": "^4.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.10.4",
     "@babel/preset-env": "^7.10.4",
     "babel-loader": "^8.2.2",
     "css-loader": "^5.2.6",
-    "dotenv-webpack": "^1.7.0",
+    "dotenv-webpack": "^8.0.1",
     "file-loader": "^6.2.0",
     "html-loader": "^2.1.2",
     "html-webpack-plugin": "^5.3.2",
