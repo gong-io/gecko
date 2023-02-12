@@ -1,7 +1,0 @@
-node_modules
-*.pyc
-*.db
-.idea/
-.env
-/private_samples/
-/build/
