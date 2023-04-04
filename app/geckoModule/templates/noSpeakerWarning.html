@@ -1,0 +1,15 @@
+<div class="modal-header">
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="modal-title" id="modal-title">Warning</h3>
+        </div>
+    </div>
+</div>
+<div class="modal-body" id="modal-body">
+    <p>File <b>{{ fileData.filename }}</b> has one or more segments without speaker:</p>
+    <p><b>{{ regionsString }}</b></p>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-warning" type="button" ng-click="ok()">Save Anyway</button>
+</div>
