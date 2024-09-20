@@ -1,3 +1,5 @@
+[![Open in DevZero](https://assets.devzero.io/open-in-devzero.svg)](https://www.devzero.io/dashboard/recipes/new?repo-url=https://github.com/gong-io/gecko)
+
 # Gecko - A Tool for Effective Annotation of Human Conversations
 
 ![Comparison](./docs/Comparison.png)
