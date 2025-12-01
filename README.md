@@ -1,3 +1,43 @@
+# ⚠️ DEPRECATION NOTICE
+
+## Status: DEPRECATED
+
+This project is **no longer actively maintained** and is considered **obsolete and outdated**.
+
+### Deprecation Details
+
+- **Date Deprecated:** November 2025
+- **Current Status:** Archived for historical reference only
+- **Maintenance:** No active maintenance, no bug fixes, no new features
+- **Support:** No support or assistance will be provided
+
+### Reason for Deprecation
+
+The Gecko project is no longer actively maintained as an open source project and has been superseded by other tools and solutions in the speech annotation ecosystem.
+
+### What This Means
+
+#### ❌ Do NOT:
+- Use this code for new development
+- Expect bug fixes or updates
+- Deploy to any production environment
+- Base new projects on this code
+- Assume dependencies are up to date or secure
+
+#### ✅ You MAY:
+- Reference the code for historical context
+- Study the implementation for learning purposes
+- Extract patterns or ideas (with caution about outdated practices)
+
+### Why Keep It in the Repository?
+
+This project is retained in the repository for:
+- Historical reference
+- Preservation of institutional knowledge
+- Potential future reference in case similar functionality is needed
+
+---
+
 # Gecko - A Tool for Effective Annotation of Human Conversations
 
 ![Comparison](./docs/Comparison.png)
