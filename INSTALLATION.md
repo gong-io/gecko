@@ -1,5 +1,8 @@
 # Installation & Deployment
 
+> ## ⚠️ DEPRECATION NOTICE
+> **This project is DEPRECATED and no longer maintained.** The installation instructions below are preserved for historical reference only. Do NOT use this project for new development. See [README.md](README.md) for full deprecation details.
+
 ## Requirements
 
 * node >= v10

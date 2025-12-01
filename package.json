@@ -1,7 +1,8 @@
 {
   "name": "speech-recognition",
   "version": "1.0.0",
-  "description": "",
+  "deprecated": "This project is no longer maintained and has been archived. See README.md for details.",
+  "description": "DEPRECATED: Gecko - A Tool for Effective Annotation of Human Conversations (No longer maintained as of November 2025)",
   "main": "build/bundle.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
